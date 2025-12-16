@@ -12,16 +12,18 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/db"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/techniques"
 )
 
 type BreathingHandler struct {
-	ctx         context.Context
-	bot         *telego.Bot
-	db          db.DBWork
-	rateLimiter rate_limiter.Limiter
-	statistics  statistic.Stats
+	ctx            context.Context
+	bot            *telego.Bot
+	db             db.DBWork
+	rateLimiter    rate_limiter.Limiter
+	statistics     statistic.Stats
+	sessionStorage session.Storage
 }
 
 func NewBreathingHandler(
@@ -30,13 +32,15 @@ func NewBreathingHandler(
 	database db.DBWork,
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
+	sessionStorage session.Storage,
 ) *BreathingHandler {
 	return &BreathingHandler{
-		ctx:         ctx,
-		bot:         bot,
-		db:          database,
-		rateLimiter: rateLimiter,
-		statistics:  statistics,
+		ctx:            ctx,
+		bot:            bot,
+		db:             database,
+		rateLimiter:    rateLimiter,
+		statistics:     statistics,
+		sessionStorage: sessionStorage,
 	}
 }
 
@@ -70,7 +74,7 @@ func (h *BreathingHandler) Handle(ctx *th.Context, update telego.Update) error {
 		if strings.HasPrefix(update.CallbackQuery.Data, "breathing_complete") {
 			h.completeBreathing(h.ctx, chatID, userID, messageID)
 		} else if strings.HasPrefix(update.CallbackQuery.Data, "breathing_cancel") {
-			h.cancelBreathing(h.ctx, chatID, messageID)
+			h.cancelBreathing(h.ctx, chatID, userID, messageID)
 		} else if update.CallbackQuery.Data == "breathing_start" {
 			go h.runBreathingCycle(chatID, userID, messageID)
 		}
@@ -83,6 +87,8 @@ func (h *BreathingHandler) Handle(ctx *th.Context, update telego.Update) error {
 }
 
 func (h *BreathingHandler) startBreathingExercise(ctx context.Context, chatID, userID int64) {
+	_ = h.sessionStorage.SetState(ctx, userID, session.StateBreathingActive)
+
 	intro := `🌬️ *Дыхание за 2 минуты*
 
 Простое упражнение для успокоения нервной системы.
@@ -176,6 +182,8 @@ func (h *BreathingHandler) runBreathingCycle(chatID int64, userID int64, message
 }
 
 func (h *BreathingHandler) completeBreathing(ctx context.Context, chatID int64, userID int64, messageID int) {
+	_ = h.sessionStorage.ClearState(ctx, userID)
+
 	text := `✨ *Спасибо за практику!*
 
 Регулярные упражнения помогают снизить уровень тревожности.`
@@ -193,7 +201,9 @@ func (h *BreathingHandler) completeBreathing(ctx context.Context, chatID int64, 
 	).WithReplyMarkup(GetMainMenu()))
 }
 
-func (h *BreathingHandler) cancelBreathing(ctx context.Context, chatID int64, messageID int) {
+func (h *BreathingHandler) cancelBreathing(ctx context.Context, chatID int64, userID int64, messageID int) {
+	_ = h.sessionStorage.ClearState(ctx, userID)
+
 	_, _ = h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:    tu.ID(chatID),
 		MessageID: messageID,

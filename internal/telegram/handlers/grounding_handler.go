@@ -11,16 +11,18 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/db"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/techniques"
 )
 
 type GroundingHandler struct {
-	ctx         context.Context
-	bot         *telego.Bot
-	db          db.DBWork
-	rateLimiter rate_limiter.Limiter
-	statistics  statistic.Stats
+	ctx            context.Context
+	bot            *telego.Bot
+	db             db.DBWork
+	rateLimiter    rate_limiter.Limiter
+	statistics     statistic.Stats
+	sessionStorage session.Storage
 }
 
 func NewGroundingHandler(
@@ -29,13 +31,15 @@ func NewGroundingHandler(
 	database db.DBWork,
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
+	sessionStorage session.Storage,
 ) *GroundingHandler {
 	return &GroundingHandler{
-		ctx:         ctx,
-		bot:         bot,
-		db:          database,
-		rateLimiter: rateLimiter,
-		statistics:  statistics,
+		ctx:            ctx,
+		bot:            bot,
+		db:             database,
+		rateLimiter:    rateLimiter,
+		statistics:     statistics,
+		sessionStorage: sessionStorage,
 	}
 }
 
@@ -75,7 +79,7 @@ func (h *GroundingHandler) Handle(ctx *th.Context, update telego.Update) error {
 		} else if strings.HasPrefix(update.CallbackQuery.Data, "grounding_complete") {
 			h.completeGrounding(h.ctx, chatID, userID, messageID)
 		} else if update.CallbackQuery.Data == "grounding_cancel" {
-			h.cancelGrounding(h.ctx, chatID, messageID)
+			h.cancelGrounding(h.ctx, chatID, userID, messageID)
 		}
 
 		_ = ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
@@ -86,6 +90,8 @@ func (h *GroundingHandler) Handle(ctx *th.Context, update telego.Update) error {
 }
 
 func (h *GroundingHandler) startGroundingExercise(ctx context.Context, chatID, userID int64) {
+	_ = h.sessionStorage.SetState(ctx, userID, session.StateGroundingStep1)
+
 	intro := `🌿 *Якорение 5-4-3-2-1*
 
 Техника для возвращения в настоящий момент.
@@ -129,6 +135,21 @@ func (h *GroundingHandler) startGroundingExercise(ctx context.Context, chatID, u
 }
 
 func (h *GroundingHandler) showGroundingStep(ctx context.Context, chatID, userID int64, messageID int, stepNum string) {
+	var state session.State
+	switch stepNum {
+	case "1":
+		state = session.StateGroundingStep1
+	case "2":
+		state = session.StateGroundingStep2
+	case "3":
+		state = session.StateGroundingStep3
+	case "4":
+		state = session.StateGroundingStep4
+	case "5":
+		state = session.StateGroundingStep5
+	}
+	_ = h.sessionStorage.SetState(ctx, userID, state)
+
 	steps := techniques.GetGroundingSteps()
 	var step techniques.GroundingStep
 	var nextStep string
@@ -185,6 +206,8 @@ func (h *GroundingHandler) showGroundingStep(ctx context.Context, chatID, userID
 }
 
 func (h *GroundingHandler) completeGrounding(ctx context.Context, chatID, userID int64, messageID int) {
+	_ = h.sessionStorage.ClearState(ctx, userID)
+
 	text := `✨ *Отлично!*
 
 Вы завершили технику якорения 5-4-3-2-1.
@@ -204,7 +227,9 @@ func (h *GroundingHandler) completeGrounding(ctx context.Context, chatID, userID
 	).WithReplyMarkup(GetMainMenu()))
 }
 
-func (h *GroundingHandler) cancelGrounding(ctx context.Context, chatID int64, messageID int) {
+func (h *GroundingHandler) cancelGrounding(ctx context.Context, chatID, userID int64, messageID int) {
+	_ = h.sessionStorage.ClearState(ctx, userID)
+
 	_, _ = h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:    tu.ID(chatID),
 		MessageID: messageID,

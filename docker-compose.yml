@@ -19,6 +19,21 @@ services:
     networks:
       - bot_network
 
+  redis:
+    image: redis:7-alpine
+    container_name: anxiety_bot_redis
+    restart: always
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 1s
+      retries: 5
+    networks:
+      - bot_network
+
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: anxiety_bot_pgadmin
@@ -50,10 +65,14 @@ services:
       POSTGRES_DBNAME: "${POSTGRES_DBNAME}"
       POSTGRES_SSLMODE: "${POSTGRES_SSLMODE}"
       POSTGRES_MIGRATIONS: "${POSTGRES_MIGRATIONS}"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
       RATE_LIMIT_TIME: "${RATE_LIMIT_TIME}"
       RATE_LIMIT: "${RATE_LIMIT}"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - bot_network

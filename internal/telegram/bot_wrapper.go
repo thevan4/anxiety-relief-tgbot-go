@@ -9,18 +9,20 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/db"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/handlers"
 )
 
 type BotHandler struct {
-	ctx         context.Context
-	cancelFunc  context.CancelFunc
-	bot         *telego.Bot
-	handler     *th.BotHandler
-	db          db.DBWork
-	rateLimiter rate_limiter.Limiter
-	statistics  statistic.Stats
+	ctx            context.Context
+	cancelFunc     context.CancelFunc
+	bot            *telego.Bot
+	handler        *th.BotHandler
+	db             db.DBWork
+	rateLimiter    rate_limiter.Limiter
+	statistics     statistic.Stats
+	sessionStorage session.Storage
 }
 
 func MustNewBotHandler(
@@ -29,6 +31,7 @@ func MustNewBotHandler(
 	database db.DBWork,
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
+	sessionStorage session.Storage,
 	options ...telego.BotOption,
 ) *BotHandler {
 	bot, err := telego.NewBot(token, options...)
@@ -51,13 +54,14 @@ func MustNewBotHandler(
 	}
 
 	bh := &BotHandler{
-		ctx:         ctx,
-		cancelFunc:  cancel,
-		bot:         bot,
-		handler:     botHandler,
-		db:          database,
-		rateLimiter: rateLimiter,
-		statistics:  statistics,
+		ctx:            ctx,
+		cancelFunc:     cancel,
+		bot:            bot,
+		handler:        botHandler,
+		db:             database,
+		rateLimiter:    rateLimiter,
+		statistics:     statistics,
+		sessionStorage: sessionStorage,
 	}
 
 	bh.registerHandlers()
@@ -115,13 +119,13 @@ func (bh *BotHandler) registerHandlers() {
 		return nil
 	}, th.TextEqual("🏠 Главное меню"))
 
-	breathingHandler := handlers.NewBreathingHandler(bh.ctx, bh.bot, bh.db, bh.rateLimiter, bh.statistics)
+	breathingHandler := handlers.NewBreathingHandler(bh.ctx, bh.bot, bh.db, bh.rateLimiter, bh.statistics, bh.sessionStorage)
 	bh.handler.Handle(breathingHandler.Handle, th.Or(
 		th.TextEqual("🌬️ Дыхание за 2 минуты"),
 		th.CallbackDataPrefix("breathing_"),
 	))
 
-	groundingHandler := handlers.NewGroundingHandler(bh.ctx, bh.bot, bh.db, bh.rateLimiter, bh.statistics)
+	groundingHandler := handlers.NewGroundingHandler(bh.ctx, bh.bot, bh.db, bh.rateLimiter, bh.statistics, bh.sessionStorage)
 	bh.handler.Handle(groundingHandler.Handle, th.Or(
 		th.TextEqual("🌿 Якорение 5-4-3-2-1"),
 		th.CallbackDataPrefix("grounding_"),
