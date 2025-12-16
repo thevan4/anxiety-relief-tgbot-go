@@ -96,24 +96,32 @@ func (h *BreathingHandler) startBreathingExercise(ctx context.Context, chatID, u
 
 Я буду напоминать каждый этап. Готовы начать?`
 
-	keyboard := &telego.InlineKeyboardMarkup{
+	inlineKeyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
 				{Text: "▶️ Начать", CallbackData: "breathing_start"},
-			},
-			{
 				{Text: "❌ Отмена", CallbackData: "breathing_cancel"},
 			},
 		},
 	}
 
+	removeKeyboard := &telego.ReplyKeyboardRemove{
+		RemoveKeyboard: true,
+	}
+
 	_, err := h.bot.SendMessage(ctx, tu.Message(
 		tu.ID(chatID),
 		intro,
-	).WithParseMode("Markdown").WithReplyMarkup(keyboard))
+	).WithParseMode("Markdown").WithReplyMarkup(inlineKeyboard))
 	if err != nil {
 		log.Printf("ERROR: send breathing intro: %v", err)
+		return
 	}
+
+	_, _ = h.bot.SendMessage(ctx, tu.Message(
+		tu.ID(chatID),
+		"_Используйте кнопки выше_",
+	).WithParseMode("Markdown").WithReplyMarkup(removeKeyboard))
 }
 
 func (h *BreathingHandler) runBreathingCycle(chatID int64, userID int64, messageID int) {
@@ -191,4 +199,9 @@ func (h *BreathingHandler) cancelBreathing(ctx context.Context, chatID int64, me
 		MessageID: messageID,
 		Text:      "❌ Упражнение отменено.",
 	})
+
+	_, _ = h.bot.SendMessage(ctx, tu.Message(
+		tu.ID(chatID),
+		"Возврат в главное меню:",
+	).WithReplyMarkup(GetMainMenu()))
 }

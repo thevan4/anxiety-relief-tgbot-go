@@ -74,6 +74,8 @@ func (h *GroundingHandler) Handle(ctx *th.Context, update telego.Update) error {
 			}
 		} else if strings.HasPrefix(update.CallbackQuery.Data, "grounding_complete") {
 			h.completeGrounding(h.ctx, chatID, userID, messageID)
+		} else if update.CallbackQuery.Data == "grounding_cancel" {
+			h.cancelGrounding(h.ctx, chatID, messageID)
 		}
 
 		_ = ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
@@ -98,21 +100,32 @@ func (h *GroundingHandler) startGroundingExercise(ctx context.Context, chatID, u
 
 Готовы начать?`
 
-	keyboard := &telego.InlineKeyboardMarkup{
+	inlineKeyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
 				{Text: "▶️ Начать", CallbackData: "grounding_step_1"},
+				{Text: "❌ Отмена", CallbackData: "grounding_cancel"},
 			},
 		},
+	}
+
+	removeKeyboard := &telego.ReplyKeyboardRemove{
+		RemoveKeyboard: true,
 	}
 
 	_, err := h.bot.SendMessage(ctx, tu.Message(
 		tu.ID(chatID),
 		intro,
-	).WithParseMode("Markdown").WithReplyMarkup(keyboard))
+	).WithParseMode("Markdown").WithReplyMarkup(inlineKeyboard))
 	if err != nil {
 		log.Printf("ERROR: send grounding intro: %v", err)
+		return
 	}
+
+	_, _ = h.bot.SendMessage(ctx, tu.Message(
+		tu.ID(chatID),
+		"_Используйте кнопки выше_",
+	).WithParseMode("Markdown").WithReplyMarkup(removeKeyboard))
 }
 
 func (h *GroundingHandler) showGroundingStep(ctx context.Context, chatID, userID int64, messageID int, stepNum string) {
@@ -188,5 +201,18 @@ func (h *GroundingHandler) completeGrounding(ctx context.Context, chatID, userID
 	_, _ = h.bot.SendMessage(ctx, tu.Message(
 		tu.ID(chatID),
 		"Выберите другую технику:",
+	).WithReplyMarkup(GetMainMenu()))
+}
+
+func (h *GroundingHandler) cancelGrounding(ctx context.Context, chatID int64, messageID int) {
+	_, _ = h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:    tu.ID(chatID),
+		MessageID: messageID,
+		Text:      "❌ Упражнение отменено.",
+	})
+
+	_, _ = h.bot.SendMessage(ctx, tu.Message(
+		tu.ID(chatID),
+		"Возврат в главное меню:",
 	).WithReplyMarkup(GetMainMenu()))
 }

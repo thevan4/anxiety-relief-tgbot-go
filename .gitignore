@@ -28,6 +28,10 @@ go.work.sum
 # env file
 .env
 
+# db
+pgadmin_data/*
+postgres_data/*
+
 # Editor/IDE
 .idea/
 .vscode/
