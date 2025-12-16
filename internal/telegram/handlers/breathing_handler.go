@@ -75,8 +75,11 @@ func (h *BreathingHandler) Handle(ctx *th.Context, update telego.Update) error {
 			h.completeBreathing(h.ctx, chatID, userID, messageID)
 		} else if strings.HasPrefix(update.CallbackQuery.Data, "breathing_cancel") {
 			h.cancelBreathing(h.ctx, chatID, userID, messageID)
+		} else if strings.HasPrefix(update.CallbackQuery.Data, "breathing_stop") {
+			h.stopBreathing(h.ctx, chatID, userID, messageID)
 		} else if update.CallbackQuery.Data == "breathing_start" {
-			go h.runBreathingCycle(chatID, userID, messageID)
+			_ = h.sessionStorage.SetState(h.ctx, userID, session.StateBreathingRunning)
+			h.runBreathingCycle(h.ctx, chatID, userID, messageID)
 		}
 
 		_ = ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
@@ -88,7 +91,10 @@ func (h *BreathingHandler) Handle(ctx *th.Context, update telego.Update) error {
 
 func (h *BreathingHandler) startBreathingExercise(ctx context.Context, chatID, userID int64) {
 	_ = h.sessionStorage.SetState(ctx, userID, session.StateBreathingActive)
+	h.showBreathingIntro(ctx, chatID, userID, 0)
+}
 
+func (h *BreathingHandler) showBreathingIntro(ctx context.Context, chatID, userID int64, messageID int) {
 	intro := `🌬️ *Дыхание за 2 минуты*
 
 Простое упражнение для успокоения нервной системы.
@@ -111,48 +117,71 @@ func (h *BreathingHandler) startBreathingExercise(ctx context.Context, chatID, u
 		},
 	}
 
-	removeKeyboard := &telego.ReplyKeyboardRemove{
-		RemoveKeyboard: true,
-	}
+	if messageID == 0 {
+		removeKeyboard := &telego.ReplyKeyboardRemove{
+			RemoveKeyboard: true,
+		}
 
-	_, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		intro,
-	).WithParseMode("Markdown").WithReplyMarkup(inlineKeyboard))
-	if err != nil {
-		log.Printf("ERROR: send breathing intro: %v", err)
-		return
-	}
+		_, err := h.bot.SendMessage(ctx, tu.Message(
+			tu.ID(chatID),
+			intro,
+		).WithParseMode("Markdown").WithReplyMarkup(inlineKeyboard))
+		if err != nil {
+			log.Printf("ERROR: send breathing intro: %v", err)
+			return
+		}
 
-	_, _ = h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"_Используйте кнопки выше_",
-	).WithParseMode("Markdown").WithReplyMarkup(removeKeyboard))
+		_, _ = h.bot.SendMessage(ctx, tu.Message(
+			tu.ID(chatID),
+			"_Используйте кнопки выше_",
+		).WithParseMode("Markdown").WithReplyMarkup(removeKeyboard))
+	} else {
+		_, _ = h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+			ChatID:      tu.ID(chatID),
+			MessageID:   messageID,
+			Text:        intro,
+			ParseMode:   "Markdown",
+			ReplyMarkup: inlineKeyboard,
+		})
+	}
 }
 
-func (h *BreathingHandler) runBreathingCycle(chatID int64, userID int64, messageID int) {
-	ctx := h.ctx
+func (h *BreathingHandler) runBreathingCycle(ctx context.Context, chatID int64, userID int64, messageID int) {
 	cycles := techniques.GetBreathingCycles()
 
 	for i, cycle := range cycles {
-		select {
-		case <-ctx.Done():
+		state, err := h.sessionStorage.GetState(ctx, userID)
+		if err != nil || state != session.StateBreathingRunning {
 			return
-		default:
-			text := fmt.Sprintf("🌬️ *Цикл %d из 8*\n\n%s", i+1, cycle.Instruction)
-
-			_, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-				ChatID:    tu.ID(chatID),
-				MessageID: messageID,
-				Text:      text,
-				ParseMode: "Markdown",
-			})
-			if err != nil {
-				log.Printf("ERROR: edit breathing message: %v", err)
-			}
-
-			time.Sleep(cycle.Duration)
 		}
+
+		text := fmt.Sprintf("🌬️ *Цикл %d из 8*\n\n%s", i+1, cycle.Instruction)
+
+		keyboard := &telego.InlineKeyboardMarkup{
+			InlineKeyboard: [][]telego.InlineKeyboardButton{
+				{
+					{Text: "🛑 Стоп", CallbackData: "breathing_stop"},
+				},
+			},
+		}
+
+		_, err = h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+			ChatID:      tu.ID(chatID),
+			MessageID:   messageID,
+			Text:        text,
+			ParseMode:   "Markdown",
+			ReplyMarkup: keyboard,
+		})
+		if err != nil {
+			log.Printf("ERROR: edit breathing message: %v", err)
+		}
+
+		time.Sleep(cycle.Duration)
+	}
+
+	state, err := h.sessionStorage.GetState(ctx, userID)
+	if err != nil || state != session.StateBreathingRunning {
+		return
 	}
 
 	completionText := `✅ *Отлично!*
@@ -169,7 +198,7 @@ func (h *BreathingHandler) runBreathingCycle(chatID int64, userID int64, message
 		},
 	}
 
-	_, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+	_, err = h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
 		Text:        completionText,
@@ -179,6 +208,11 @@ func (h *BreathingHandler) runBreathingCycle(chatID int64, userID int64, message
 	if err != nil {
 		log.Printf("ERROR: send completion message: %v", err)
 	}
+}
+
+func (h *BreathingHandler) stopBreathing(ctx context.Context, chatID int64, userID int64, messageID int) {
+	_ = h.sessionStorage.SetState(ctx, userID, session.StateBreathingActive)
+	h.showBreathingIntro(ctx, chatID, userID, messageID)
 }
 
 func (h *BreathingHandler) completeBreathing(ctx context.Context, chatID int64, userID int64, messageID int) {
