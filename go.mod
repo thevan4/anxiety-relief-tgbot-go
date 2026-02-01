@@ -3,7 +3,6 @@ module github.com/thevan4/anxiety-relief-tgbot-go
 go 1.25.5
 
 require (
-	github.com/lib/pq v1.10.9
 	github.com/mymmrac/telego v1.3.3
 	github.com/redis/go-redis/v9 v9.17.2
 	golang.org/x/time v0.14.0

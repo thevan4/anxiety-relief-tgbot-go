@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -25,9 +26,11 @@ func NewRedisStorage(addr string) (Storage, error) {
 	return &RedisStorage{client: client}, nil
 }
 
+const sessionTTL = 5 * time.Minute
+
 func (r *RedisStorage) SetState(ctx context.Context, userID int64, state State) error {
 	key := fmt.Sprintf("session:%d", userID)
-	return r.client.Set(ctx, key, string(state), 0).Err()
+	return r.client.Set(ctx, key, string(state), sessionTTL).Err()
 }
 
 func (r *RedisStorage) GetState(ctx context.Context, userID int64) (State, error) {
@@ -45,4 +48,8 @@ func (r *RedisStorage) GetState(ctx context.Context, userID int64) (State, error
 func (r *RedisStorage) ClearState(ctx context.Context, userID int64) error {
 	key := fmt.Sprintf("session:%d", userID)
 	return r.client.Del(ctx, key).Err()
+}
+
+func (r *RedisStorage) Close() error {
+	return r.client.Close()
 }

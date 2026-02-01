@@ -54,11 +54,10 @@ func (rl *RateLimiter) GetUserRequestsInfo(userID int64) *UserRequestsInfo {
 	defer rl.mux.Unlock()
 	userRequestsInfo, exists := rl.userLimits[userID]
 	if !exists {
+		interval := rl.settings.timeLimit / time.Duration(rl.settings.rateLimit)
 		userRequestsInfo = &UserRequestsInfo{
-			mux: new(sync.Mutex),
-			//RateLimiter: rate.NewLimiter(rate.Every(time.Hour/rateLimit), rateLimit),
-			RateLimiter: rate.NewLimiter(rate.Every(rl.settings.timeLimit/time.Duration(rl.settings.rateLimit)),
-				rl.settings.rateLimit),
+			mux:         new(sync.Mutex),
+			RateLimiter: rate.NewLimiter(rate.Every(interval), rl.settings.rateLimit),
 		}
 		rl.userLimits[userID] = userRequestsInfo
 
@@ -73,8 +72,8 @@ func (rl *RateLimiter) WaitAndGo(ctx context.Context, userID int64) {
 	userRequestsInfo := rl.GetUserRequestsInfo(userID)
 	// Blocks until the next event is resolved.
 	err := userRequestsInfo.RateLimiter.Wait(ctx)
-	if err != nil { // context cancel or deadline.
-		log.Printf("for user %d: request rate limit exceeded", userID)
+	if err != nil {
+		log.Printf("rate limiter: context done for user %d: %v", userID, err)
 		return
 	}
 	// go!

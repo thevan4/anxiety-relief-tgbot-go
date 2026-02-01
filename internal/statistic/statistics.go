@@ -20,13 +20,18 @@ type Statistics struct {
 	stats map[int64]*Statistic
 }
 
-// NewStatistics loads past statistics into memory.
+// NewStatistics loads past statistics into memory. Copies oldStatistics so the caller's map is not shared.
 func NewStatistics(oldStatistics map[int64]*Statistic) *Statistics {
-	var newStats map[int64]*Statistic
-	if len(oldStatistics) == 0 {
-		newStats = make(map[int64]*Statistic)
-	} else {
-		newStats = oldStatistics
+	newStats := make(map[int64]*Statistic, len(oldStatistics))
+	for k, v := range oldStatistics {
+		if v != nil {
+			newStats[k] = &Statistic{
+				username:      v.username,
+				isPremium:     v.isPremium,
+				isBot:         v.isBot,
+				totalRequests: v.totalRequests,
+			}
+		}
 	}
 	return &Statistics{
 		mux:   new(sync.Mutex),
@@ -54,7 +59,10 @@ func (s *Statistics) IncreaseRequestsStatisticForUser(
 		return
 	}
 
-	oldStats.totalRequests += 1
+	oldStats.username = username
+	oldStats.isPremium = isPremium
+	oldStats.isBot = isBot
+	oldStats.totalRequests++
 }
 
 // GetStatistics gives the current statistics.
