@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/techniques"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/messages"
 )
 
 type PMRHandler struct {
@@ -41,33 +41,40 @@ func NewPMRHandler(
 	}
 }
 
-func (h *PMRHandler) Handle(ctx *th.Context, update telego.Update) error {
-	if update.Message != nil {
-		return h.handleMessage(ctx, update.Message)
+// HandleMenuSelect handles selection from main menu
+func (h *PMRHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+	msg, ok := cb.Message.(*telego.Message)
+	if !ok || msg == nil {
+		return nil
 	}
-	if update.CallbackQuery != nil {
-		return h.handleCallback(ctx, update.CallbackQuery)
-	}
-	return nil
-}
+	userID := cb.From.ID
+	chatID := msg.Chat.ID
+	messageID := msg.MessageID
 
-func (h *PMRHandler) handleMessage(_ *th.Context, msg *telego.Message) error {
-	userID := msg.From.ID
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
+
 	h.statistics.IncreaseRequestsStatisticForUser(
 		userID,
-		msg.From.Username,
-		msg.From.IsPremium,
-		msg.From.IsBot,
+		cb.From.Username,
+		cb.From.IsPremium,
+		cb.From.IsBot,
 	)
-	h.showIntro(h.ctx, msg.Chat.ID, userID)
+
+	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
+		CallbackQueryID: cb.ID,
+	}); err != nil {
+		log.Printf("ERROR: answer callback query: %v", err)
+	}
+
+	h.showIntro(h.ctx, chatID, userID, messageID)
 	return nil
 }
 
-func (h *PMRHandler) handleCallback(ctx *th.Context, cb *telego.CallbackQuery) error {
+// HandleCallback handles PMR exercise callbacks
+func (h *PMRHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")
@@ -76,6 +83,7 @@ func (h *PMRHandler) handleCallback(ctx *th.Context, cb *telego.CallbackQuery) e
 	chatID := msg.Chat.ID
 	userID := cb.From.ID
 	messageID := msg.MessageID
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
@@ -111,50 +119,31 @@ func (h *PMRHandler) processCallback(chatID, userID int64, messageID int, data s
 	}
 }
 
-func (h *PMRHandler) showIntro(ctx context.Context, chatID, userID int64) {
+func (h *PMRHandler) showIntro(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StatePMRActive); err != nil {
 		log.Printf("ERROR: set state pmr active: %v", err)
 	}
 
 	muscleGroups := techniques.GetMuscleGroups()
-
-	text := fmt.Sprintf(`💪 *Прогрессивная мышечная релаксация*
-
-Техника глубокого расслабления через напряжение и расслабление мышц.
-
-*Как это работает:*
-1. Напрягаете группу мышц на 7 секунд
-2. Расслабляете на 15 секунд
-3. Переходите к следующей группе
-
-*%d групп мышц* — от рук до ног.
-
-Готовы начать?`, len(muscleGroups))
+	text := messages.PMRIntro(len(muscleGroups))
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: "▶️ Начать", CallbackData: "pmr_start"},
-				{Text: "❌ Отмена", CallbackData: "pmr_cancel"},
+				{Text: messages.Start, CallbackData: "pmr_start"},
+				{Text: messages.Cancel, CallbackData: "pmr_cancel"},
 			},
 		},
 	}
 
-	removeKeyboard := &telego.ReplyKeyboardRemove{RemoveKeyboard: true}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		text,
-	).WithParseMode("Markdown").WithReplyMarkup(keyboard)); err != nil {
-		log.Printf("ERROR: send pmr intro: %v", err)
-		return
-	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"_Используйте кнопки выше_",
-	).WithParseMode("Markdown").WithReplyMarkup(removeKeyboard)); err != nil {
-		log.Printf("ERROR: send pmr use buttons: %v", err)
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        text,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit pmr intro: %v", err)
 	}
 }
 
@@ -162,9 +151,7 @@ func (h *PMRHandler) startExercise(ctx context.Context, chatID, userID int64, me
 	h.runMuscleGroup(ctx, chatID, userID, messageID, 0)
 }
 
-func (h *PMRHandler) runMuscleGroup(
-	ctx context.Context, chatID, userID int64, messageID int, muscleIdx int,
-) {
+func (h *PMRHandler) runMuscleGroup(ctx context.Context, chatID, userID int64, messageID int, muscleIdx int) {
 	muscleGroups := techniques.GetMuscleGroups()
 	if muscleIdx < 0 || muscleIdx >= len(muscleGroups) {
 		h.sendCompletion(ctx, chatID, userID, messageID)
@@ -178,14 +165,12 @@ func (h *PMRHandler) runMuscleGroup(
 	muscle := muscleGroups[muscleIdx]
 	totalGroups := len(muscleGroups)
 
-	// Tense phase
-	tenseText := fmt.Sprintf("🔴 *НАПРЯГИТЕ*\n\n%s\n\n_7 секунд..._", muscle.TenseInstruction)
+	tenseText := messages.PMRTensePhase(muscle.TenseInstruction)
 	if !h.runPhase(ctx, chatID, userID, messageID, muscle, totalGroups, tenseText, muscle.TenseDuration) {
 		return
 	}
 
-	// Relax phase
-	relaxText := fmt.Sprintf("🟢 *РАССЛАБЬТЕ*\n\n%s\n\n_15 секунд..._", muscle.RelaxInstruction)
+	relaxText := messages.PMRRelaxPhase(muscle.RelaxInstruction)
 	if !h.runPhase(ctx, chatID, userID, messageID, muscle, totalGroups, relaxText, muscle.RelaxDuration) {
 		return
 	}
@@ -202,12 +187,11 @@ func (h *PMRHandler) runPhase(
 		return false
 	}
 
-	text := fmt.Sprintf("%s *%s* (%d/%d)\n\n%s",
-		muscle.Emoji, muscle.Name, muscle.Number, totalGroups, phaseText)
+	text := messages.PMRMuscleStep(muscle.Emoji, muscle.Name, muscle.Number, totalGroups, phaseText)
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: "🛑 Стоп", CallbackData: "pmr_stop"}},
+			{{Text: messages.Stop, CallbackData: "pmr_stop"}},
 		},
 	}
 
@@ -237,17 +221,11 @@ func (h *PMRHandler) sendCompletion(ctx context.Context, chatID, userID int64, m
 		return
 	}
 
-	text := `✅ *Отлично!*
-
-Вы завершили прогрессивную мышечную релаксацию.
-
-Ваше тело теперь полностью расслаблено. Посидите ещё минуту, наслаждаясь этим состоянием.`
-
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: "✅ Готово", CallbackData: "pmr_complete"},
-				{Text: "🔄 Повторить", CallbackData: "pmr_start"},
+				{Text: messages.Done, CallbackData: "pmr_complete"},
+				{Text: messages.Repeat, CallbackData: "pmr_start"},
 			},
 		},
 	}
@@ -255,7 +233,7 @@ func (h *PMRHandler) sendCompletion(ctx context.Context, chatID, userID int64, m
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        text,
+		Text:        messages.PMRCompletion,
 		ParseMode:   "Markdown",
 		ReplyMarkup: keyboard,
 	}); err != nil {
@@ -268,17 +246,11 @@ func (h *PMRHandler) stopExercise(ctx context.Context, chatID, userID int64, mes
 		log.Printf("ERROR: set state pmr active: %v", err)
 	}
 
-	text := `💪 *Прогрессивная мышечная релаксация*
-
-Упражнение остановлено.
-
-Хотите начать сначала?`
-
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: "▶️ Начать", CallbackData: "pmr_start"},
-				{Text: "❌ Отмена", CallbackData: "pmr_cancel"},
+				{Text: messages.Start, CallbackData: "pmr_start"},
+				{Text: messages.Cancel, CallbackData: "pmr_cancel"},
 			},
 		},
 	}
@@ -286,7 +258,7 @@ func (h *PMRHandler) stopExercise(ctx context.Context, chatID, userID int64, mes
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        text,
+		Text:        messages.PMRStopped,
 		ParseMode:   "Markdown",
 		ReplyMarkup: keyboard,
 	}); err != nil {
@@ -299,24 +271,14 @@ func (h *PMRHandler) completeExercise(ctx context.Context, chatID, userID int64,
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
-	text := `✨ *Спасибо за практику!*
-
-Прогрессивная мышечная релаксация снижает мышечное напряжение и уровень стресса.`
-
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:    tu.ID(chatID),
-		MessageID: messageID,
-		Text:      text,
-		ParseMode: "Markdown",
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        messages.PMRThanks,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
 		log.Printf("ERROR: edit pmr complete: %v", err)
-	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"Выберите другую технику:",
-	).WithReplyMarkup(GetMainMenu())); err != nil {
-		log.Printf("ERROR: send pmr menu: %v", err)
 	}
 }
 
@@ -326,17 +288,12 @@ func (h *PMRHandler) cancelExercise(ctx context.Context, chatID, userID int64, m
 	}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:    tu.ID(chatID),
-		MessageID: messageID,
-		Text:      "❌ Упражнение отменено.",
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        MainMenuText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
 		log.Printf("ERROR: edit pmr cancel: %v", err)
-	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"Возврат в главное меню:",
-	).WithReplyMarkup(GetMainMenu())); err != nil {
-		log.Printf("ERROR: send pmr menu: %v", err)
 	}
 }

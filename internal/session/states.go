@@ -32,3 +32,20 @@ const (
 	StateVisualizationSelect  State = "visualization_select"
 	StateVisualizationRunning State = "visualization_running"
 )
+
+// IsRunning returns true if user is in an active exercise that should not be interrupted.
+func (s State) IsRunning() bool {
+	switch s {
+	case StateBreathingRunning,
+		StateGuidedBreathingRunning,
+		StatePMRRunning,
+		StateVisualizationRunning:
+		return true
+	}
+	return false
+}
+
+// IsActive returns true if user has any active session (including selection screens).
+func (s State) IsActive() bool {
+	return s != StateUnknown && s != StateIdle
+}

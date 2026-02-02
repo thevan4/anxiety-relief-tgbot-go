@@ -66,52 +66,43 @@ func MustNewBotHandler(
 }
 
 func (bh *BotHandler) registerHandlers() {
-	bh.registerStartAndMenu()
-	bh.registerTechniqueHandlers()
-	bh.registerInfoHandler()
-}
-
-func (bh *BotHandler) registerStartAndMenu() {
 	bh.registerStartHandler()
-	bh.registerMenuHandler()
+	bh.registerMenuCallbackHandler()
+	bh.registerTechniqueHandlers()
+	bh.registerThoughtLabelingTextHandler()
+	bh.registerCatchAllHandler() // Must be last!
 }
 
 func (bh *BotHandler) registerStartHandler() {
 	bh.handler.HandleMessage(func(ctx *th.Context, message telego.Message) error {
 		if message.From == nil {
-			log.Printf("ERROR: start message has no From")
 			return nil
 		}
 		bh.rateLimiter.WaitAndGo(bh.ctx, message.From.ID)
 		if bh.ctx.Err() != nil {
 			return bh.ctx.Err()
 		}
+
+		// Clear any active session on /start
+		if err := bh.sessionStorage.ClearState(bh.ctx, message.From.ID); err != nil {
+			log.Printf("ERROR: clear state on start: %v", err)
+		}
+
 		bh.statistics.IncreaseRequestsStatisticForUser(
 			message.From.ID,
 			message.From.Username,
 			message.From.IsPremium,
 			message.From.IsBot,
 		)
+
 		welcomeText := `👋 Привет, *` + message.From.FirstName + `*!
 
-Я — AnxietyHelp бот, помогу справиться с тревожностью.
+` + handlers.MainMenuText
 
-*Быстрые техники:*
-🌬️ Дыхание за 2 минуты
-🌿 Якорение 5-4-3-2-1
-
-*Продвинутые техники:*
-🧘 Управляемое дыхание
-💪 Мышечная релаксация
-🏷️ Маркировка мыслей
-🌅 Визуализация
-
-Выберите технику из меню ниже:`
-		_, err := ctx.Bot().SendMessage(ctx, tu.Message(
+		if _, err := ctx.Bot().SendMessage(ctx, tu.Message(
 			tu.ID(message.Chat.ID),
 			welcomeText,
-		).WithParseMode("Markdown").WithReplyMarkup(handlers.GetMainMenu()))
-		if err != nil {
+		).WithParseMode("Markdown").WithReplyMarkup(handlers.GetMainMenuInline())); err != nil {
 			log.Printf("ERROR: send start message: %v", err)
 			return err
 		}
@@ -119,35 +110,92 @@ func (bh *BotHandler) registerStartHandler() {
 	}, th.CommandEqual("start"))
 }
 
-func (bh *BotHandler) registerMenuHandler() {
-	bh.handler.HandleMessage(func(ctx *th.Context, message telego.Message) error {
-		if message.From == nil {
-			log.Printf("ERROR: menu message has no From")
+func (bh *BotHandler) registerMenuCallbackHandler() {
+	// Handle info
+	bh.handler.HandleCallbackQuery(func(ctx *th.Context, cb telego.CallbackQuery) error {
+		msg, ok := cb.Message.(*telego.Message)
+		if !ok || msg == nil {
 			return nil
 		}
-		bh.rateLimiter.WaitAndGo(bh.ctx, message.From.ID)
+		chatID := msg.Chat.ID
+		messageID := msg.MessageID
+
+		bh.rateLimiter.WaitAndGo(bh.ctx, cb.From.ID)
 		if bh.ctx.Err() != nil {
 			return bh.ctx.Err()
 		}
-		bh.statistics.IncreaseRequestsStatisticForUser(
-			message.From.ID,
-			message.From.Username,
-			message.From.IsPremium,
-			message.From.IsBot,
-		)
-		menuText := `🏠 *Главное меню*
 
-Выберите технику для работы с тревожностью:`
-		_, err := ctx.Bot().SendMessage(ctx, tu.Message(
-			tu.ID(message.Chat.ID),
-			menuText,
-		).WithParseMode("Markdown").WithReplyMarkup(handlers.GetMainMenu()))
-		if err != nil {
-			log.Printf("ERROR: send menu: %v", err)
-			return err
+		if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
+			CallbackQueryID: cb.ID,
+		}); err != nil {
+			log.Printf("ERROR: answer callback query: %v", err)
 		}
+
+		bh.showInfo(chatID, messageID)
 		return nil
-	}, th.TextEqual("🏠 Главное меню"))
+	}, th.CallbackDataEqual("menu_info"))
+
+	// Handle back to menu
+	bh.handler.HandleCallbackQuery(func(ctx *th.Context, cb telego.CallbackQuery) error {
+		msg, ok := cb.Message.(*telego.Message)
+		if !ok || msg == nil {
+			return nil
+		}
+		chatID := msg.Chat.ID
+		messageID := msg.MessageID
+
+		bh.rateLimiter.WaitAndGo(bh.ctx, cb.From.ID)
+		if bh.ctx.Err() != nil {
+			return bh.ctx.Err()
+		}
+
+		if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
+			CallbackQueryID: cb.ID,
+		}); err != nil {
+			log.Printf("ERROR: answer callback query: %v", err)
+		}
+
+		bh.showMainMenu(chatID, messageID)
+		return nil
+	}, th.CallbackDataEqual("menu_back"))
+}
+
+func (bh *BotHandler) showMainMenu(chatID int64, messageID int) {
+	if _, err := bh.bot.EditMessageText(bh.ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        handlers.MainMenuText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: handlers.GetMainMenuInline(),
+	}); err != nil {
+		log.Printf("ERROR: edit to main menu: %v", err)
+	}
+}
+
+func (bh *BotHandler) showInfo(chatID int64, messageID int) {
+	infoText := `ℹ️ *О боте AnxietyHelp*
+
+Бот предоставляет научно обоснованные техники для снижения тревожности.
+
+💡 *Совет:* Практикуйте регулярно для лучшего эффекта.
+
+⚠️ При постоянной тревоге обратитесь к специалисту.`
+
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{{Text: "🏠 В меню", CallbackData: "menu_back"}},
+		},
+	}
+
+	if _, err := bh.bot.EditMessageText(bh.ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        infoText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit to info: %v", err)
+	}
 }
 
 func (bh *BotHandler) registerTechniqueHandlers() {
@@ -163,99 +211,108 @@ func (bh *BotHandler) registerBreathingHandler() {
 	breathingHandler := handlers.NewBreathingHandler(
 		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
 	)
-	bh.handler.Handle(breathingHandler.Handle, th.Or(
-		th.TextEqual("🌬️ Дыхание за 2 минуты"),
-		th.CallbackDataPrefix("breathing_"),
-	))
+	bh.handler.HandleCallbackQuery(breathingHandler.HandleCallback, th.CallbackDataPrefix("breathing_"))
+	bh.handler.HandleCallbackQuery(breathingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_breathing"))
 }
 
 func (bh *BotHandler) registerGroundingHandler() {
 	groundingHandler := handlers.NewGroundingHandler(
 		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
 	)
-	bh.handler.Handle(groundingHandler.Handle, th.Or(
-		th.TextEqual("🌿 Якорение 5-4-3-2-1"),
-		th.CallbackDataPrefix("grounding_"),
-	))
+	bh.handler.HandleCallbackQuery(groundingHandler.HandleCallback, th.CallbackDataPrefix("grounding_"))
+	bh.handler.HandleCallbackQuery(groundingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_grounding"))
 }
 
 func (bh *BotHandler) registerGuidedBreathingHandler() {
 	guidedBreathingHandler := handlers.NewGuidedBreathingHandler(
 		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
 	)
-	bh.handler.Handle(guidedBreathingHandler.Handle, th.Or(
-		th.TextEqual("🧘 Управляемое дыхание"),
-		th.CallbackDataPrefix("gbreath_"),
-	))
+	bh.handler.HandleCallbackQuery(guidedBreathingHandler.HandleCallback, th.CallbackDataPrefix("gbreath_"))
+	bh.handler.HandleCallbackQuery(guidedBreathingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_guided"))
 }
 
 func (bh *BotHandler) registerPMRHandler() {
 	pmrHandler := handlers.NewPMRHandler(
 		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
 	)
-	bh.handler.Handle(pmrHandler.Handle, th.Or(
-		th.TextEqual("💪 Мышечная релаксация"),
-		th.CallbackDataPrefix("pmr_"),
-	))
+	bh.handler.HandleCallbackQuery(pmrHandler.HandleCallback, th.CallbackDataPrefix("pmr_"))
+	bh.handler.HandleCallbackQuery(pmrHandler.HandleMenuSelect, th.CallbackDataEqual("menu_pmr"))
 }
 
 func (bh *BotHandler) registerThoughtLabelingHandler() {
 	thoughtLabelingHandler := handlers.NewThoughtLabelingHandler(
 		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
 	)
-	bh.handler.Handle(thoughtLabelingHandler.Handle, th.Or(
-		th.TextEqual("🏷️ Маркировка мыслей"),
-		th.CallbackDataPrefix("thought_"),
-	))
+	bh.handler.HandleCallbackQuery(thoughtLabelingHandler.HandleCallback, th.CallbackDataPrefix("thought_"))
+	bh.handler.HandleCallbackQuery(thoughtLabelingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_thought"))
+}
+
+func (bh *BotHandler) registerThoughtLabelingTextHandler() {
+	// Handle text input for thought labeling (user sends their thought)
+	bh.handler.HandleMessage(func(ctx *th.Context, message telego.Message) error {
+		if message.From == nil {
+			return nil
+		}
+		userID := message.From.ID
+		chatID := message.Chat.ID
+
+		state, _ := bh.sessionStorage.GetState(bh.ctx, userID)
+		if state != session.StateThoughtLabelingInput {
+			return nil // Not in input state, let catch-all handle it
+		}
+
+		// Get saved message ID to edit
+		messageID, err := bh.sessionStorage.GetMessageID(bh.ctx, userID)
+		if err != nil || messageID == 0 {
+			log.Printf("ERROR: get message id for thought input: %v", err)
+			bh.deleteMessage(chatID, message.MessageID)
+			return nil
+		}
+
+		// Delete user's message
+		bh.deleteMessage(chatID, message.MessageID)
+
+		// Create handler and process thought
+		thoughtHandler := handlers.NewThoughtLabelingHandler(
+			bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
+		)
+		thoughtHandler.ProcessThoughtInput(chatID, userID, messageID, message.Text)
+
+		return nil
+	}, th.AnyMessage())
 }
 
 func (bh *BotHandler) registerVisualizationHandler() {
 	visualizationHandler := handlers.NewVisualizationHandler(
 		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
 	)
-	bh.handler.Handle(visualizationHandler.Handle, th.Or(
-		th.TextEqual("🌅 Визуализация"),
-		th.CallbackDataPrefix("visual_"),
-	))
+	bh.handler.HandleCallbackQuery(visualizationHandler.HandleCallback, th.CallbackDataPrefix("visual_"))
+	bh.handler.HandleCallbackQuery(visualizationHandler.HandleMenuSelect, th.CallbackDataEqual("menu_visual"))
 }
 
-func (bh *BotHandler) registerInfoHandler() {
+// registerCatchAllHandler handles any unrecognized messages
+func (bh *BotHandler) registerCatchAllHandler() {
 	bh.handler.HandleMessage(func(ctx *th.Context, message telego.Message) error {
 		if message.From == nil {
-			log.Printf("ERROR: info message has no From")
 			return nil
 		}
-		bh.rateLimiter.WaitAndGo(bh.ctx, message.From.ID)
-		if bh.ctx.Err() != nil {
-			return bh.ctx.Err()
-		}
-		infoText := `ℹ️ *О боте AnxietyHelp*
+		chatID := message.Chat.ID
 
-Этот бот предоставляет техники для снижения тревожности:
-
-*Быстрые техники (2-5 мин):*
-🌬️ *Дыхание* — успокаивает нервную систему
-🌿 *Якорение* — возвращает в настоящий момент
-
-*Продвинутые техники (5-15 мин):*
-🧘 *Управляемое дыхание* — разные паттерны дыхания
-💪 *Мышечная релаксация* — снятие телесного напряжения
-🏷️ *Маркировка мыслей* — работа с тревожными мыслями
-🌅 *Визуализация* — расслабление через воображение
-
-💡 *Совет:* Практикуйте регулярно для лучшего эффекта.
-
-⚠️ При постоянной тревоге обратитесь к специалисту.`
-		_, err := ctx.Bot().SendMessage(ctx, tu.Message(
-			tu.ID(message.Chat.ID),
-			infoText,
-		).WithParseMode("Markdown"))
-		if err != nil {
-			log.Printf("ERROR: send info message: %v", err)
-			return err
-		}
+		// Delete any unrecognized message to keep chat clean
+		bh.deleteMessage(chatID, message.MessageID)
 		return nil
-	}, th.TextEqual("ℹ️ Информация"))
+	}, th.AnyMessage())
+}
+
+// deleteMessage silently deletes a message
+func (bh *BotHandler) deleteMessage(chatID int64, messageID int) {
+	if err := bh.bot.DeleteMessage(bh.ctx, &telego.DeleteMessageParams{
+		ChatID:    tu.ID(chatID),
+		MessageID: messageID,
+	}); err != nil {
+		// Ignore errors - message might already be deleted or too old
+		log.Printf("DEBUG: could not delete message %d: %v", messageID, err)
+	}
 }
 
 // Start runs the bot handler in a goroutine.

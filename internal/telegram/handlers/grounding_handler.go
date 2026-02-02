@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"strings"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/techniques"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/messages"
 )
 
 type GroundingHandler struct {
@@ -39,33 +39,40 @@ func NewGroundingHandler(
 	}
 }
 
-func (h *GroundingHandler) Handle(ctx *th.Context, update telego.Update) error {
-	if update.Message != nil {
-		return h.handleGroundingMessage(update.Message)
+// HandleMenuSelect handles selection from main menu
+func (h *GroundingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+	msg, ok := cb.Message.(*telego.Message)
+	if !ok || msg == nil {
+		return nil
 	}
-	if update.CallbackQuery != nil {
-		return h.handleGroundingCallback(ctx, update.CallbackQuery)
-	}
-	return nil
-}
+	userID := cb.From.ID
+	chatID := msg.Chat.ID
+	messageID := msg.MessageID
 
-func (h *GroundingHandler) handleGroundingMessage(msg *telego.Message) error {
-	userID := msg.From.ID
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
+
 	h.statistics.IncreaseRequestsStatisticForUser(
 		userID,
-		msg.From.Username,
-		msg.From.IsPremium,
-		msg.From.IsBot,
+		cb.From.Username,
+		cb.From.IsPremium,
+		cb.From.IsBot,
 	)
-	h.startGroundingExercise(h.ctx, msg.Chat.ID, userID)
+
+	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
+		CallbackQueryID: cb.ID,
+	}); err != nil {
+		log.Printf("ERROR: answer callback query: %v", err)
+	}
+
+	h.showGroundingIntro(h.ctx, chatID, userID, messageID)
 	return nil
 }
 
-func (h *GroundingHandler) handleGroundingCallback(ctx *th.Context, cb *telego.CallbackQuery) error {
+// HandleCallback handles grounding exercise callbacks
+func (h *GroundingHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")
@@ -74,11 +81,14 @@ func (h *GroundingHandler) handleGroundingCallback(ctx *th.Context, cb *telego.C
 	chatID := msg.Chat.ID
 	userID := cb.From.ID
 	messageID := msg.MessageID
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
+
 	h.applyGroundingCallbackAction(h.ctx, chatID, userID, messageID, cb.Data)
+
 	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
 		CallbackQueryID: cb.ID,
 	}); err != nil {
@@ -104,52 +114,28 @@ func (h *GroundingHandler) applyGroundingCallbackAction(
 	}
 }
 
-func (h *GroundingHandler) startGroundingExercise(ctx context.Context, chatID, userID int64) {
+func (h *GroundingHandler) showGroundingIntro(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateGroundingStep1); err != nil {
 		log.Printf("ERROR: set state grounding step1: %v", err)
 	}
 
-	intro := `🌿 *Якорение 5-4-3-2-1*
-
-Техника для возвращения в настоящий момент.
-
-*Суть:* Назовите вслух или про себя:
-
-• 5 вещей, которые видите 👁️
-• 4 вещи, которые ощущаете 🤚
-• 3 звука, которые слышите 👂
-• 2 запаха, которые чувствуете 👃
-• 1 вкус во рту 👅
-
-Готовы начать?`
-
-	inlineKeyboard := &telego.InlineKeyboardMarkup{
+	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: "▶️ Начать", CallbackData: "grounding_step_1"},
-				{Text: "❌ Отмена", CallbackData: "grounding_cancel"},
+				{Text: messages.Start, CallbackData: "grounding_step_1"},
+				{Text: messages.Cancel, CallbackData: "grounding_cancel"},
 			},
 		},
 	}
 
-	removeKeyboard := &telego.ReplyKeyboardRemove{
-		RemoveKeyboard: true,
-	}
-
-	_, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		intro,
-	).WithParseMode("Markdown").WithReplyMarkup(inlineKeyboard))
-	if err != nil {
-		log.Printf("ERROR: send grounding intro: %v", err)
-		return
-	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"_Используйте кнопки выше_",
-	).WithParseMode("Markdown").WithReplyMarkup(removeKeyboard)); err != nil {
-		log.Printf("ERROR: send grounding use buttons: %v", err)
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        messages.GroundingIntro,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit grounding intro: %v", err)
 	}
 }
 
@@ -189,15 +175,15 @@ func (h *GroundingHandler) showGroundingStep(
 	step := steps[idx]
 	nextStep := stepCfg.nextStep
 
-	text := fmt.Sprintf("%s *%s*\n\n%s", step.Emoji, step.Title, step.Description)
+	text := messages.GroundingStepText(step.Emoji, step.Title, step.Description)
 
 	var keyboard *telego.InlineKeyboardMarkup
 	if nextStep == "complete" {
 		keyboard = &telego.InlineKeyboardMarkup{
 			InlineKeyboard: [][]telego.InlineKeyboardButton{
 				{
-					{Text: "✅ Завершить", CallbackData: "grounding_complete"},
-					{Text: "❌ Отмена", CallbackData: "grounding_cancel"},
+					{Text: messages.Complete, CallbackData: "grounding_complete"},
+					{Text: messages.Cancel, CallbackData: "grounding_cancel"},
 				},
 			},
 		}
@@ -205,8 +191,8 @@ func (h *GroundingHandler) showGroundingStep(
 		keyboard = &telego.InlineKeyboardMarkup{
 			InlineKeyboard: [][]telego.InlineKeyboardButton{
 				{
-					{Text: "➡️ Далее", CallbackData: "grounding_step_" + nextStep},
-					{Text: "❌ Отмена", CallbackData: "grounding_cancel"},
+					{Text: messages.Next, CallbackData: "grounding_step_" + nextStep},
+					{Text: messages.Cancel, CallbackData: "grounding_cancel"},
 				},
 			},
 		}
@@ -223,55 +209,34 @@ func (h *GroundingHandler) showGroundingStep(
 	}
 }
 
-func (h *GroundingHandler) completeGrounding(
-	ctx context.Context, chatID, userID int64, messageID int,
-) {
+func (h *GroundingHandler) completeGrounding(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
-	text := `✨ *Отлично!*
-
-Вы завершили технику якорения 5-4-3-2-1.
-
-Эта практика помогает выйти из тревожных мыслей и вернуться в настоящий момент.`
-
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:    tu.ID(chatID),
-		MessageID: messageID,
-		Text:      text,
-		ParseMode: "Markdown",
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        messages.GroundingCompletion,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
 		log.Printf("ERROR: edit grounding complete: %v", err)
 	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"Выберите другую технику:",
-	).WithReplyMarkup(GetMainMenu())); err != nil {
-		log.Printf("ERROR: send grounding menu: %v", err)
-	}
 }
 
-func (h *GroundingHandler) cancelGrounding(
-	ctx context.Context, chatID, userID int64, messageID int,
-) {
+func (h *GroundingHandler) cancelGrounding(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:    tu.ID(chatID),
-		MessageID: messageID,
-		Text:      "❌ Упражнение отменено.",
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        MainMenuText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
 		log.Printf("ERROR: edit grounding cancel: %v", err)
-	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"Возврат в главное меню:",
-	).WithReplyMarkup(GetMainMenu())); err != nil {
-		log.Printf("ERROR: send grounding menu: %v", err)
 	}
 }

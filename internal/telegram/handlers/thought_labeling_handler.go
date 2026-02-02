@@ -13,6 +13,7 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/techniques"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/messages"
 )
 
 type ThoughtLabelingHandler struct {
@@ -39,40 +40,40 @@ func NewThoughtLabelingHandler(
 	}
 }
 
-func (h *ThoughtLabelingHandler) Handle(ctx *th.Context, update telego.Update) error {
-	if update.Message != nil {
-		return h.handleMessage(update.Message)
+// HandleMenuSelect handles selection from main menu
+func (h *ThoughtLabelingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+	msg, ok := cb.Message.(*telego.Message)
+	if !ok || msg == nil {
+		return nil
 	}
-	if update.CallbackQuery != nil {
-		return h.handleCallback(ctx, update.CallbackQuery)
-	}
-	return nil
-}
+	userID := cb.From.ID
+	chatID := msg.Chat.ID
+	messageID := msg.MessageID
 
-func (h *ThoughtLabelingHandler) handleMessage(msg *telego.Message) error {
-	userID := msg.From.ID
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
+
 	h.statistics.IncreaseRequestsStatisticForUser(
 		userID,
-		msg.From.Username,
-		msg.From.IsPremium,
-		msg.From.IsBot,
+		cb.From.Username,
+		cb.From.IsPremium,
+		cb.From.IsBot,
 	)
 
-	state, _ := h.sessionStorage.GetState(h.ctx, userID)
-	if state == session.StateThoughtLabelingInput {
-		h.showCategories(h.ctx, msg.Chat.ID, userID, msg.Text)
-		return nil
+	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
+		CallbackQueryID: cb.ID,
+	}); err != nil {
+		log.Printf("ERROR: answer callback query: %v", err)
 	}
 
-	h.showIntro(h.ctx, msg.Chat.ID, userID)
+	h.showIntro(h.ctx, chatID, userID, messageID)
 	return nil
 }
 
-func (h *ThoughtLabelingHandler) handleCallback(ctx *th.Context, cb *telego.CallbackQuery) error {
+// HandleCallback handles thought labeling callbacks
+func (h *ThoughtLabelingHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")
@@ -81,6 +82,7 @@ func (h *ThoughtLabelingHandler) handleCallback(ctx *th.Context, cb *telego.Call
 	chatID := msg.Chat.ID
 	userID := cb.From.ID
 	messageID := msg.MessageID
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
@@ -113,110 +115,87 @@ func (h *ThoughtLabelingHandler) processCallback(chatID, userID int64, messageID
 	}
 }
 
-func (h *ThoughtLabelingHandler) showIntro(ctx context.Context, chatID, userID int64) {
+func (h *ThoughtLabelingHandler) showIntro(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateThoughtLabelingActive); err != nil {
 		log.Printf("ERROR: set state thought labeling active: %v", err)
 	}
 
-	text := `🏷️ *Маркировка мыслей*
-
-Техника когнитивной терапии для работы с тревожными мыслями.
-
-*Как это работает:*
-1. Вы описываете тревожную мысль
-2. Определяете её тип (категорию)
-3. Осознание типа мысли снижает её влияние
-
-*Почему это помогает:*
-Когда мы называем мысль, мы отделяем себя от неё. Это не "я тревожусь", а "это мысль типа беспокойство".
-
-Готовы попробовать?`
-
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: "▶️ Начать", CallbackData: "thought_start"},
-				{Text: "❌ Отмена", CallbackData: "thought_cancel"},
+				{Text: messages.Start, CallbackData: "thought_start"},
+				{Text: messages.Cancel, CallbackData: "thought_cancel"},
 			},
 		},
 	}
 
-	removeKeyboard := &telego.ReplyKeyboardRemove{RemoveKeyboard: true}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		text,
-	).WithParseMode("Markdown").WithReplyMarkup(keyboard)); err != nil {
-		log.Printf("ERROR: send thought labeling intro: %v", err)
-		return
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        messages.ThoughtLabelingIntro,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit thought labeling intro: %v", err)
 	}
 
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"_Используйте кнопки выше_",
-	).WithParseMode("Markdown").WithReplyMarkup(removeKeyboard)); err != nil {
-		log.Printf("ERROR: send thought labeling use buttons: %v", err)
+	// Save message ID for later editing when user sends thought
+	if err := h.sessionStorage.SetMessageID(ctx, userID, messageID); err != nil {
+		log.Printf("ERROR: save message id: %v", err)
 	}
 }
 
-func (h *ThoughtLabelingHandler) promptForThought(
-	ctx context.Context, chatID, userID int64, messageID int,
-) {
+func (h *ThoughtLabelingHandler) promptForThought(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateThoughtLabelingInput); err != nil {
 		log.Printf("ERROR: set state thought labeling input: %v", err)
 	}
 
-	text := `💭 *Опишите тревожную мысль*
-
-Напишите мысль, которая вас беспокоит.
-
-_Например: "Я боюсь, что не справлюсь с работой"_`
-
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: "❌ Отмена", CallbackData: "thought_cancel"}},
+			{{Text: messages.Cancel, CallbackData: "thought_cancel"}},
 		},
 	}
 
-	if messageID == 0 {
-		if _, err := h.bot.SendMessage(ctx, tu.Message(
-			tu.ID(chatID),
-			text,
-		).WithParseMode("Markdown").WithReplyMarkup(keyboard)); err != nil {
-			log.Printf("ERROR: send thought prompt: %v", err)
-		}
-	} else {
-		if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-			ChatID:      tu.ID(chatID),
-			MessageID:   messageID,
-			Text:        text,
-			ParseMode:   "Markdown",
-			ReplyMarkup: keyboard,
-		}); err != nil {
-			log.Printf("ERROR: edit thought prompt: %v", err)
-		}
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        messages.ThoughtLabelingPrompt,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit thought prompt: %v", err)
+	}
+
+	// Save message ID for later editing when user sends thought
+	if err := h.sessionStorage.SetMessageID(ctx, userID, messageID); err != nil {
+		log.Printf("ERROR: save message id: %v", err)
 	}
 }
 
-func (h *ThoughtLabelingHandler) showCategories(
-	ctx context.Context, chatID, userID int64, thought string,
-) {
+// ProcessThoughtInput processes the user's thought text input
+func (h *ThoughtLabelingHandler) ProcessThoughtInput(chatID, userID int64, messageID int, thought string) {
+	h.showCategories(h.ctx, chatID, userID, messageID, thought)
+}
+
+func (h *ThoughtLabelingHandler) showCategories(ctx context.Context, chatID, userID int64, messageID int, thought string) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateThoughtLabelingCategory); err != nil {
 		log.Printf("ERROR: set state thought labeling category: %v", err)
 	}
 
 	categories := techniques.GetThoughtCategories()
-
-	text := fmt.Sprintf("💭 *Ваша мысль:*\n_%s_\n\n🏷️ *К какому типу относится эта мысль?*", thought)
+	text := messages.ThoughtLabelingCategories(thought)
 
 	buttons := h.buildCategoryButtons(categories)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
 
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		text,
-	).WithParseMode("Markdown").WithReplyMarkup(keyboard)); err != nil {
-		log.Printf("ERROR: send thought categories: %v", err)
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        text,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit thought categories: %v", err)
 	}
 }
 
@@ -236,7 +215,7 @@ func (h *ThoughtLabelingHandler) buildCategoryButtons(
 		}
 	}
 	buttons = append(buttons, []telego.InlineKeyboardButton{
-		{Text: "❌ Отмена", CallbackData: "thought_cancel"},
+		{Text: messages.Cancel, CallbackData: "thought_cancel"},
 	})
 	return buttons
 }
@@ -260,25 +239,13 @@ func (h *ThoughtLabelingHandler) showCategoryInfo(
 		log.Printf("ERROR: set state thought labeling active: %v", err)
 	}
 
-	text := fmt.Sprintf(`%s *%s*
-
-_%s_
-
-*Пример:* %s
-
----
-
-✅ Вы успешно промаркировали мысль!
-
-Осознание типа мысли — первый шаг к снижению её влияния. Теперь вы видите эту мысль со стороны.
-
-Хотите промаркировать ещё одну мысль?`, category.Emoji, category.Name, category.Description, category.Example)
+	text := messages.ThoughtLabelingCategoryInfo(category.Emoji, category.Name, category.Description, category.Example)
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: "💭 Ещё мысль", CallbackData: "thought_another"},
-				{Text: "✅ Готово", CallbackData: "thought_complete"},
+				{Text: messages.AnotherThought, CallbackData: "thought_another"},
+				{Text: messages.Done, CallbackData: "thought_complete"},
 			},
 		},
 	}
@@ -294,57 +261,34 @@ _%s_
 	}
 }
 
-func (h *ThoughtLabelingHandler) completeExercise(
-	ctx context.Context, chatID, userID int64, messageID int,
-) {
+func (h *ThoughtLabelingHandler) completeExercise(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
-	text := `✨ *Спасибо за практику!*
-
-Маркировка мыслей — мощная техника когнитивной терапии. Регулярная практика помогает:
-
-• Снижать влияние тревожных мыслей
-• Развивать осознанность
-• Отделять себя от негативных паттернов мышления`
-
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:    tu.ID(chatID),
-		MessageID: messageID,
-		Text:      text,
-		ParseMode: "Markdown",
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        messages.ThoughtLabelingThanks,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
 		log.Printf("ERROR: edit thought complete: %v", err)
 	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"Выберите другую технику:",
-	).WithReplyMarkup(GetMainMenu())); err != nil {
-		log.Printf("ERROR: send thought menu: %v", err)
-	}
 }
 
-func (h *ThoughtLabelingHandler) cancelExercise(
-	ctx context.Context, chatID, userID int64, messageID int,
-) {
+func (h *ThoughtLabelingHandler) cancelExercise(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:    tu.ID(chatID),
-		MessageID: messageID,
-		Text:      "❌ Упражнение отменено.",
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        MainMenuText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
 		log.Printf("ERROR: edit thought cancel: %v", err)
-	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"Возврат в главное меню:",
-	).WithReplyMarkup(GetMainMenu())); err != nil {
-		log.Printf("ERROR: send thought menu: %v", err)
 	}
 }

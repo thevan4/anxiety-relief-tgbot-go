@@ -15,7 +15,6 @@ services:
       - bot_network
 
   bot:
-    image: alpine
     container_name: anxiety_bot
     restart: unless-stopped
     build: .
@@ -23,8 +22,6 @@ services:
       BOT_TOKEN: "${BOT_TOKEN}"
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      RATE_LIMIT_TIME: "${RATE_LIMIT_TIME}"
-      RATE_LIMIT: "${RATE_LIMIT}"
     depends_on:
       redis:
         condition: service_healthy

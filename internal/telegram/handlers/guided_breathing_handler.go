@@ -15,6 +15,7 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/techniques"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/messages"
 )
 
 type GuidedBreathingHandler struct {
@@ -41,33 +42,40 @@ func NewGuidedBreathingHandler(
 	}
 }
 
-func (h *GuidedBreathingHandler) Handle(ctx *th.Context, update telego.Update) error {
-	if update.Message != nil {
-		return h.handleMessage(ctx, update.Message)
+// HandleMenuSelect handles selection from main menu
+func (h *GuidedBreathingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+	msg, ok := cb.Message.(*telego.Message)
+	if !ok || msg == nil {
+		return nil
 	}
-	if update.CallbackQuery != nil {
-		return h.handleCallback(ctx, update.CallbackQuery)
-	}
-	return nil
-}
+	userID := cb.From.ID
+	chatID := msg.Chat.ID
+	messageID := msg.MessageID
 
-func (h *GuidedBreathingHandler) handleMessage(_ *th.Context, msg *telego.Message) error {
-	userID := msg.From.ID
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
+
 	h.statistics.IncreaseRequestsStatisticForUser(
 		userID,
-		msg.From.Username,
-		msg.From.IsPremium,
-		msg.From.IsBot,
+		cb.From.Username,
+		cb.From.IsPremium,
+		cb.From.IsBot,
 	)
-	h.showPatternSelection(h.ctx, msg.Chat.ID, userID)
+
+	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
+		CallbackQueryID: cb.ID,
+	}); err != nil {
+		log.Printf("ERROR: answer callback query: %v", err)
+	}
+
+	h.showPatternSelection(h.ctx, chatID, userID, messageID)
 	return nil
 }
 
-func (h *GuidedBreathingHandler) handleCallback(ctx *th.Context, cb *telego.CallbackQuery) error {
+// HandleCallback handles guided breathing callbacks
+func (h *GuidedBreathingHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")
@@ -76,6 +84,7 @@ func (h *GuidedBreathingHandler) handleCallback(ctx *th.Context, cb *telego.Call
 	chatID := msg.Chat.ID
 	userID := cb.From.ID
 	messageID := msg.MessageID
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
@@ -109,35 +118,33 @@ func (h *GuidedBreathingHandler) processCallback(chatID, userID int64, messageID
 	}
 }
 
-func (h *GuidedBreathingHandler) showPatternSelection(ctx context.Context, chatID, userID int64) {
+func (h *GuidedBreathingHandler) buildPatternsInfo(patterns []techniques.BreathingPattern) string {
+	var info string
+	for _, p := range patterns {
+		info += fmt.Sprintf("%s *%s*\n_%s_\n\n", p.Emoji, p.Name, p.Description)
+	}
+	return info
+}
+
+func (h *GuidedBreathingHandler) showPatternSelection(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateGuidedBreathingSelect); err != nil {
 		log.Printf("ERROR: set state guided breathing select: %v", err)
 	}
 
 	patterns := techniques.GetBreathingPatterns()
-	text := "🧘 *Управляемое дыхание*\n\nВыберите технику дыхания:\n\n"
-	for _, p := range patterns {
-		text += fmt.Sprintf("%s *%s*\n_%s_\n\n", p.Emoji, p.Name, p.Description)
-	}
+	text := messages.GuidedBreathingIntro(h.buildPatternsInfo(patterns))
 
 	buttons := h.buildPatternButtons(patterns)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
 
-	removeKeyboard := &telego.ReplyKeyboardRemove{RemoveKeyboard: true}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		text,
-	).WithParseMode("Markdown").WithReplyMarkup(keyboard)); err != nil {
-		log.Printf("ERROR: send guided breathing intro: %v", err)
-		return
-	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"_Используйте кнопки выше_",
-	).WithParseMode("Markdown").WithReplyMarkup(removeKeyboard)); err != nil {
-		log.Printf("ERROR: send guided breathing use buttons: %v", err)
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        text,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit guided breathing intro: %v", err)
 	}
 }
 
@@ -151,7 +158,7 @@ func (h *GuidedBreathingHandler) buildPatternButtons(
 		})
 	}
 	buttons = append(buttons, []telego.InlineKeyboardButton{
-		{Text: "❌ Отмена", CallbackData: "gbreath_cancel"},
+		{Text: messages.Cancel, CallbackData: "gbreath_cancel"},
 	})
 	return buttons
 }
@@ -200,13 +207,14 @@ func (h *GuidedBreathingHandler) runPhase(
 		return false
 	}
 
-	text := fmt.Sprintf("%s *%s*\n\n*Цикл %d из %d*\n\n%s %s\n\n_%d сек_",
+	text := messages.GuidedBreathingPhase(
 		pattern.Emoji, pattern.Name, cycle, pattern.Cycles,
-		phase.Emoji, phase.Name, int(phase.Duration.Seconds()))
+		phase.Emoji, phase.Name, int(phase.Duration.Seconds()),
+	)
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: "🛑 Стоп", CallbackData: "gbreath_stop"}},
+			{{Text: messages.Stop, CallbackData: "gbreath_stop"}},
 		},
 	}
 
@@ -241,17 +249,13 @@ func (h *GuidedBreathingHandler) sendCompletion(
 	patterns := techniques.GetBreathingPatterns()
 	pattern := patterns[patternIdx]
 
-	text := fmt.Sprintf(`✅ *Отлично!*
-
-Вы завершили упражнение "%s".
-
-Как вы себя чувствуете?`, pattern.Name)
+	text := messages.GuidedBreathingCompletion(pattern.Name)
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: "✅ Лучше", CallbackData: "gbreath_complete"},
-				{Text: "🔄 Повторить", CallbackData: fmt.Sprintf("gbreath_pattern_%d", patternIdx)},
+				{Text: messages.FeelBetter, CallbackData: "gbreath_complete"},
+				{Text: messages.Repeat, CallbackData: fmt.Sprintf("gbreath_pattern_%d", patternIdx)},
 			},
 		},
 	}
@@ -267,18 +271,13 @@ func (h *GuidedBreathingHandler) sendCompletion(
 	}
 }
 
-func (h *GuidedBreathingHandler) stopBreathing(
-	ctx context.Context, chatID, userID int64, messageID int,
-) {
+func (h *GuidedBreathingHandler) stopBreathing(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateGuidedBreathingSelect); err != nil {
 		log.Printf("ERROR: set state guided breathing select: %v", err)
 	}
 
 	patterns := techniques.GetBreathingPatterns()
-	text := "🧘 *Управляемое дыхание*\n\nУпражнение остановлено. Выберите технику:\n\n"
-	for _, p := range patterns {
-		text += fmt.Sprintf("%s *%s*\n_%s_\n\n", p.Emoji, p.Name, p.Description)
-	}
+	text := messages.GuidedBreathingStoppedIntro(h.buildPatternsInfo(patterns))
 
 	buttons := h.buildPatternButtons(patterns)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
@@ -294,53 +293,34 @@ func (h *GuidedBreathingHandler) stopBreathing(
 	}
 }
 
-func (h *GuidedBreathingHandler) completeBreathing(
-	ctx context.Context, chatID, userID int64, messageID int,
-) {
+func (h *GuidedBreathingHandler) completeBreathing(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
-	text := `✨ *Спасибо за практику!*
-
-Регулярные дыхательные упражнения помогают снизить уровень тревожности и улучшить концентрацию.`
-
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:    tu.ID(chatID),
-		MessageID: messageID,
-		Text:      text,
-		ParseMode: "Markdown",
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        messages.GuidedBreathingThanks,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
 		log.Printf("ERROR: edit guided breathing complete: %v", err)
 	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"Выберите другую технику:",
-	).WithReplyMarkup(GetMainMenu())); err != nil {
-		log.Printf("ERROR: send guided breathing menu: %v", err)
-	}
 }
 
-func (h *GuidedBreathingHandler) cancelBreathing(
-	ctx context.Context, chatID, userID int64, messageID int,
-) {
+func (h *GuidedBreathingHandler) cancelBreathing(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:    tu.ID(chatID),
-		MessageID: messageID,
-		Text:      "❌ Упражнение отменено.",
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        MainMenuText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
 		log.Printf("ERROR: edit guided breathing cancel: %v", err)
-	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"Возврат в главное меню:",
-	).WithReplyMarkup(GetMainMenu())); err != nil {
-		log.Printf("ERROR: send guided breathing menu: %v", err)
 	}
 }

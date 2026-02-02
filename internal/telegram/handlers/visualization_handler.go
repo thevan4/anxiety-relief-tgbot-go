@@ -14,6 +14,7 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/techniques"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/messages"
 )
 
 const (
@@ -45,33 +46,40 @@ func NewVisualizationHandler(
 	}
 }
 
-func (h *VisualizationHandler) Handle(ctx *th.Context, update telego.Update) error {
-	if update.Message != nil {
-		return h.handleMessage(ctx, update.Message)
+// HandleMenuSelect handles selection from main menu
+func (h *VisualizationHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+	msg, ok := cb.Message.(*telego.Message)
+	if !ok || msg == nil {
+		return nil
 	}
-	if update.CallbackQuery != nil {
-		return h.handleCallback(ctx, update.CallbackQuery)
-	}
-	return nil
-}
+	userID := cb.From.ID
+	chatID := msg.Chat.ID
+	messageID := msg.MessageID
 
-func (h *VisualizationHandler) handleMessage(_ *th.Context, msg *telego.Message) error {
-	userID := msg.From.ID
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
+
 	h.statistics.IncreaseRequestsStatisticForUser(
 		userID,
-		msg.From.Username,
-		msg.From.IsPremium,
-		msg.From.IsBot,
+		cb.From.Username,
+		cb.From.IsPremium,
+		cb.From.IsBot,
 	)
-	h.showSceneSelection(h.ctx, msg.Chat.ID, userID)
+
+	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
+		CallbackQueryID: cb.ID,
+	}); err != nil {
+		log.Printf("ERROR: answer callback query: %v", err)
+	}
+
+	h.showSceneSelection(h.ctx, chatID, userID, messageID)
 	return nil
 }
 
-func (h *VisualizationHandler) handleCallback(ctx *th.Context, cb *telego.CallbackQuery) error {
+// HandleCallback handles visualization callbacks
+func (h *VisualizationHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")
@@ -80,6 +88,7 @@ func (h *VisualizationHandler) handleCallback(ctx *th.Context, cb *telego.Callba
 	chatID := msg.Chat.ID
 	userID := cb.From.ID
 	messageID := msg.MessageID
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
@@ -110,37 +119,33 @@ func (h *VisualizationHandler) processCallback(chatID, userID int64, messageID i
 	}
 }
 
-func (h *VisualizationHandler) showSceneSelection(ctx context.Context, chatID, userID int64) {
+func (h *VisualizationHandler) buildScenesInfo(scenes []techniques.VisualizationScene) string {
+	var info string
+	for _, scene := range scenes {
+		info += fmt.Sprintf("%s *%s*\n_%s_\n\n", scene.Emoji, scene.Name, scene.Description)
+	}
+	return info
+}
+
+func (h *VisualizationHandler) showSceneSelection(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateVisualizationSelect); err != nil {
 		log.Printf("ERROR: set state visualization select: %v", err)
 	}
 
 	scenes := techniques.GetVisualizationScenes()
-
-	text := "🌅 *Мирная визуализация*\n\nТехника расслабления через воображение спокойных мест.\n\n"
-	text += "*Выберите сцену:*\n\n"
-	for _, scene := range scenes {
-		text += fmt.Sprintf("%s *%s*\n_%s_\n\n", scene.Emoji, scene.Name, scene.Description)
-	}
+	text := messages.VisualizationIntro(h.buildScenesInfo(scenes))
 
 	buttons := h.buildSceneButtons(scenes)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
 
-	removeKeyboard := &telego.ReplyKeyboardRemove{RemoveKeyboard: true}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		text,
-	).WithParseMode("Markdown").WithReplyMarkup(keyboard)); err != nil {
-		log.Printf("ERROR: send visualization intro: %v", err)
-		return
-	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"_Используйте кнопки выше_",
-	).WithParseMode("Markdown").WithReplyMarkup(removeKeyboard)); err != nil {
-		log.Printf("ERROR: send visualization use buttons: %v", err)
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        text,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit visualization intro: %v", err)
 	}
 }
 
@@ -157,7 +162,7 @@ func (h *VisualizationHandler) buildSceneButtons(
 		})
 	}
 	buttons = append(buttons, []telego.InlineKeyboardButton{
-		{Text: "❌ Отмена", CallbackData: "visual_cancel"},
+		{Text: messages.Cancel, CallbackData: "visual_cancel"},
 	})
 	return buttons
 }
@@ -174,7 +179,7 @@ func (h *VisualizationHandler) startScene(
 		log.Printf("ERROR: set state visualization running: %v", err)
 	}
 
-	if !h.showSceneIntro(ctx, chatID, messageID, scene) {
+	if !h.showSceneIntro(ctx, chatID, userID, messageID, scene) {
 		return
 	}
 
@@ -196,19 +201,18 @@ func (h *VisualizationHandler) findScene(sceneID string) *techniques.Visualizati
 }
 
 func (h *VisualizationHandler) showSceneIntro(
-	ctx context.Context, chatID int64, messageID int, scene *techniques.VisualizationScene,
+	ctx context.Context, chatID, userID int64, messageID int, scene *techniques.VisualizationScene,
 ) bool {
-	introText := fmt.Sprintf(`%s *%s*
+	state, err := h.sessionStorage.GetState(ctx, userID)
+	if err != nil || state != session.StateVisualizationRunning {
+		return false
+	}
 
-_%s_
-
-🌿 *Атмосфера:* %s
-
-Закройте глаза и погрузитесь в эту сцену...`, scene.Emoji, scene.Name, scene.Description, scene.Atmosphere)
+	introText := messages.VisualizationSceneIntro(scene.Emoji, scene.Name, scene.Description, scene.Atmosphere)
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: "🛑 Стоп", CallbackData: "visual_stop"}},
+			{{Text: messages.Stop, CallbackData: "visual_stop"}},
 		},
 	}
 
@@ -237,7 +241,7 @@ func (h *VisualizationHandler) runSceneSteps(
 ) bool {
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: "🛑 Стоп", CallbackData: "visual_stop"}},
+			{{Text: messages.Stop, CallbackData: "visual_stop"}},
 		},
 	}
 
@@ -247,11 +251,7 @@ func (h *VisualizationHandler) runSceneSteps(
 			return false
 		}
 
-		stepText := fmt.Sprintf(`%s *%s*
-
-*Шаг %d из %d*
-
-%s`, scene.Emoji, scene.Name, step.Number, len(scene.Steps), step.Instruction)
+		stepText := messages.VisualizationStep(scene.Emoji, scene.Name, step.Number, len(scene.Steps), step.Instruction)
 
 		if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 			ChatID:      tu.ID(chatID),
@@ -287,19 +287,13 @@ func (h *VisualizationHandler) sendCompletion(
 		return
 	}
 
-	text := fmt.Sprintf(`✅ *Отлично!*
-
-Вы завершили визуализацию "%s".
-
-Медленно возвращайтесь в реальность. Пошевелите пальцами, глубоко вдохните и откройте глаза.
-
-Как вы себя чувствуете?`, scene.Name)
+	text := messages.VisualizationCompletion(scene.Name)
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: "✅ Лучше", CallbackData: "visual_complete"},
-				{Text: "🔄 Повторить", CallbackData: fmt.Sprintf("visual_scene_%s", sceneID)},
+				{Text: messages.FeelBetter, CallbackData: "visual_complete"},
+				{Text: messages.Repeat, CallbackData: fmt.Sprintf("visual_scene_%s", sceneID)},
 			},
 		},
 	}
@@ -315,19 +309,13 @@ func (h *VisualizationHandler) sendCompletion(
 	}
 }
 
-func (h *VisualizationHandler) stopExercise(
-	ctx context.Context, chatID, userID int64, messageID int,
-) {
+func (h *VisualizationHandler) stopExercise(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateVisualizationSelect); err != nil {
 		log.Printf("ERROR: set state visualization select: %v", err)
 	}
 
 	scenes := techniques.GetVisualizationScenes()
-
-	text := "🌅 *Мирная визуализация*\n\nУпражнение остановлено. Выберите другую сцену:\n\n"
-	for _, scene := range scenes {
-		text += fmt.Sprintf("%s *%s*\n", scene.Emoji, scene.Name)
-	}
+	text := messages.VisualizationStoppedIntro(h.buildScenesInfo(scenes))
 
 	buttons := h.buildSceneButtons(scenes)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
@@ -343,53 +331,34 @@ func (h *VisualizationHandler) stopExercise(
 	}
 }
 
-func (h *VisualizationHandler) completeExercise(
-	ctx context.Context, chatID, userID int64, messageID int,
-) {
+func (h *VisualizationHandler) completeExercise(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
-	text := `✨ *Спасибо за практику!*
-
-Визуализация — мощная техника для снижения стресса и тревожности. Регулярная практика усиливает эффект.`
-
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:    tu.ID(chatID),
-		MessageID: messageID,
-		Text:      text,
-		ParseMode: "Markdown",
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        messages.VisualizationThanks,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
 		log.Printf("ERROR: edit visualization complete: %v", err)
 	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"Выберите другую технику:",
-	).WithReplyMarkup(GetMainMenu())); err != nil {
-		log.Printf("ERROR: send visualization menu: %v", err)
-	}
 }
 
-func (h *VisualizationHandler) cancelExercise(
-	ctx context.Context, chatID, userID int64, messageID int,
-) {
+func (h *VisualizationHandler) cancelExercise(ctx context.Context, chatID, userID int64, messageID int) {
 	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:    tu.ID(chatID),
-		MessageID: messageID,
-		Text:      "❌ Упражнение отменено.",
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        MainMenuText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
 		log.Printf("ERROR: edit visualization cancel: %v", err)
-	}
-
-	if _, err := h.bot.SendMessage(ctx, tu.Message(
-		tu.ID(chatID),
-		"Возврат в главное меню:",
-	).WithReplyMarkup(GetMainMenu())); err != nil {
-		log.Printf("ERROR: send visualization menu: %v", err)
 	}
 }
