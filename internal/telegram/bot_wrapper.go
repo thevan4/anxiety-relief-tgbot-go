@@ -69,7 +69,6 @@ func (bh *BotHandler) registerHandlers() {
 	bh.registerStartHandler()
 	bh.registerMenuCallbackHandler()
 	bh.registerTechniqueHandlers()
-	bh.registerThoughtLabelingTextHandler()
 	bh.registerCatchAllHandler() // Must be last!
 }
 
@@ -247,41 +246,6 @@ func (bh *BotHandler) registerThoughtLabelingHandler() {
 	bh.handler.HandleCallbackQuery(thoughtLabelingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_thought"))
 }
 
-func (bh *BotHandler) registerThoughtLabelingTextHandler() {
-	// Handle text input for thought labeling (user sends their thought)
-	bh.handler.HandleMessage(func(ctx *th.Context, message telego.Message) error {
-		if message.From == nil {
-			return nil
-		}
-		userID := message.From.ID
-		chatID := message.Chat.ID
-
-		state, _ := bh.sessionStorage.GetState(bh.ctx, userID)
-		if state != session.StateThoughtLabelingInput {
-			return nil // Not in input state, let catch-all handle it
-		}
-
-		// Get saved message ID to edit
-		messageID, err := bh.sessionStorage.GetMessageID(bh.ctx, userID)
-		if err != nil || messageID == 0 {
-			log.Printf("ERROR: get message id for thought input: %v", err)
-			bh.deleteMessage(chatID, message.MessageID)
-			return nil
-		}
-
-		// Delete user's message
-		bh.deleteMessage(chatID, message.MessageID)
-
-		// Create handler and process thought
-		thoughtHandler := handlers.NewThoughtLabelingHandler(
-			bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
-		)
-		thoughtHandler.ProcessThoughtInput(chatID, userID, messageID, message.Text)
-
-		return nil
-	}, th.AnyMessage())
-}
-
 func (bh *BotHandler) registerVisualizationHandler() {
 	visualizationHandler := handlers.NewVisualizationHandler(
 		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
@@ -296,7 +260,26 @@ func (bh *BotHandler) registerCatchAllHandler() {
 		if message.From == nil {
 			return nil
 		}
+		userID := message.From.ID
 		chatID := message.Chat.ID
+
+		// Check if user is in thought labeling input state
+		state, _ := bh.sessionStorage.GetState(bh.ctx, userID)
+		if state == session.StateThoughtLabelingInput {
+			// Get saved message ID to edit
+			botMessageID, err := bh.sessionStorage.GetMessageID(bh.ctx, userID)
+			if err == nil && botMessageID != 0 {
+				// Delete user's message
+				bh.deleteMessage(chatID, message.MessageID)
+
+				// Process thought input
+				thoughtHandler := handlers.NewThoughtLabelingHandler(
+					bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
+				)
+				thoughtHandler.ProcessThoughtInput(chatID, userID, botMessageID, message.Text)
+				return nil
+			}
+		}
 
 		// Delete any unrecognized message to keep chat clean
 		bh.deleteMessage(chatID, message.MessageID)

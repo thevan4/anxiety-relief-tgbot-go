@@ -45,8 +45,8 @@ Redis обязателен для работы бота (хранение сос
 # Создать .env файл с токеном бота
 echo "BOT_TOKEN=your_bot_token" > .env
 
-# Запустить
-docker-compose up -d --build
+# Запустить в консоли
+docker-compose up --build
 ```
 
 Остановка:
