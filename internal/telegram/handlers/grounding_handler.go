@@ -21,6 +21,7 @@ type GroundingHandler struct {
 	rateLimiter    rate_limiter.Limiter
 	statistics     statistic.Stats
 	sessionStorage session.Storage
+	sessionManager *session.SessionManager
 }
 
 func NewGroundingHandler(
@@ -29,6 +30,7 @@ func NewGroundingHandler(
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
+	sessionManager *session.SessionManager,
 ) *GroundingHandler {
 	return &GroundingHandler{
 		ctx:            ctx,
@@ -36,6 +38,7 @@ func NewGroundingHandler(
 		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
+		sessionManager: sessionManager,
 	}
 }
 
@@ -49,6 +52,11 @@ func (h *GroundingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQ
 	chatID := msg.Chat.ID
 	messageID := msg.MessageID
 
+	// Answer callback FIRST; if too old - delete message and stop
+	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
@@ -60,12 +68,6 @@ func (h *GroundingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQ
 		cb.From.IsPremium,
 		cb.From.IsBot,
 	)
-
-	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: cb.ID,
-	}); err != nil {
-		log.Printf("ERROR: answer callback query: %v", err)
-	}
 
 	h.showGroundingIntro(h.ctx, chatID, userID, messageID)
 	return nil
@@ -82,19 +84,17 @@ func (h *GroundingHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQue
 	userID := cb.From.ID
 	messageID := msg.MessageID
 
+	// Answer callback FIRST; if too old - delete message and stop
+	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
 
 	h.applyGroundingCallbackAction(h.ctx, chatID, userID, messageID, cb.Data)
-
-	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: cb.ID,
-	}); err != nil {
-		log.Printf("ERROR: answer callback query: %v", err)
-		return err
-	}
 	return nil
 }
 
@@ -237,6 +237,8 @@ func (h *GroundingHandler) cancelGrounding(ctx context.Context, chatID, userID i
 		ParseMode:   "Markdown",
 		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
-		log.Printf("ERROR: edit grounding cancel: %v", err)
+		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
+			log.Printf("ERROR: edit grounding cancel: %v", err)
+		}
 	}
 }

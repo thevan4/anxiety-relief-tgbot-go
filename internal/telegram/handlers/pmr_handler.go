@@ -23,6 +23,7 @@ type PMRHandler struct {
 	rateLimiter    rate_limiter.Limiter
 	statistics     statistic.Stats
 	sessionStorage session.Storage
+	sessionManager *session.SessionManager
 }
 
 func NewPMRHandler(
@@ -31,6 +32,7 @@ func NewPMRHandler(
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
+	sessionManager *session.SessionManager,
 ) *PMRHandler {
 	return &PMRHandler{
 		ctx:            ctx,
@@ -38,6 +40,7 @@ func NewPMRHandler(
 		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
+		sessionManager: sessionManager,
 	}
 }
 
@@ -51,6 +54,11 @@ func (h *PMRHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) 
 	chatID := msg.Chat.ID
 	messageID := msg.MessageID
 
+	// Answer callback FIRST; if too old - delete message and stop
+	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
@@ -62,12 +70,6 @@ func (h *PMRHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) 
 		cb.From.IsPremium,
 		cb.From.IsBot,
 	)
-
-	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: cb.ID,
-	}); err != nil {
-		log.Printf("ERROR: answer callback query: %v", err)
-	}
 
 	h.showIntro(h.ctx, chatID, userID, messageID)
 	return nil
@@ -84,37 +86,41 @@ func (h *PMRHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) er
 	userID := cb.From.ID
 	messageID := msg.MessageID
 
+	// Answer callback FIRST; if too old - delete message and stop
+	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
 
 	h.processCallback(chatID, userID, messageID, cb.Data)
-
-	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: cb.ID,
-	}); err != nil {
-		log.Printf("ERROR: answer callback query: %v", err)
-		return err
-	}
 	return nil
 }
 
 func (h *PMRHandler) processCallback(chatID, userID int64, messageID int, data string) {
 	switch {
 	case data == "pmr_start":
-		h.startExercise(h.ctx, chatID, userID, messageID)
+		// Create new session context (cancels previous if any)
+		sessionCtx := h.sessionManager.StartSession(h.ctx, userID)
+		go h.startExercise(sessionCtx, chatID, userID, messageID)
 	case strings.HasPrefix(data, "pmr_muscle_"):
 		muscleIdx := strings.TrimPrefix(data, "pmr_muscle_")
 		idx, err := strconv.Atoi(muscleIdx)
 		if err == nil {
-			h.runMuscleGroup(h.ctx, chatID, userID, messageID, idx)
+			sessionCtx := h.sessionManager.StartSession(h.ctx, userID)
+			go h.runMuscleGroup(sessionCtx, chatID, userID, messageID, idx)
 		}
 	case data == "pmr_stop":
+		h.sessionManager.CancelSession(userID)
 		h.stopExercise(h.ctx, chatID, userID, messageID)
 	case data == "pmr_complete":
+		h.sessionManager.CancelSession(userID)
 		h.completeExercise(h.ctx, chatID, userID, messageID)
 	case data == "pmr_cancel":
+		h.sessionManager.CancelSession(userID)
 		h.cancelExercise(h.ctx, chatID, userID, messageID)
 	}
 }
@@ -294,6 +300,8 @@ func (h *PMRHandler) cancelExercise(ctx context.Context, chatID, userID int64, m
 		ParseMode:   "Markdown",
 		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
-		log.Printf("ERROR: edit pmr cancel: %v", err)
+		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
+			log.Printf("ERROR: edit pmr cancel: %v", err)
+		}
 	}
 }

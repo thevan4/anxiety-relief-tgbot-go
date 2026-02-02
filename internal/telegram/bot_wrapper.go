@@ -21,6 +21,7 @@ type BotHandler struct {
 	rateLimiter    rate_limiter.Limiter
 	statistics     statistic.Stats
 	sessionStorage session.Storage
+	sessionManager *session.SessionManager
 }
 
 func MustNewBotHandler(
@@ -58,6 +59,7 @@ func MustNewBotHandler(
 		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
+		sessionManager: session.NewSessionManager(),
 	}
 
 	bh.registerHandlers()
@@ -77,18 +79,29 @@ func (bh *BotHandler) registerStartHandler() {
 		if message.From == nil {
 			return nil
 		}
-		bh.rateLimiter.WaitAndGo(bh.ctx, message.From.ID)
+		userID := message.From.ID
+		chatID := message.Chat.ID
+
+		bh.rateLimiter.WaitAndGo(bh.ctx, userID)
 		if bh.ctx.Err() != nil {
 			return bh.ctx.Err()
 		}
 
-		// Clear any active session on /start
-		if err := bh.sessionStorage.ClearState(bh.ctx, message.From.ID); err != nil {
+		// Cancel any running session (stops active goroutines)
+		bh.sessionManager.CancelSession(userID)
+
+		// Delete old bot message if exists
+		if oldMsgID, err := bh.sessionStorage.GetMessageID(bh.ctx, userID); err == nil && oldMsgID != 0 {
+			bh.deleteMessage(chatID, oldMsgID)
+		}
+
+		// Clear session state
+		if err := bh.sessionStorage.ClearState(bh.ctx, userID); err != nil {
 			log.Printf("ERROR: clear state on start: %v", err)
 		}
 
 		bh.statistics.IncreaseRequestsStatisticForUser(
-			message.From.ID,
+			userID,
 			message.From.Username,
 			message.From.IsPremium,
 			message.From.IsBot,
@@ -98,13 +111,20 @@ func (bh *BotHandler) registerStartHandler() {
 
 ` + handlers.MainMenuText
 
-		if _, err := ctx.Bot().SendMessage(ctx, tu.Message(
-			tu.ID(message.Chat.ID),
+		sentMsg, err := ctx.Bot().SendMessage(ctx, tu.Message(
+			tu.ID(chatID),
 			welcomeText,
-		).WithParseMode("Markdown").WithReplyMarkup(handlers.GetMainMenuInline())); err != nil {
+		).WithParseMode("Markdown").WithReplyMarkup(handlers.GetMainMenuInline()))
+		if err != nil {
 			log.Printf("ERROR: send start message: %v", err)
 			return err
 		}
+
+		// Save new message ID for future deletion
+		if err := bh.sessionStorage.SetMessageID(bh.ctx, userID, sentMsg.MessageID); err != nil {
+			log.Printf("ERROR: save message id: %v", err)
+		}
+
 		return nil
 	}, th.CommandEqual("start"))
 }
@@ -119,15 +139,14 @@ func (bh *BotHandler) registerMenuCallbackHandler() {
 		chatID := msg.Chat.ID
 		messageID := msg.MessageID
 
+		// Answer callback FIRST; if too old - delete message and stop
+		if !handlers.AnswerCallbackOrDelete(bh.ctx, bh.bot, cb.ID, chatID, messageID) {
+			return nil
+		}
+
 		bh.rateLimiter.WaitAndGo(bh.ctx, cb.From.ID)
 		if bh.ctx.Err() != nil {
 			return bh.ctx.Err()
-		}
-
-		if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-			CallbackQueryID: cb.ID,
-		}); err != nil {
-			log.Printf("ERROR: answer callback query: %v", err)
 		}
 
 		bh.showInfo(chatID, messageID)
@@ -143,20 +162,20 @@ func (bh *BotHandler) registerMenuCallbackHandler() {
 		chatID := msg.Chat.ID
 		messageID := msg.MessageID
 
+		// Answer callback FIRST; if too old - delete message and stop
+		if !handlers.AnswerCallbackOrDelete(bh.ctx, bh.bot, cb.ID, chatID, messageID) {
+			return nil
+		}
+
 		bh.rateLimiter.WaitAndGo(bh.ctx, cb.From.ID)
 		if bh.ctx.Err() != nil {
 			return bh.ctx.Err()
 		}
 
-		if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-			CallbackQueryID: cb.ID,
-		}); err != nil {
-			log.Printf("ERROR: answer callback query: %v", err)
-		}
-
 		bh.showMainMenu(chatID, messageID)
 		return nil
 	}, th.CallbackDataEqual("menu_back"))
+
 }
 
 func (bh *BotHandler) showMainMenu(chatID int64, messageID int) {
@@ -167,7 +186,9 @@ func (bh *BotHandler) showMainMenu(chatID int64, messageID int) {
 		ParseMode:   "Markdown",
 		ReplyMarkup: handlers.GetMainMenuInline(),
 	}); err != nil {
-		log.Printf("ERROR: edit to main menu: %v", err)
+		if !handlers.HandleEditError(bh.ctx, bh.bot, err, chatID, messageID) {
+			log.Printf("ERROR: edit to main menu: %v", err)
+		}
 	}
 }
 
@@ -208,7 +229,7 @@ func (bh *BotHandler) registerTechniqueHandlers() {
 
 func (bh *BotHandler) registerBreathingHandler() {
 	breathingHandler := handlers.NewBreathingHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
+		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(breathingHandler.HandleCallback, th.CallbackDataPrefix("breathing_"))
 	bh.handler.HandleCallbackQuery(breathingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_breathing"))
@@ -216,7 +237,7 @@ func (bh *BotHandler) registerBreathingHandler() {
 
 func (bh *BotHandler) registerGroundingHandler() {
 	groundingHandler := handlers.NewGroundingHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
+		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(groundingHandler.HandleCallback, th.CallbackDataPrefix("grounding_"))
 	bh.handler.HandleCallbackQuery(groundingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_grounding"))
@@ -224,7 +245,7 @@ func (bh *BotHandler) registerGroundingHandler() {
 
 func (bh *BotHandler) registerGuidedBreathingHandler() {
 	guidedBreathingHandler := handlers.NewGuidedBreathingHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
+		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(guidedBreathingHandler.HandleCallback, th.CallbackDataPrefix("gbreath_"))
 	bh.handler.HandleCallbackQuery(guidedBreathingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_guided"))
@@ -232,7 +253,7 @@ func (bh *BotHandler) registerGuidedBreathingHandler() {
 
 func (bh *BotHandler) registerPMRHandler() {
 	pmrHandler := handlers.NewPMRHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
+		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(pmrHandler.HandleCallback, th.CallbackDataPrefix("pmr_"))
 	bh.handler.HandleCallbackQuery(pmrHandler.HandleMenuSelect, th.CallbackDataEqual("menu_pmr"))
@@ -240,7 +261,7 @@ func (bh *BotHandler) registerPMRHandler() {
 
 func (bh *BotHandler) registerThoughtLabelingHandler() {
 	thoughtLabelingHandler := handlers.NewThoughtLabelingHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
+		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(thoughtLabelingHandler.HandleCallback, th.CallbackDataPrefix("thought_"))
 	bh.handler.HandleCallbackQuery(thoughtLabelingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_thought"))
@@ -248,7 +269,7 @@ func (bh *BotHandler) registerThoughtLabelingHandler() {
 
 func (bh *BotHandler) registerVisualizationHandler() {
 	visualizationHandler := handlers.NewVisualizationHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
+		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(visualizationHandler.HandleCallback, th.CallbackDataPrefix("visual_"))
 	bh.handler.HandleCallbackQuery(visualizationHandler.HandleMenuSelect, th.CallbackDataEqual("menu_visual"))
@@ -274,7 +295,7 @@ func (bh *BotHandler) registerCatchAllHandler() {
 
 				// Process thought input
 				thoughtHandler := handlers.NewThoughtLabelingHandler(
-					bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage,
+					bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 				)
 				thoughtHandler.ProcessThoughtInput(chatID, userID, botMessageID, message.Text)
 				return nil

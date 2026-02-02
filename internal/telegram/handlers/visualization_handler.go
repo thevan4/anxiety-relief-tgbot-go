@@ -28,6 +28,7 @@ type VisualizationHandler struct {
 	rateLimiter    rate_limiter.Limiter
 	statistics     statistic.Stats
 	sessionStorage session.Storage
+	sessionManager *session.SessionManager
 }
 
 func NewVisualizationHandler(
@@ -36,6 +37,7 @@ func NewVisualizationHandler(
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
+	sessionManager *session.SessionManager,
 ) *VisualizationHandler {
 	return &VisualizationHandler{
 		ctx:            ctx,
@@ -43,6 +45,7 @@ func NewVisualizationHandler(
 		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
+		sessionManager: sessionManager,
 	}
 }
 
@@ -56,6 +59,11 @@ func (h *VisualizationHandler) HandleMenuSelect(ctx *th.Context, cb telego.Callb
 	chatID := msg.Chat.ID
 	messageID := msg.MessageID
 
+	// Answer callback FIRST; if too old - delete message and stop
+	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
@@ -67,12 +75,6 @@ func (h *VisualizationHandler) HandleMenuSelect(ctx *th.Context, cb telego.Callb
 		cb.From.IsPremium,
 		cb.From.IsBot,
 	)
-
-	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: cb.ID,
-	}); err != nil {
-		log.Printf("ERROR: answer callback query: %v", err)
-	}
 
 	h.showSceneSelection(h.ctx, chatID, userID, messageID)
 	return nil
@@ -89,19 +91,17 @@ func (h *VisualizationHandler) HandleCallback(ctx *th.Context, cb telego.Callbac
 	userID := cb.From.ID
 	messageID := msg.MessageID
 
+	// Answer callback FIRST; if too old - delete message and stop
+	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
 
 	h.processCallback(chatID, userID, messageID, cb.Data)
-
-	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: cb.ID,
-	}); err != nil {
-		log.Printf("ERROR: answer callback query: %v", err)
-		return err
-	}
 	return nil
 }
 
@@ -109,12 +109,17 @@ func (h *VisualizationHandler) processCallback(chatID, userID int64, messageID i
 	switch {
 	case strings.HasPrefix(data, "visual_scene_"):
 		sceneID := strings.TrimPrefix(data, "visual_scene_")
-		h.startScene(h.ctx, chatID, userID, messageID, sceneID)
+		// Create new session context (cancels previous if any)
+		sessionCtx := h.sessionManager.StartSession(h.ctx, userID)
+		go h.startScene(sessionCtx, chatID, userID, messageID, sceneID)
 	case data == "visual_stop":
+		h.sessionManager.CancelSession(userID)
 		h.stopExercise(h.ctx, chatID, userID, messageID)
 	case data == "visual_complete":
+		h.sessionManager.CancelSession(userID)
 		h.completeExercise(h.ctx, chatID, userID, messageID)
 	case data == "visual_cancel":
+		h.sessionManager.CancelSession(userID)
 		h.cancelExercise(h.ctx, chatID, userID, messageID)
 	}
 }
@@ -359,6 +364,8 @@ func (h *VisualizationHandler) cancelExercise(ctx context.Context, chatID, userI
 		ParseMode:   "Markdown",
 		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
-		log.Printf("ERROR: edit visualization cancel: %v", err)
+		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
+			log.Printf("ERROR: edit visualization cancel: %v", err)
+		}
 	}
 }

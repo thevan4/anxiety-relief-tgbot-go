@@ -24,6 +24,7 @@ type GuidedBreathingHandler struct {
 	rateLimiter    rate_limiter.Limiter
 	statistics     statistic.Stats
 	sessionStorage session.Storage
+	sessionManager *session.SessionManager
 }
 
 func NewGuidedBreathingHandler(
@@ -32,6 +33,7 @@ func NewGuidedBreathingHandler(
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
+	sessionManager *session.SessionManager,
 ) *GuidedBreathingHandler {
 	return &GuidedBreathingHandler{
 		ctx:            ctx,
@@ -39,6 +41,7 @@ func NewGuidedBreathingHandler(
 		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
+		sessionManager: sessionManager,
 	}
 }
 
@@ -52,6 +55,11 @@ func (h *GuidedBreathingHandler) HandleMenuSelect(ctx *th.Context, cb telego.Cal
 	chatID := msg.Chat.ID
 	messageID := msg.MessageID
 
+	// Answer callback FIRST; if too old - delete message and stop
+	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
@@ -63,12 +71,6 @@ func (h *GuidedBreathingHandler) HandleMenuSelect(ctx *th.Context, cb telego.Cal
 		cb.From.IsPremium,
 		cb.From.IsBot,
 	)
-
-	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: cb.ID,
-	}); err != nil {
-		log.Printf("ERROR: answer callback query: %v", err)
-	}
 
 	h.showPatternSelection(h.ctx, chatID, userID, messageID)
 	return nil
@@ -85,19 +87,17 @@ func (h *GuidedBreathingHandler) HandleCallback(ctx *th.Context, cb telego.Callb
 	userID := cb.From.ID
 	messageID := msg.MessageID
 
+	// Answer callback FIRST; if too old - delete message and stop
+	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
 
 	h.processCallback(chatID, userID, messageID, cb.Data)
-
-	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: cb.ID,
-	}); err != nil {
-		log.Printf("ERROR: answer callback query: %v", err)
-		return err
-	}
 	return nil
 }
 
@@ -107,13 +107,18 @@ func (h *GuidedBreathingHandler) processCallback(chatID, userID int64, messageID
 		patternIdx := strings.TrimPrefix(data, "gbreath_pattern_")
 		idx, err := strconv.Atoi(patternIdx)
 		if err == nil {
-			h.startPattern(h.ctx, chatID, userID, messageID, idx)
+			// Create new session context (cancels previous if any)
+			sessionCtx := h.sessionManager.StartSession(h.ctx, userID)
+			go h.startPattern(sessionCtx, chatID, userID, messageID, idx)
 		}
 	case data == "gbreath_stop":
+		h.sessionManager.CancelSession(userID)
 		h.stopBreathing(h.ctx, chatID, userID, messageID)
 	case data == "gbreath_complete":
+		h.sessionManager.CancelSession(userID)
 		h.completeBreathing(h.ctx, chatID, userID, messageID)
 	case data == "gbreath_cancel":
+		h.sessionManager.CancelSession(userID)
 		h.cancelBreathing(h.ctx, chatID, userID, messageID)
 	}
 }
@@ -321,6 +326,8 @@ func (h *GuidedBreathingHandler) cancelBreathing(ctx context.Context, chatID, us
 		ParseMode:   "Markdown",
 		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
-		log.Printf("ERROR: edit guided breathing cancel: %v", err)
+		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
+			log.Printf("ERROR: edit guided breathing cancel: %v", err)
+		}
 	}
 }

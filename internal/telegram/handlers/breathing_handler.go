@@ -21,6 +21,7 @@ type BreathingHandler struct {
 	rateLimiter    rate_limiter.Limiter
 	statistics     statistic.Stats
 	sessionStorage session.Storage
+	sessionManager *session.SessionManager
 }
 
 func NewBreathingHandler(
@@ -29,6 +30,7 @@ func NewBreathingHandler(
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
+	sessionManager *session.SessionManager,
 ) *BreathingHandler {
 	return &BreathingHandler{
 		ctx:            ctx,
@@ -36,6 +38,7 @@ func NewBreathingHandler(
 		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
+		sessionManager: sessionManager,
 	}
 }
 
@@ -49,6 +52,11 @@ func (h *BreathingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQ
 	chatID := msg.Chat.ID
 	messageID := msg.MessageID
 
+	// Answer callback FIRST; if too old - delete message and stop
+	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
@@ -60,12 +68,6 @@ func (h *BreathingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQ
 		cb.From.IsPremium,
 		cb.From.IsBot,
 	)
-
-	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: cb.ID,
-	}); err != nil {
-		log.Printf("ERROR: answer callback query: %v", err)
-	}
 
 	h.showBreathingIntro(h.ctx, chatID, userID, messageID)
 	return nil
@@ -82,35 +84,39 @@ func (h *BreathingHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQue
 	userID := cb.From.ID
 	messageID := msg.MessageID
 
+	// Answer callback FIRST; if too old - delete message and stop
+	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
 
 	h.processCallback(chatID, userID, messageID, cb.Data)
-
-	if err := ctx.Bot().AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: cb.ID,
-	}); err != nil {
-		log.Printf("ERROR: answer callback query: %v", err)
-		return err
-	}
 	return nil
 }
 
 func (h *BreathingHandler) processCallback(chatID, userID int64, messageID int, data string) {
 	switch data {
 	case "breathing_complete":
+		h.sessionManager.CancelSession(userID)
 		h.completeBreathing(h.ctx, chatID, userID, messageID)
 	case "breathing_cancel":
+		h.sessionManager.CancelSession(userID)
 		h.cancelBreathing(h.ctx, chatID, userID, messageID)
 	case "breathing_stop":
+		h.sessionManager.CancelSession(userID)
 		h.stopBreathing(h.ctx, chatID, userID, messageID)
 	case "breathing_start":
+		// Create new session context (cancels previous if any)
+		sessionCtx := h.sessionManager.StartSession(h.ctx, userID)
 		if err := h.sessionStorage.SetState(h.ctx, userID, session.StateBreathingRunning); err != nil {
 			log.Printf("ERROR: set state breathing running: %v", err)
 		}
-		h.runBreathingCycle(h.ctx, chatID, userID, messageID)
+		// Run in goroutine with session context
+		go h.runBreathingCycle(sessionCtx, chatID, userID, messageID)
 	}
 }
 
@@ -162,6 +168,10 @@ func (h *BreathingHandler) runBreathingCycle(ctx context.Context, chatID, userID
 func (h *BreathingHandler) sendCycleStep(
 	ctx context.Context, chatID, userID int64, messageID int, stepIndex int, cycle techniques.BreathingCycle,
 ) bool {
+	// Check if context was cancelled
+	if ctx.Err() != nil {
+		return false
+	}
 	state, err := h.sessionStorage.GetState(ctx, userID)
 	if err != nil || state != session.StateBreathingRunning {
 		return false
@@ -245,6 +255,8 @@ func (h *BreathingHandler) cancelBreathing(ctx context.Context, chatID, userID i
 		ParseMode:   "Markdown",
 		ReplyMarkup: GetMainMenuInline(),
 	}); err != nil {
-		log.Printf("ERROR: edit breathing cancel: %v", err)
+		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
+			log.Printf("ERROR: edit breathing cancel: %v", err)
+		}
 	}
 }
