@@ -10,10 +10,14 @@ func GuidedBreathingStoppedIntro(patternsInfo string) string {
 	return "🧘 *Управляемое дыхание*\n\nУпражнение остановлено. Выберите технику:\n\n" + patternsInfo
 }
 
-func GuidedBreathingPhase(patternEmoji, patternName string, cycle, totalCycles int, phaseEmoji, phaseName string, durationSec int) string {
-	return fmt.Sprintf("%s *%s*\n\n*Цикл %d из %d*\n\n%s %s\n\n_%d сек_",
+const guidedProgressBarWidth = 10
+
+// GuidedBreathingPhase returns formatted text for guided breathing phase with progress bar.
+func GuidedBreathingPhase(patternEmoji, patternName string, cycle, totalCycles int, phaseEmoji, phaseName string, elapsed, totalSec int) string {
+	progress := ProgressBar(elapsed, totalSec, guidedProgressBarWidth)
+	return fmt.Sprintf("%s *%s*\n\n*Цикл %d/%d*\n%s %s\n%s",
 		patternEmoji, patternName, cycle, totalCycles,
-		phaseEmoji, phaseName, durationSec)
+		phaseName, phaseEmoji, progress)
 }
 
 func GuidedBreathingCompletion(patternName string) string {

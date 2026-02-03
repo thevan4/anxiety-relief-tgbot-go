@@ -171,29 +171,24 @@ func (h *PMRHandler) runMuscleGroup(ctx context.Context, chatID, userID int64, m
 	muscle := muscleGroups[muscleIdx]
 	totalGroups := len(muscleGroups)
 
-	tenseText := messages.PMRTensePhase(muscle.TenseInstruction)
-	if !h.runPhase(ctx, chatID, userID, messageID, muscle, totalGroups, tenseText, muscle.TenseDuration) {
+	// Tense phase with progress
+	if !h.runPhaseWithProgress(ctx, chatID, userID, messageID, muscle, totalGroups, true, muscle.TenseDuration) {
 		return
 	}
 
-	relaxText := messages.PMRRelaxPhase(muscle.RelaxInstruction)
-	if !h.runPhase(ctx, chatID, userID, messageID, muscle, totalGroups, relaxText, muscle.RelaxDuration) {
+	// Relax phase with progress
+	if !h.runPhaseWithProgress(ctx, chatID, userID, messageID, muscle, totalGroups, false, muscle.RelaxDuration) {
 		return
 	}
 
 	h.runMuscleGroup(ctx, chatID, userID, messageID, muscleIdx+1)
 }
 
-func (h *PMRHandler) runPhase(
+func (h *PMRHandler) runPhaseWithProgress(
 	ctx context.Context, chatID, userID int64, messageID int,
-	muscle techniques.MuscleGroup, totalGroups int, phaseText string, duration time.Duration,
+	muscle techniques.MuscleGroup, totalGroups int, isTense bool, duration time.Duration,
 ) bool {
-	state, err := h.sessionStorage.GetState(ctx, userID)
-	if err != nil || state != session.StatePMRRunning {
-		return false
-	}
-
-	text := messages.PMRMuscleStep(muscle.Emoji, muscle.Name, muscle.Number, totalGroups, phaseText)
+	totalSeconds := int(duration.Seconds())
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
@@ -201,24 +196,46 @@ func (h *PMRHandler) runPhase(
 		},
 	}
 
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        text,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit pmr phase message: %v", err)
-	}
+	for elapsed := 0; elapsed <= totalSeconds; elapsed++ {
+		if ctx.Err() != nil {
+			return false
+		}
 
-	timer := time.NewTimer(duration)
-	select {
-	case <-ctx.Done():
-		timer.Stop()
-		return false
-	case <-timer.C:
-		return true
+		state, err := h.sessionStorage.GetState(ctx, userID)
+		if err != nil || state != session.StatePMRRunning {
+			return false
+		}
+
+		var phaseText string
+		if isTense {
+			phaseText = messages.PMRTensePhaseWithProgress(muscle.TenseInstruction, elapsed, totalSeconds)
+		} else {
+			phaseText = messages.PMRRelaxPhaseWithProgress(muscle.RelaxInstruction, elapsed, totalSeconds)
+		}
+
+		text := messages.PMRMuscleStep(muscle.Emoji, muscle.Name, muscle.Number, totalGroups, phaseText)
+
+		if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+			ChatID:      tu.ID(chatID),
+			MessageID:   messageID,
+			Text:        text,
+			ParseMode:   "Markdown",
+			ReplyMarkup: keyboard,
+		}); err != nil && !IsMessageNotModifiedError(err) {
+			log.Printf("ERROR: edit pmr phase message: %v", err)
+		}
+
+		if elapsed < totalSeconds {
+			timer := time.NewTimer(1 * time.Second)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return false
+			case <-timer.C:
+			}
+		}
 	}
+	return true
 }
 
 func (h *PMRHandler) sendCompletion(ctx context.Context, chatID, userID int64, messageID int) {

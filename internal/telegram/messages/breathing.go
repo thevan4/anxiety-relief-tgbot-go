@@ -15,8 +15,23 @@ const BreathingIntro = `🌬️ *Дыхание за 2 минуты*
 
 Я буду напоминать каждый этап. Готовы начать?`
 
+// BreathingCycleText returns formatted text for breathing cycle (legacy).
 func BreathingCycleText(cycleNum, totalCycles int, instruction string) string {
 	return fmt.Sprintf("🌬️ *Цикл %d из %d*\n\n%s", cycleNum, totalCycles, instruction)
+}
+
+const progressBarWidth = 10
+
+// BreathingPhaseText returns formatted text for breathing phase with progress bar.
+// cycleNum - current cycle (1-8)
+// totalCycles - total cycles (8)
+// phaseName - "Вдох", "Задержка", "Выдох"
+// emoji - phase emoji
+// elapsed - seconds elapsed in this phase
+// total - total seconds for this phase
+func BreathingPhaseText(cycleNum, totalCycles int, phaseName, emoji string, elapsed, total int) string {
+	progress := ProgressBar(elapsed, total, progressBarWidth)
+	return fmt.Sprintf("*Цикл %d/%d*\n%s %s\n%s", cycleNum, totalCycles, phaseName, emoji, progress)
 }
 
 const BreathingCompletion = `✅ *Отлично!*

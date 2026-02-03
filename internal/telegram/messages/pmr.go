@@ -17,6 +17,21 @@ func PMRIntro(muscleGroupsCount int) string {
 Готовы начать?`, muscleGroupsCount)
 }
 
+const pmrProgressBarWidth = 10
+
+// PMRTensePhaseWithProgress returns formatted text for tense phase with progress bar.
+func PMRTensePhaseWithProgress(instruction string, elapsed, totalSec int) string {
+	progress := ProgressBar(elapsed, totalSec, pmrProgressBarWidth)
+	return fmt.Sprintf("🔴 *НАПРЯГИТЕ*\n\n%s\n\n%s", instruction, progress)
+}
+
+// PMRRelaxPhaseWithProgress returns formatted text for relax phase with progress bar.
+func PMRRelaxPhaseWithProgress(instruction string, elapsed, totalSec int) string {
+	progress := ProgressBar(elapsed, totalSec, pmrProgressBarWidth)
+	return fmt.Sprintf("🟢 *РАССЛАБЬТЕ*\n\n%s\n\n%s", instruction, progress)
+}
+
+// Legacy functions without progress bar.
 func PMRTensePhase(instruction string) string {
 	return fmt.Sprintf("🔴 *НАПРЯГИТЕ*\n\n%s\n\n_7 секунд..._", instruction)
 }

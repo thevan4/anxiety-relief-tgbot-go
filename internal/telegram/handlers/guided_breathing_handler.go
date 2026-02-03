@@ -207,15 +207,7 @@ func (h *GuidedBreathingHandler) runPhase(
 	ctx context.Context, chatID, userID int64, messageID int,
 	pattern techniques.BreathingPattern, cycle int, phase techniques.BreathingPhase,
 ) bool {
-	state, err := h.sessionStorage.GetState(ctx, userID)
-	if err != nil || state != session.StateGuidedBreathingRunning {
-		return false
-	}
-
-	text := messages.GuidedBreathingPhase(
-		pattern.Emoji, pattern.Name, cycle, pattern.Cycles,
-		phase.Emoji, phase.Name, int(phase.Duration.Seconds()),
-	)
+	totalSeconds := int(phase.Duration.Seconds())
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
@@ -223,24 +215,42 @@ func (h *GuidedBreathingHandler) runPhase(
 		},
 	}
 
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        text,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit guided breathing message: %v", err)
-	}
+	for elapsed := 0; elapsed <= totalSeconds; elapsed++ {
+		if ctx.Err() != nil {
+			return false
+		}
 
-	timer := time.NewTimer(phase.Duration)
-	select {
-	case <-ctx.Done():
-		timer.Stop()
-		return false
-	case <-timer.C:
-		return true
+		state, err := h.sessionStorage.GetState(ctx, userID)
+		if err != nil || state != session.StateGuidedBreathingRunning {
+			return false
+		}
+
+		text := messages.GuidedBreathingPhase(
+			pattern.Emoji, pattern.Name, cycle, pattern.Cycles,
+			phase.Emoji, phase.Name, elapsed, totalSeconds,
+		)
+
+		if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+			ChatID:      tu.ID(chatID),
+			MessageID:   messageID,
+			Text:        text,
+			ParseMode:   "Markdown",
+			ReplyMarkup: keyboard,
+		}); err != nil && !IsMessageNotModifiedError(err) {
+			log.Printf("ERROR: edit guided breathing message: %v", err)
+		}
+
+		if elapsed < totalSeconds {
+			timer := time.NewTimer(1 * time.Second)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return false
+			case <-timer.C:
+			}
+		}
 	}
+	return true
 }
 
 func (h *GuidedBreathingHandler) sendCompletion(

@@ -1,5 +1,7 @@
 package messages
 
+import "strings"
+
 const (
 	FeelBetter = "✅ Лучше"
 	Repeat     = "🔄 Повторить"
@@ -22,4 +24,28 @@ const (
 💪 Мышечная релаксация — снятие напряжения
 🏷️ Маркировка мыслей — работа с тревогой
 🌅 Визуализация — расслабление`
+
+	progressFilled = "▓"
+	progressEmpty  = "░"
 )
+
+// ProgressBar generates a progress bar string.
+// current - current progress value
+// total - maximum value
+// width - number of characters in the bar
+func ProgressBar(current, total, width int) string {
+	if total <= 0 || width <= 0 {
+		return ""
+	}
+	if current < 0 {
+		current = 0
+	}
+	if current > total {
+		current = total
+	}
+
+	filled := (current * width) / total
+	empty := width - filled
+
+	return strings.Repeat(progressFilled, filled) + strings.Repeat(progressEmpty, empty)
+}

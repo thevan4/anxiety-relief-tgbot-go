@@ -146,51 +146,66 @@ func (h *BreathingHandler) showBreathingIntro(ctx context.Context, chatID, userI
 }
 
 const breathingStepsPerCycle = 3
-const breathingTotalCycles = 8
 
 func (h *BreathingHandler) runBreathingCycle(ctx context.Context, chatID, userID int64, messageID int) {
 	cycles := techniques.GetBreathingCycles()
 	for i, cycle := range cycles {
-		if !h.sendCycleStep(ctx, chatID, userID, messageID, i, cycle) {
+		if !h.runPhaseWithProgress(ctx, chatID, userID, messageID, i, cycle) {
 			return
-		}
-		timer := time.NewTimer(cycle.Duration)
-		select {
-		case <-ctx.Done():
-			timer.Stop()
-			return
-		case <-timer.C:
 		}
 	}
 	h.sendBreathingCompletion(ctx, chatID, userID, messageID)
 }
 
-func (h *BreathingHandler) sendCycleStep(
+func (h *BreathingHandler) runPhaseWithProgress(
 	ctx context.Context, chatID, userID int64, messageID int, stepIndex int, cycle techniques.BreathingCycle,
 ) bool {
-	// Check if context was cancelled
-	if ctx.Err() != nil {
-		return false
-	}
-	state, err := h.sessionStorage.GetState(ctx, userID)
-	if err != nil || state != session.StateBreathingRunning {
-		return false
-	}
 	cycleNum := stepIndex/breathingStepsPerCycle + 1
-	text := messages.BreathingCycleText(cycleNum, breathingTotalCycles, cycle.Instruction)
+	totalSeconds := int(cycle.Duration.Seconds())
+
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{{Text: messages.Stop, CallbackData: "breathing_stop"}},
 		},
 	}
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        text,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit breathing message: %v", err)
+
+	for elapsed := 0; elapsed <= totalSeconds; elapsed++ {
+		// Check if context was cancelled
+		if ctx.Err() != nil {
+			return false
+		}
+		state, err := h.sessionStorage.GetState(ctx, userID)
+		if err != nil || state != session.StateBreathingRunning {
+			return false
+		}
+
+		// Update progress bar
+		text := messages.BreathingPhaseText(
+			cycleNum, techniques.BreathCycles,
+			cycle.Name, cycle.Emoji,
+			elapsed, totalSeconds,
+		)
+
+		if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+			ChatID:      tu.ID(chatID),
+			MessageID:   messageID,
+			Text:        text,
+			ParseMode:   "Markdown",
+			ReplyMarkup: keyboard,
+		}); err != nil && !IsMessageNotModifiedError(err) {
+			log.Printf("ERROR: edit breathing message: %v", err)
+		}
+
+		// Wait 1 second (except on last iteration)
+		if elapsed < totalSeconds {
+			timer := time.NewTimer(1 * time.Second)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return false
+			case <-timer.C:
+			}
+		}
 	}
 	return true
 }

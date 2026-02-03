@@ -208,12 +208,7 @@ func (h *VisualizationHandler) findScene(sceneID string) *techniques.Visualizati
 func (h *VisualizationHandler) showSceneIntro(
 	ctx context.Context, chatID, userID int64, messageID int, scene *techniques.VisualizationScene,
 ) bool {
-	state, err := h.sessionStorage.GetState(ctx, userID)
-	if err != nil || state != session.StateVisualizationRunning {
-		return false
-	}
-
-	introText := messages.VisualizationSceneIntro(scene.Emoji, scene.Name, scene.Description, scene.Atmosphere)
+	totalSeconds := int(visualizationIntroDuration.Seconds())
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
@@ -221,24 +216,42 @@ func (h *VisualizationHandler) showSceneIntro(
 		},
 	}
 
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        introText,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit visualization intro: %v", err)
-	}
+	for elapsed := 0; elapsed <= totalSeconds; elapsed++ {
+		if ctx.Err() != nil {
+			return false
+		}
 
-	timer := time.NewTimer(visualizationIntroDuration)
-	select {
-	case <-ctx.Done():
-		timer.Stop()
-		return false
-	case <-timer.C:
-		return true
+		state, err := h.sessionStorage.GetState(ctx, userID)
+		if err != nil || state != session.StateVisualizationRunning {
+			return false
+		}
+
+		introText := messages.VisualizationIntroWithProgress(
+			scene.Emoji, scene.Name, scene.Description, scene.Atmosphere,
+			elapsed, totalSeconds,
+		)
+
+		if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+			ChatID:      tu.ID(chatID),
+			MessageID:   messageID,
+			Text:        introText,
+			ParseMode:   "Markdown",
+			ReplyMarkup: keyboard,
+		}); err != nil && !IsMessageNotModifiedError(err) {
+			log.Printf("ERROR: edit visualization intro: %v", err)
+		}
+
+		if elapsed < totalSeconds {
+			timer := time.NewTimer(1 * time.Second)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return false
+			case <-timer.C:
+			}
+		}
 	}
+	return true
 }
 
 func (h *VisualizationHandler) runSceneSteps(
@@ -250,30 +263,43 @@ func (h *VisualizationHandler) runSceneSteps(
 		},
 	}
 
+	totalSeconds := int(visualizationStepDuration.Seconds())
+
 	for _, step := range scene.Steps {
-		state, err := h.sessionStorage.GetState(ctx, userID)
-		if err != nil || state != session.StateVisualizationRunning {
-			return false
-		}
+		for elapsed := 0; elapsed <= totalSeconds; elapsed++ {
+			if ctx.Err() != nil {
+				return false
+			}
 
-		stepText := messages.VisualizationStep(scene.Emoji, scene.Name, step.Number, len(scene.Steps), step.Instruction)
+			state, err := h.sessionStorage.GetState(ctx, userID)
+			if err != nil || state != session.StateVisualizationRunning {
+				return false
+			}
 
-		if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-			ChatID:      tu.ID(chatID),
-			MessageID:   messageID,
-			Text:        stepText,
-			ParseMode:   "Markdown",
-			ReplyMarkup: keyboard,
-		}); err != nil {
-			log.Printf("ERROR: edit visualization step: %v", err)
-		}
+			stepText := messages.VisualizationStepWithProgress(
+				scene.Emoji, scene.Name, step.Number, len(scene.Steps),
+				step.Instruction, elapsed, totalSeconds,
+			)
 
-		timer := time.NewTimer(visualizationStepDuration)
-		select {
-		case <-ctx.Done():
-			timer.Stop()
-			return false
-		case <-timer.C:
+			if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+				ChatID:      tu.ID(chatID),
+				MessageID:   messageID,
+				Text:        stepText,
+				ParseMode:   "Markdown",
+				ReplyMarkup: keyboard,
+			}); err != nil && !IsMessageNotModifiedError(err) {
+				log.Printf("ERROR: edit visualization step: %v", err)
+			}
+
+			if elapsed < totalSeconds {
+				timer := time.NewTimer(1 * time.Second)
+				select {
+				case <-ctx.Done():
+					timer.Stop()
+					return false
+				case <-timer.C:
+				}
+			}
 		}
 	}
 	return true

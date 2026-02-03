@@ -20,12 +20,41 @@ _%s_
 Закройте глаза и погрузитесь в эту сцену...`, emoji, name, description, atmosphere)
 }
 
+const visualizationProgressBarWidth = 10
+
+// VisualizationStep returns formatted text for visualization step (legacy).
 func VisualizationStep(emoji, name string, stepNum, totalSteps int, instruction string) string {
 	return fmt.Sprintf(`%s *%s*
 
 *Шаг %d из %d*
 
 %s`, emoji, name, stepNum, totalSteps, instruction)
+}
+
+// VisualizationStepWithProgress returns formatted text for visualization step with progress bar.
+func VisualizationStepWithProgress(emoji, name string, stepNum, totalSteps int, instruction string, elapsed, totalSec int) string {
+	progress := ProgressBar(elapsed, totalSec, visualizationProgressBarWidth)
+	return fmt.Sprintf(`%s *%s*
+
+*Шаг %d/%d*
+
+%s
+
+%s`, emoji, name, stepNum, totalSteps, instruction, progress)
+}
+
+// VisualizationIntroWithProgress returns formatted text for scene intro with progress bar.
+func VisualizationIntroWithProgress(emoji, name, description, atmosphere string, elapsed, totalSec int) string {
+	progress := ProgressBar(elapsed, totalSec, visualizationProgressBarWidth)
+	return fmt.Sprintf(`%s *%s*
+
+_%s_
+
+🌿 *Атмосфера:* %s
+
+Закройте глаза и погрузитесь в эту сцену...
+
+%s`, emoji, name, description, atmosphere, progress)
 }
 
 func VisualizationCompletion(sceneName string) string {
