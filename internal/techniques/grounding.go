@@ -8,6 +8,7 @@ const (
 	groundingTasteCount = 1
 )
 
+// GetGroundingSteps returns the 5-4-3-2-1 grounding technique steps.
 func GetGroundingSteps() []GroundingStep {
 	touchExample := "Назовите 4 вещи, которые вы ощущаете телом.\n\n" +
 		"Например: ноги на полу, спина на стуле, руки на столе, одежда на теле."

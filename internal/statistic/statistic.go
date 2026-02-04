@@ -1,3 +1,4 @@
+// Package statistic provides user activity tracking and statistics.
 package statistic
 
 // Statistic ...

@@ -189,7 +189,129 @@ func TestMessagesNotEmpty(t *testing.T) {
 	}
 }
 
-// Test backward compatibility functions
+func TestVisualizationMessagesNotEmpty(t *testing.T) {
+	l := NewLocalizer()
+
+	for _, lang := range l.SupportedLanguages() {
+		t.Run(lang, func(t *testing.T) {
+			msgs := l.Get(lang)
+
+			if msgs.MenuVisualization == "" {
+				t.Errorf("%s: MenuVisualization is empty", lang)
+			}
+			if msgs.VisualizationIntro == "" {
+				t.Errorf("%s: VisualizationIntro is empty", lang)
+			}
+			if msgs.VisualizationStopped == "" {
+				t.Errorf("%s: VisualizationStopped is empty", lang)
+			}
+			if msgs.VisualizationCompletion == "" {
+				t.Errorf("%s: VisualizationCompletion is empty", lang)
+			}
+			if msgs.VisualizationThanks == "" {
+				t.Errorf("%s: VisualizationThanks is empty", lang)
+			}
+			if msgs.VisualizationAtmosphere == "" {
+				t.Errorf("%s: VisualizationAtmosphere is empty", lang)
+			}
+			if msgs.VisualizationCloseEyes == "" {
+				t.Errorf("%s: VisualizationCloseEyes is empty", lang)
+			}
+			if msgs.VisualizationStepFmt == "" {
+				t.Errorf("%s: VisualizationStepFmt is empty", lang)
+			}
+		})
+	}
+}
+
+func TestGetVisualizationScenes(t *testing.T) {
+	l := NewLocalizer()
+
+	for _, lang := range l.SupportedLanguages() {
+		t.Run(lang, func(t *testing.T) {
+			m := l.Get(lang)
+			scenes := m.GetVisualizationScenes()
+
+			if len(scenes) != 5 {
+				t.Errorf("%s: expected 5 scenes, got %d", lang, len(scenes))
+			}
+
+			expectedIDs := []string{"mountain", "forest", "beach", "garden", "starry"}
+			for i, scene := range scenes {
+				if scene.ID != expectedIDs[i] {
+					t.Errorf("%s: scene %d ID = %q, want %q", lang, i, scene.ID, expectedIDs[i])
+				}
+				if scene.Name == "" {
+					t.Errorf("%s: scene %s Name is empty", lang, scene.ID)
+				}
+				if scene.Description == "" {
+					t.Errorf("%s: scene %s Description is empty", lang, scene.ID)
+				}
+				if scene.Atmosphere == "" {
+					t.Errorf("%s: scene %s Atmosphere is empty", lang, scene.ID)
+				}
+				if len(scene.Steps) != 7 {
+					t.Errorf("%s: scene %s has %d steps, want 7", lang, scene.ID, len(scene.Steps))
+				}
+				for j, step := range scene.Steps {
+					if step.Instruction == "" {
+						t.Errorf("%s: scene %s step %d Instruction is empty", lang, scene.ID, j+1)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestVisualizationFormatMethods(t *testing.T) {
+	l := NewLocalizer()
+	m := l.Get("en")
+
+	t.Run("FormatVisualizationSceneIntro", func(t *testing.T) {
+		result := m.FormatVisualizationSceneIntro("🏖️", "Beach", "Warm beach", "Sound of waves", "⏱️ 3")
+		if result == "" {
+			t.Error("FormatVisualizationSceneIntro returned empty string")
+		}
+		if !contains(result, "🏖️") || !contains(result, "Beach") || !contains(result, "Warm beach") {
+			t.Errorf("FormatVisualizationSceneIntro missing expected content: %q", result)
+		}
+	})
+
+	t.Run("FormatVisualizationStep", func(t *testing.T) {
+		result := m.FormatVisualizationStep("🏖️", "Beach", 1, 5, "Close your eyes", "⏱️ 10")
+		if result == "" {
+			t.Error("FormatVisualizationStep returned empty string")
+		}
+		if !contains(result, "🏖️") || !contains(result, "Beach") || !contains(result, "Close your eyes") {
+			t.Errorf("FormatVisualizationStep missing expected content: %q", result)
+		}
+	})
+
+	t.Run("FormatVisualizationCompletion", func(t *testing.T) {
+		result := m.FormatVisualizationCompletion("Beach Scene")
+		if result == "" {
+			t.Error("FormatVisualizationCompletion returned empty string")
+		}
+		if !contains(result, "Beach Scene") {
+			t.Errorf("FormatVisualizationCompletion missing scene name: %q", result)
+		}
+	})
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
+}
+
+func containsHelper(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
+// Test backward compatibility functions.
 func TestBackwardCompatibility(t *testing.T) {
 	// Test global Get function
 	msgs := Get("en")

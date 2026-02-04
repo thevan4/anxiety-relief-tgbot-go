@@ -8,6 +8,7 @@ const (
 	relaxDuration = 15 * time.Second
 )
 
+// MuscleGroup represents one muscle group for Progressive Muscle Relaxation.
 type MuscleGroup struct {
 	Number           int
 	Name             string
@@ -18,6 +19,7 @@ type MuscleGroup struct {
 	RelaxDuration    time.Duration
 }
 
+// GetMuscleGroups returns the muscle groups for Progressive Muscle Relaxation exercise.
 func GetMuscleGroups() []MuscleGroup {
 	return buildMuscleGroups()
 }

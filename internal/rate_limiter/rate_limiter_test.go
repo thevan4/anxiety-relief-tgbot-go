@@ -84,11 +84,11 @@ func TestWaitAndGoCancelledContext(t *testing.T) {
 	}
 }
 
-func TestRateLimiterInterface(t *testing.T) {
+func TestRateLimiterInterface(_ *testing.T) {
 	var _ Limiter = NewRateLimiter(time.Second, 10)
 }
 
-func TestConcurrentAccess(t *testing.T) {
+func TestConcurrentAccess(_ *testing.T) {
 	rl := NewRateLimiter(time.Second, 100)
 	ctx := context.Background()
 

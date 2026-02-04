@@ -14,7 +14,6 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
-	"github.com/thevan4/anxiety-relief-tgbot-go/internal/techniques"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/messages"
 )
 
@@ -23,6 +22,7 @@ const (
 	visualizationIntroDuration = 5 * time.Second
 )
 
+// VisualizationHandler handles peaceful scene visualization exercise.
 type VisualizationHandler struct {
 	ctx            context.Context
 	bot            *telego.Bot
@@ -33,6 +33,7 @@ type VisualizationHandler struct {
 	sessionManager *session.SessionManager
 }
 
+// NewVisualizationHandler creates a new visualization exercise handler.
 func NewVisualizationHandler(
 	ctx context.Context,
 	bot *telego.Bot,
@@ -85,8 +86,8 @@ func (h *VisualizationHandler) getMainMenuInline(m localization.Messages) *teleg
 	}
 }
 
-// HandleMenuSelect handles selection from main menu
-func (h *VisualizationHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleMenuSelect handles selection from main menu.
+func (h *VisualizationHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		return nil
@@ -116,8 +117,8 @@ func (h *VisualizationHandler) HandleMenuSelect(ctx *th.Context, cb telego.Callb
 	return nil
 }
 
-// HandleCallback handles visualization callbacks
-func (h *VisualizationHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleCallback handles visualization callbacks.
+func (h *VisualizationHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")
@@ -160,7 +161,7 @@ func (h *VisualizationHandler) processCallback(chatID, userID int64, messageID i
 	}
 }
 
-func (h *VisualizationHandler) buildScenesInfo(scenes []techniques.VisualizationScene) string {
+func (h *VisualizationHandler) buildScenesInfo(scenes []localization.VisualizationScene) string {
 	var info string
 	for _, scene := range scenes {
 		info += fmt.Sprintf("%s *%s*\n_%s_\n\n", scene.Emoji, scene.Name, scene.Description)
@@ -174,8 +175,8 @@ func (h *VisualizationHandler) showSceneSelection(ctx context.Context, chatID, u
 	}
 
 	m := h.localizer.Get(h.getLang(ctx, userID))
-	scenes := techniques.GetVisualizationScenes()
-	text := messages.VisualizationIntro(h.buildScenesInfo(scenes))
+	scenes := m.GetVisualizationScenes()
+	text := m.VisualizationIntro + h.buildScenesInfo(scenes)
 
 	buttons := h.buildSceneButtons(scenes, m)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
@@ -192,7 +193,7 @@ func (h *VisualizationHandler) showSceneSelection(ctx context.Context, chatID, u
 }
 
 func (h *VisualizationHandler) buildSceneButtons(
-	scenes []techniques.VisualizationScene, m localization.Messages,
+	scenes []localization.VisualizationScene, m localization.Messages,
 ) [][]telego.InlineKeyboardButton {
 	var buttons [][]telego.InlineKeyboardButton
 	for _, scene := range scenes {
@@ -212,7 +213,8 @@ func (h *VisualizationHandler) buildSceneButtons(
 func (h *VisualizationHandler) startScene(
 	ctx context.Context, chatID, userID int64, messageID int, sceneID string,
 ) {
-	scene := h.findScene(sceneID)
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	scene := h.findScene(sceneID, m)
 	if scene == nil {
 		return
 	}
@@ -232,8 +234,8 @@ func (h *VisualizationHandler) startScene(
 	h.sendCompletion(ctx, chatID, userID, messageID, sceneID)
 }
 
-func (h *VisualizationHandler) findScene(sceneID string) *techniques.VisualizationScene {
-	scenes := techniques.GetVisualizationScenes()
+func (h *VisualizationHandler) findScene(sceneID string, m localization.Messages) *localization.VisualizationScene {
+	scenes := m.GetVisualizationScenes()
 	for _, s := range scenes {
 		if s.ID == sceneID {
 			return &s
@@ -243,7 +245,7 @@ func (h *VisualizationHandler) findScene(sceneID string) *techniques.Visualizati
 }
 
 func (h *VisualizationHandler) showSceneIntro(
-	ctx context.Context, chatID, userID int64, messageID int, scene *techniques.VisualizationScene,
+	ctx context.Context, chatID, userID int64, messageID int, scene *localization.VisualizationScene,
 ) bool {
 	totalSeconds := int(visualizationIntroDuration.Seconds())
 	m := h.localizer.Get(h.getLang(ctx, userID))
@@ -255,18 +257,13 @@ func (h *VisualizationHandler) showSceneIntro(
 	}
 
 	for elapsed := 0; elapsed <= totalSeconds; elapsed++ {
-		if ctx.Err() != nil {
+		if !h.checkVisualizationRunning(ctx, userID) {
 			return false
 		}
 
-		state, err := h.sessionStorage.GetState(ctx, userID)
-		if err != nil || state != session.StateVisualizationRunning {
-			return false
-		}
-
-		introText := messages.VisualizationIntroWithProgress(
-			scene.Emoji, scene.Name, scene.Description, scene.Atmosphere,
-			elapsed, totalSeconds,
+		timer := messages.TimerCountdown(elapsed, totalSeconds)
+		introText := m.FormatVisualizationSceneIntro(
+			scene.Emoji, scene.Name, scene.Description, scene.Atmosphere, timer,
 		)
 
 		if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
@@ -292,8 +289,16 @@ func (h *VisualizationHandler) showSceneIntro(
 	return true
 }
 
+func (h *VisualizationHandler) checkVisualizationRunning(ctx context.Context, userID int64) bool {
+	if ctx.Err() != nil {
+		return false
+	}
+	state, err := h.sessionStorage.GetState(ctx, userID)
+	return err == nil && state == session.StateVisualizationRunning
+}
+
 func (h *VisualizationHandler) runSceneSteps(
-	ctx context.Context, chatID, userID int64, messageID int, scene *techniques.VisualizationScene,
+	ctx context.Context, chatID, userID int64, messageID int, scene *localization.VisualizationScene,
 ) bool {
 	m := h.localizer.Get(h.getLang(ctx, userID))
 
@@ -307,18 +312,14 @@ func (h *VisualizationHandler) runSceneSteps(
 
 	for _, step := range scene.Steps {
 		for elapsed := 0; elapsed <= totalSeconds; elapsed++ {
-			if ctx.Err() != nil {
+			if !h.checkVisualizationRunning(ctx, userID) {
 				return false
 			}
 
-			state, err := h.sessionStorage.GetState(ctx, userID)
-			if err != nil || state != session.StateVisualizationRunning {
-				return false
-			}
-
-			stepText := messages.VisualizationStepWithProgress(
+			timer := messages.TimerCountdown(elapsed, totalSeconds)
+			stepText := m.FormatVisualizationStep(
 				scene.Emoji, scene.Name, step.Number, len(scene.Steps),
-				step.Instruction, elapsed, totalSeconds,
+				step.Instruction, timer,
 			)
 
 			if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
@@ -353,13 +354,13 @@ func (h *VisualizationHandler) sendCompletion(
 		return
 	}
 
-	scene := h.findScene(sceneID)
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	scene := h.findScene(sceneID, m)
 	if scene == nil {
 		return
 	}
 
-	m := h.localizer.Get(h.getLang(ctx, userID))
-	text := messages.VisualizationCompletion(scene.Name)
+	text := m.FormatVisualizationCompletion(scene.Name)
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
@@ -387,8 +388,8 @@ func (h *VisualizationHandler) stopExercise(ctx context.Context, chatID, userID 
 	}
 
 	m := h.localizer.Get(h.getLang(ctx, userID))
-	scenes := techniques.GetVisualizationScenes()
-	text := messages.VisualizationStoppedIntro(h.buildScenesInfo(scenes))
+	scenes := m.GetVisualizationScenes()
+	text := m.VisualizationStopped + h.buildScenesInfo(scenes)
 
 	buttons := h.buildSceneButtons(scenes, m)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
@@ -414,7 +415,7 @@ func (h *VisualizationHandler) completeExercise(ctx context.Context, chatID, use
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        messages.VisualizationThanks,
+		Text:        m.VisualizationThanks,
 		ParseMode:   "Markdown",
 		ReplyMarkup: h.getMainMenuInline(m),
 	}); err != nil {

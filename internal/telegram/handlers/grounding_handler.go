@@ -15,6 +15,7 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 )
 
+// GroundingHandler handles the 5-4-3-2-1 grounding technique.
 type GroundingHandler struct {
 	ctx            context.Context
 	bot            *telego.Bot
@@ -25,6 +26,7 @@ type GroundingHandler struct {
 	sessionManager *session.SessionManager
 }
 
+// NewGroundingHandler creates a new grounding exercise handler.
 func NewGroundingHandler(
 	ctx context.Context,
 	bot *telego.Bot,
@@ -77,8 +79,8 @@ func (h *GroundingHandler) getMainMenuInline(m localization.Messages) *telego.In
 	}
 }
 
-// HandleMenuSelect handles selection from main menu
-func (h *GroundingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleMenuSelect handles selection from main menu.
+func (h *GroundingHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		return nil
@@ -108,8 +110,8 @@ func (h *GroundingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQ
 	return nil
 }
 
-// HandleCallback handles grounding exercise callbacks
-func (h *GroundingHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleCallback handles grounding exercise callbacks.
+func (h *GroundingHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")

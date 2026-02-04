@@ -21,14 +21,16 @@ var messagesEN = Messages{
 *Advanced (5-15 min):*
 🧘 Guided breathing — various patterns
 💪 Muscle relaxation — release tension
-🏷️ Thought labeling — work with anxiety`,
-	MenuBreathing: "🌬️ Breathing 2 min",
-	MenuGrounding: "🌿 Grounding",
-	MenuGuided:    "🧘 Guided",
-	MenuPMR:       "💪 Muscles",
-	MenuThought:   "🏷️ Thoughts",
-	MenuInfo:      "ℹ️ Info",
-	MenuLang:      "🌐 Language",
+🏷️ Thought labeling — work with anxiety
+🌅 Visualization — relaxation through imagination`,
+	MenuBreathing:     "🌬️ Breathing 2 min",
+	MenuGrounding:     "🌿 Grounding",
+	MenuGuided:        "🧘 Guided",
+	MenuPMR:           "💪 Muscles",
+	MenuThought:       "🏷️ Thoughts",
+	MenuVisualization: "🌅 Visualization",
+	MenuInfo:          "ℹ️ Info",
+	MenuLang:          "🌐 Language",
 
 	// Breathing
 	BreathingIntro: `🌬️ *2-Minute Breathing*
@@ -167,6 +169,95 @@ Thought labeling helps recognize cognitive distortions and reduce their impact.
 
 Choose a technique from the menu below.`,
 
+	// Visualization
+	VisualizationIntro: `🌅 *Peaceful Visualization*
+
+A relaxation technique through imagining peaceful places.
+
+*Choose a scene:*
+
+`,
+	VisualizationStopped: `🌅 *Peaceful Visualization*
+
+Exercise stopped. Choose another scene:
+
+`,
+	VisualizationCompletion: `✅ *Great job!*
+
+You've completed the visualization "%s".
+
+Slowly return to reality. Wiggle your fingers, take a deep breath and open your eyes.
+
+How do you feel?`,
+	VisualizationThanks: `✨ *Thank you for practicing!*
+
+Visualization is a powerful technique for reducing stress and anxiety. Regular practice enhances the effect.
+
+Choose a technique from the menu below.`,
+	VisualizationAtmosphere: "Atmosphere",
+	VisualizationCloseEyes:  "Close your eyes and immerse yourself in this scene...",
+	VisualizationStepFmt:    "Step %d/%d",
+
+	// Scene: Mountain
+	SceneMountainName:  "Mountain Peak",
+	SceneMountainDesc:  "Sunrise at the mountain top",
+	SceneMountainAtmo:  "Cool, fresh mountain air",
+	SceneMountainStep1: "Close your eyes and imagine standing on a mountain peak early in the morning.",
+	SceneMountainStep2: "Silence surrounds you. You feel the cool mountain air on your skin.",
+	SceneMountainStep3: "The sun appears on the horizon, painting the sky in pink and orange hues.",
+	SceneMountainStep4: "Warm rays of sunlight gently touch your face.",
+	SceneMountainStep5: "You see endless expanses below. Everything seems so small and distant.",
+	SceneMountainStep6: "Take a deep breath of pure mountain air. Feel the calmness.",
+	SceneMountainStep7: "You are safe. This moment belongs only to you.",
+
+	// Scene: Forest
+	SceneForestName:  "Forest Clearing",
+	SceneForestDesc:  "A quiet clearing among ancient trees",
+	SceneForestAtmo:  "Warm sunlight, rustling leaves",
+	SceneForestStep1: "Imagine yourself in a cozy clearing in an ancient forest.",
+	SceneForestStep2: "Sunlight filters through the tree canopy, creating patterns on the grass.",
+	SceneForestStep3: "You hear birds singing and leaves rustling in the wind.",
+	SceneForestStep4: "Soft moss beneath your feet. You feel connected to the earth.",
+	SceneForestStep5: "The scent of pine and flowers fills the air.",
+	SceneForestStep6: "Sit down on the warm grass. Feel nature embracing you.",
+	SceneForestStep7: "There is no rush here. Only peace and harmony with nature.",
+
+	// Scene: Beach
+	SceneBeachName:  "Ocean Beach",
+	SceneBeachDesc:  "A calm beach with warm sand",
+	SceneBeachAtmo:  "Sea breeze, sound of waves",
+	SceneBeachStep1: "You walk barefoot on warm sand along the ocean.",
+	SceneBeachStep2: "Waves gently roll onto the shore and retreat back.",
+	SceneBeachStep3: "A light sea breeze refreshes your face and plays with your hair.",
+	SceneBeachStep4: "You feel the warmth of sand under your feet with each step.",
+	SceneBeachStep5: "Seagulls fly in the distance. Their cries blend with the sound of waves.",
+	SceneBeachStep6: "Stop and look at the endless horizon.",
+	SceneBeachStep7: "The ocean is infinite, just like your possibilities. Feel the freedom.",
+
+	// Scene: Garden
+	SceneGardenName:  "Blooming Garden",
+	SceneGardenDesc:  "A beautiful garden with flowers and a fountain",
+	SceneGardenAtmo:  "Fragrance of flowers, murmur of water",
+	SceneGardenStep1: "You enter a beautiful garden full of blooming plants.",
+	SceneGardenStep2: "Roses, lavender, jasmine — their fragrances mix in the air.",
+	SceneGardenStep3: "A small fountain bubbles in the center of the garden.",
+	SceneGardenStep4: "Butterflies flutter between flowers. Everything is full of life.",
+	SceneGardenStep5: "You sit on a bench by the fountain and close your eyes.",
+	SceneGardenStep6: "The sound of bubbling water calms your mind.",
+	SceneGardenStep7: "This garden is your safe place. You can return here anytime.",
+
+	// Scene: Starry
+	SceneStarryName:  "Starry Night",
+	SceneStarryDesc:  "A night meadow under the starry sky",
+	SceneStarryAtmo:  "Cool night air, silence",
+	SceneStarryStep1: "You lie on soft grass on a warm summer night.",
+	SceneStarryStep2: "Above you is an endless sky dotted with millions of stars.",
+	SceneStarryStep3: "The Milky Way stretches across the sky — a river of light.",
+	SceneStarryStep4: "The night air is pleasantly cool. You hear crickets chirping.",
+	SceneStarryStep5: "Each star is a sun in a distant galaxy.",
+	SceneStarryStep6: "Feel your place in the universe. You are part of something vast.",
+	SceneStarryStep7: "Your worries dissolve in the infinity of space.",
+
 	// Info
 	InfoText: `ℹ️ *About the bot*
 
@@ -178,6 +269,7 @@ This bot helps manage anxiety using evidence-based techniques.
 • 🧘 Guided breathing — various patterns
 • 💪 Muscle relaxation — release tension
 • 🏷️ Thought labeling — work with anxiety
+• 🌅 Visualization — relaxation through imagination
 
 *Privacy:*
 The bot doesn't store personal data. Sessions are automatically deleted.

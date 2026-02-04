@@ -77,7 +77,7 @@ func (h *LangHandler) getMainMenuInline(m localization.Messages) *telego.InlineK
 }
 
 // HandleMenuSelect handles selection from main menu.
-func (h *LangHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+func (h *LangHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		return nil
@@ -107,7 +107,7 @@ func (h *LangHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery)
 }
 
 // HandleCallback handles language selection callbacks.
-func (h *LangHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
+func (h *LangHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")

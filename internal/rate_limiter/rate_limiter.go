@@ -1,3 +1,4 @@
+// Package rate_limiter provides request rate limiting functionality for users.
 package rate_limiter
 
 import (

@@ -16,6 +16,7 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/techniques"
 )
 
+// ThoughtLabelingHandler handles thought labeling and categorization exercise.
 type ThoughtLabelingHandler struct {
 	ctx            context.Context
 	bot            *telego.Bot
@@ -26,6 +27,7 @@ type ThoughtLabelingHandler struct {
 	sessionManager *session.SessionManager
 }
 
+// NewThoughtLabelingHandler creates a new thought labeling exercise handler.
 func NewThoughtLabelingHandler(
 	ctx context.Context,
 	bot *telego.Bot,
@@ -78,8 +80,8 @@ func (h *ThoughtLabelingHandler) getMainMenuInline(m localization.Messages) *tel
 	}
 }
 
-// HandleMenuSelect handles selection from main menu
-func (h *ThoughtLabelingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleMenuSelect handles selection from main menu.
+func (h *ThoughtLabelingHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		return nil
@@ -109,8 +111,8 @@ func (h *ThoughtLabelingHandler) HandleMenuSelect(ctx *th.Context, cb telego.Cal
 	return nil
 }
 
-// HandleCallback handles thought labeling callbacks
-func (h *ThoughtLabelingHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleCallback handles thought labeling callbacks.
+func (h *ThoughtLabelingHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")
@@ -211,7 +213,7 @@ func (h *ThoughtLabelingHandler) promptForThought(ctx context.Context, chatID, u
 	}
 }
 
-// ProcessThoughtInput processes the user's thought text input
+// ProcessThoughtInput processes the user's thought text input.
 func (h *ThoughtLabelingHandler) ProcessThoughtInput(chatID, userID int64, messageID int, thought string) {
 	h.showCategories(h.ctx, chatID, userID, messageID, thought)
 }

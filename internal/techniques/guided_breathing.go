@@ -15,6 +15,7 @@ const (
 	cycles6 = 6
 )
 
+// BreathingPattern defines a guided breathing exercise with specific timing.
 type BreathingPattern struct {
 	Name        string
 	Description string
@@ -26,12 +27,14 @@ type BreathingPattern struct {
 	Cycles      int
 }
 
+// BreathingPhase represents one phase in a guided breathing pattern.
 type BreathingPhase struct {
 	Name     string
 	Duration time.Duration
 	Emoji    string
 }
 
+// GetBreathingPatterns returns available guided breathing patterns with different timings.
 func GetBreathingPatterns() []BreathingPattern {
 	return []BreathingPattern{
 		{
@@ -77,6 +80,7 @@ func GetBreathingPatterns() []BreathingPattern {
 	}
 }
 
+// GetBreathingPhases converts a breathing pattern into individual phases for execution.
 func GetBreathingPhases(pattern BreathingPattern) []BreathingPhase {
 	phases := []BreathingPhase{}
 

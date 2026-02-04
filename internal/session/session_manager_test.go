@@ -72,7 +72,7 @@ func TestCancelSession(t *testing.T) {
 	}
 }
 
-func TestCancelSessionNonExistent(t *testing.T) {
+func TestCancelSessionNonExistent(_ *testing.T) {
 	sm := NewSessionManager()
 
 	// Should not panic
@@ -147,7 +147,7 @@ func TestParentContextCancellation(t *testing.T) {
 	}
 }
 
-func TestConcurrentSessionOperations(t *testing.T) {
+func TestConcurrentSessionOperations(_ *testing.T) {
 	sm := NewSessionManager()
 	parentCtx := context.Background()
 	done := make(chan bool)

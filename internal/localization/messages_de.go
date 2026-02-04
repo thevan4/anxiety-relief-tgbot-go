@@ -21,14 +21,16 @@ var messagesDE = Messages{
 *Fortgeschritten (5-15 Min):*
 🧘 Geführte Atmung — verschiedene Muster
 💪 Muskelentspannung — Spannung lösen
-🏷️ Gedanken markieren — mit Angst arbeiten`,
-	MenuBreathing: "🌬️ Atmung 2 Min",
-	MenuGrounding: "🌿 Erdung",
-	MenuGuided:    "🧘 Geführt",
-	MenuPMR:       "💪 Muskeln",
-	MenuThought:   "🏷️ Gedanken",
-	MenuInfo:      "ℹ️ Info",
-	MenuLang:      "🌐 Sprache",
+🏷️ Gedanken markieren — mit Angst arbeiten
+🌅 Visualisierung — Entspannung durch Vorstellung`,
+	MenuBreathing:     "🌬️ Atmung 2 Min",
+	MenuGrounding:     "🌿 Erdung",
+	MenuGuided:        "🧘 Geführt",
+	MenuPMR:           "💪 Muskeln",
+	MenuThought:       "🏷️ Gedanken",
+	MenuVisualization: "🌅 Visualisierung",
+	MenuInfo:          "ℹ️ Info",
+	MenuLang:          "🌐 Sprache",
 
 	// Breathing
 	BreathingIntro: `🌬️ *2-Minuten-Atmung*
@@ -167,6 +169,95 @@ Gedanken markieren hilft, kognitive Verzerrungen zu erkennen und ihre Auswirkung
 
 Wählen Sie eine Technik aus dem Menü unten.`,
 
+	// Visualization
+	VisualizationIntro: `🌅 *Friedliche Visualisierung*
+
+Eine Entspannungstechnik durch Vorstellung friedlicher Orte.
+
+*Wählen Sie eine Szene:*
+
+`,
+	VisualizationStopped: `🌅 *Friedliche Visualisierung*
+
+Übung gestoppt. Wählen Sie eine andere Szene:
+
+`,
+	VisualizationCompletion: `✅ *Sehr gut!*
+
+Sie haben die Visualisierung "%s" abgeschlossen.
+
+Kehren Sie langsam in die Realität zurück. Bewegen Sie Ihre Finger, atmen Sie tief ein und öffnen Sie die Augen.
+
+Wie fühlen Sie sich?`,
+	VisualizationThanks: `✨ *Danke für die Übung!*
+
+Visualisierung ist eine kraftvolle Technik zur Reduzierung von Stress und Angst. Regelmäßige Übung verstärkt die Wirkung.
+
+Wählen Sie eine Technik aus dem Menü unten.`,
+	VisualizationAtmosphere: "Atmosphäre",
+	VisualizationCloseEyes:  "Schließen Sie die Augen und tauchen Sie in diese Szene ein...",
+	VisualizationStepFmt:    "Schritt %d/%d",
+
+	// Scene: Mountain
+	SceneMountainName:  "Berggipfel",
+	SceneMountainDesc:  "Sonnenaufgang auf dem Berggipfel",
+	SceneMountainAtmo:  "Kühle, frische Bergluft",
+	SceneMountainStep1: "Schließen Sie die Augen und stellen Sie sich vor, Sie stehen am frühen Morgen auf einem Berggipfel.",
+	SceneMountainStep2: "Stille umgibt Sie. Sie spüren die kühle Bergluft auf Ihrer Haut.",
+	SceneMountainStep3: "Die Sonne erscheint am Horizont und taucht den Himmel in Rosa- und Orangetöne.",
+	SceneMountainStep4: "Warme Sonnenstrahlen berühren sanft Ihr Gesicht.",
+	SceneMountainStep5: "Sie sehen endlose Weiten unter sich. Alles erscheint so klein und fern.",
+	SceneMountainStep6: "Atmen Sie tief die reine Bergluft ein. Spüren Sie die Ruhe.",
+	SceneMountainStep7: "Sie sind sicher. Dieser Moment gehört nur Ihnen.",
+
+	// Scene: Forest
+	SceneForestName:  "Waldlichtung",
+	SceneForestDesc:  "Eine ruhige Lichtung zwischen alten Bäumen",
+	SceneForestAtmo:  "Warmes Sonnenlicht, raschelnde Blätter",
+	SceneForestStep1: "Stellen Sie sich vor, Sie befinden sich auf einer gemütlichen Lichtung in einem alten Wald.",
+	SceneForestStep2: "Sonnenlicht filtert durch die Baumkronen und erzeugt Muster im Gras.",
+	SceneForestStep3: "Sie hören Vögel singen und Blätter im Wind rascheln.",
+	SceneForestStep4: "Weiches Moos unter Ihren Füßen. Sie fühlen sich mit der Erde verbunden.",
+	SceneForestStep5: "Der Duft von Kiefern und Blumen erfüllt die Luft.",
+	SceneForestStep6: "Setzen Sie sich auf das warme Gras. Spüren Sie, wie die Natur Sie umarmt.",
+	SceneForestStep7: "Hier gibt es keine Hektik. Nur Frieden und Harmonie mit der Natur.",
+
+	// Scene: Beach
+	SceneBeachName:  "Ozeanstrand",
+	SceneBeachDesc:  "Ein ruhiger Strand mit warmem Sand",
+	SceneBeachAtmo:  "Meeresbrise, Wellenrauschen",
+	SceneBeachStep1: "Sie gehen barfuß über warmen Sand am Meer entlang.",
+	SceneBeachStep2: "Wellen rollen sanft an den Strand und ziehen sich zurück.",
+	SceneBeachStep3: "Eine leichte Meeresbrise erfrischt Ihr Gesicht und spielt mit Ihrem Haar.",
+	SceneBeachStep4: "Sie spüren die Wärme des Sandes unter Ihren Füßen bei jedem Schritt.",
+	SceneBeachStep5: "Möwen fliegen in der Ferne. Ihre Rufe vermischen sich mit dem Wellenrauschen.",
+	SceneBeachStep6: "Bleiben Sie stehen und schauen Sie auf den endlosen Horizont.",
+	SceneBeachStep7: "Der Ozean ist unendlich, genau wie Ihre Möglichkeiten. Spüren Sie die Freiheit.",
+
+	// Scene: Garden
+	SceneGardenName:  "Blühender Garten",
+	SceneGardenDesc:  "Ein schöner Garten mit Blumen und Brunnen",
+	SceneGardenAtmo:  "Blumenduft, plätscherndes Wasser",
+	SceneGardenStep1: "Sie betreten einen wunderschönen Garten voller blühender Pflanzen.",
+	SceneGardenStep2: "Rosen, Lavendel, Jasmin — ihre Düfte vermischen sich in der Luft.",
+	SceneGardenStep3: "Ein kleiner Brunnen plätschert in der Mitte des Gartens.",
+	SceneGardenStep4: "Schmetterlinge flattern zwischen den Blumen. Alles ist voller Leben.",
+	SceneGardenStep5: "Sie setzen sich auf eine Bank am Brunnen und schließen die Augen.",
+	SceneGardenStep6: "Das Geräusch des plätschernden Wassers beruhigt Ihren Geist.",
+	SceneGardenStep7: "Dieser Garten ist Ihr sicherer Ort. Sie können jederzeit hierher zurückkehren.",
+
+	// Scene: Starry
+	SceneStarryName:  "Sternennacht",
+	SceneStarryDesc:  "Eine nächtliche Wiese unter dem Sternenhimmel",
+	SceneStarryAtmo:  "Kühle Nachtluft, Stille",
+	SceneStarryStep1: "Sie liegen auf weichem Gras in einer warmen Sommernacht.",
+	SceneStarryStep2: "Über Ihnen ist ein endloser Himmel, übersät mit Millionen von Sternen.",
+	SceneStarryStep3: "Die Milchstraße erstreckt sich über den Himmel — ein Fluss aus Licht.",
+	SceneStarryStep4: "Die Nachtluft ist angenehm kühl. Sie hören Grillen zirpen.",
+	SceneStarryStep5: "Jeder Stern ist eine Sonne in einer fernen Galaxie.",
+	SceneStarryStep6: "Spüren Sie Ihren Platz im Universum. Sie sind Teil von etwas Großem.",
+	SceneStarryStep7: "Ihre Sorgen lösen sich in der Unendlichkeit des Weltraums auf.",
+
 	// Info
 	InfoText: `ℹ️ *Über den Bot*
 
@@ -178,6 +269,7 @@ Dieser Bot hilft bei der Bewältigung von Angst mit evidenzbasierten Techniken.
 • 🧘 Geführte Atmung — verschiedene Muster
 • 💪 Muskelentspannung — Spannung lösen
 • 🏷️ Gedanken markieren — mit Angst arbeiten
+• 🌅 Visualisierung — Entspannung durch Vorstellung
 
 *Datenschutz:*
 Der Bot speichert keine persönlichen Daten. Sitzungen werden automatisch gelöscht.

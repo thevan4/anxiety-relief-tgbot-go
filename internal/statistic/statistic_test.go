@@ -24,7 +24,7 @@ func TestNewStatistic(t *testing.T) {
 }
 
 func TestStatisticNilSafety(t *testing.T) {
-	var s *Statistic = nil
+	var s *Statistic
 
 	if s.GetUsername() != "" {
 		t.Errorf("nil.GetUsername() = %q, want empty", s.GetUsername())
@@ -118,7 +118,7 @@ func TestGetStatisticsCopy(t *testing.T) {
 	}
 }
 
-func TestStatsInterface(t *testing.T) {
+func TestStatsInterface(_ *testing.T) {
 	var _ Stats = NewStatistics(nil)
 }
 

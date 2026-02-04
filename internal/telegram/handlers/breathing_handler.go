@@ -1,3 +1,4 @@
+// Package handlers implements telegram bot message handlers for anxiety relief techniques.
 package handlers
 
 import (
@@ -16,6 +17,7 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/messages"
 )
 
+// BreathingHandler handles the basic 4-4-6 breathing exercise.
 type BreathingHandler struct {
 	ctx            context.Context
 	bot            *telego.Bot
@@ -26,6 +28,7 @@ type BreathingHandler struct {
 	sessionManager *session.SessionManager
 }
 
+// NewBreathingHandler creates a new breathing exercise handler.
 func NewBreathingHandler(
 	ctx context.Context,
 	bot *telego.Bot,
@@ -46,7 +49,7 @@ func NewBreathingHandler(
 	}
 }
 
-// getLang returns user's language from session or default
+// getLang returns user's language from session or default.
 func (h *BreathingHandler) getLang(ctx context.Context, userID int64) string {
 	lang, err := h.sessionStorage.GetLang(ctx, userID)
 	if err != nil || lang == "" {
@@ -55,8 +58,8 @@ func (h *BreathingHandler) getLang(ctx context.Context, userID int64) string {
 	return lang
 }
 
-// HandleMenuSelect handles selection from main menu
-func (h *BreathingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleMenuSelect handles selection from main menu.
+func (h *BreathingHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		return nil
@@ -86,8 +89,8 @@ func (h *BreathingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQ
 	return nil
 }
 
-// HandleCallback handles breathing exercise callbacks
-func (h *BreathingHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleCallback handles breathing exercise callbacks.
+func (h *BreathingHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")
@@ -224,7 +227,7 @@ func (h *BreathingHandler) runPhaseWithProgress(
 	return true
 }
 
-// getLocalizedPhaseName returns localized name for breathing phase
+// getLocalizedPhaseName returns localized name for breathing phase.
 func (h *BreathingHandler) getLocalizedPhaseName(name string, m localization.Messages) string {
 	switch name {
 	case "Вдох":
@@ -290,7 +293,7 @@ func (h *BreathingHandler) completeBreathing(ctx context.Context, chatID, userID
 	}
 }
 
-// getMainMenuInline returns localized main menu keyboard
+// getMainMenuInline returns localized main menu keyboard.
 func (h *BreathingHandler) getMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
 	return &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{

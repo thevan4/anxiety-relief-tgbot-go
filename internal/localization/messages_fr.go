@@ -21,14 +21,16 @@ var messagesFR = Messages{
 *Avancées (5-15 min) :*
 🧘 Respiration guidée — différents schémas
 💪 Relaxation musculaire — relâcher la tension
-🏷️ Étiquetage des pensées — travailler l'anxiété`,
-	MenuBreathing: "🌬️ Respiration 2 min",
-	MenuGrounding: "🌿 Ancrage",
-	MenuGuided:    "🧘 Guidée",
-	MenuPMR:       "💪 Muscles",
-	MenuThought:   "🏷️ Pensées",
-	MenuInfo:      "ℹ️ Info",
-	MenuLang:      "🌐 Langue",
+🏷️ Étiquetage des pensées — travailler l'anxiété
+🌅 Visualisation — relaxation par l'imagination`,
+	MenuBreathing:     "🌬️ Respiration 2 min",
+	MenuGrounding:     "🌿 Ancrage",
+	MenuGuided:        "🧘 Guidée",
+	MenuPMR:           "💪 Muscles",
+	MenuThought:       "🏷️ Pensées",
+	MenuVisualization: "🌅 Visualisation",
+	MenuInfo:          "ℹ️ Info",
+	MenuLang:          "🌐 Langue",
 
 	// Breathing
 	BreathingIntro: `🌬️ *Respiration de 2 minutes*
@@ -167,6 +169,95 @@ L'étiquetage des pensées aide à reconnaître les distorsions cognitives et à
 
 Choisissez une technique dans le menu ci-dessous.`,
 
+	// Visualization
+	VisualizationIntro: `🌅 *Visualisation paisible*
+
+Une technique de relaxation par l'imagination de lieux paisibles.
+
+*Choisissez une scène :*
+
+`,
+	VisualizationStopped: `🌅 *Visualisation paisible*
+
+Exercice arrêté. Choisissez une autre scène :
+
+`,
+	VisualizationCompletion: `✅ *Excellent !*
+
+Vous avez terminé la visualisation "%s".
+
+Revenez lentement à la réalité. Bougez vos doigts, inspirez profondément et ouvrez les yeux.
+
+Comment vous sentez-vous ?`,
+	VisualizationThanks: `✨ *Merci pour la pratique !*
+
+La visualisation est une technique puissante pour réduire le stress et l'anxiété. La pratique régulière renforce l'effet.
+
+Choisissez une technique dans le menu ci-dessous.`,
+	VisualizationAtmosphere: "Atmosphère",
+	VisualizationCloseEyes:  "Fermez les yeux et plongez dans cette scène...",
+	VisualizationStepFmt:    "Étape %d/%d",
+
+	// Scene: Mountain
+	SceneMountainName:  "Sommet de montagne",
+	SceneMountainDesc:  "Lever de soleil au sommet de la montagne",
+	SceneMountainAtmo:  "Air frais et pur de la montagne",
+	SceneMountainStep1: "Fermez les yeux et imaginez-vous debout sur un sommet de montagne tôt le matin.",
+	SceneMountainStep2: "Le silence vous entoure. Vous sentez l'air frais de la montagne sur votre peau.",
+	SceneMountainStep3: "Le soleil apparaît à l'horizon, peignant le ciel de teintes roses et orangées.",
+	SceneMountainStep4: "Les rayons chauds du soleil touchent doucement votre visage.",
+	SceneMountainStep5: "Vous voyez des étendues infinies en dessous. Tout semble si petit et lointain.",
+	SceneMountainStep6: "Prenez une grande inspiration d'air pur de montagne. Ressentez le calme.",
+	SceneMountainStep7: "Vous êtes en sécurité. Ce moment n'appartient qu'à vous.",
+
+	// Scene: Forest
+	SceneForestName:  "Clairière forestière",
+	SceneForestDesc:  "Une clairière tranquille parmi les arbres anciens",
+	SceneForestAtmo:  "Lumière chaude du soleil, bruissement des feuilles",
+	SceneForestStep1: "Imaginez-vous dans une clairière confortable au milieu d'une forêt ancienne.",
+	SceneForestStep2: "La lumière du soleil filtre à travers la canopée, créant des motifs sur l'herbe.",
+	SceneForestStep3: "Vous entendez les oiseaux chanter et les feuilles bruisser dans le vent.",
+	SceneForestStep4: "Mousse douce sous vos pieds. Vous vous sentez connecté à la terre.",
+	SceneForestStep5: "Le parfum des pins et des fleurs emplit l'air.",
+	SceneForestStep6: "Asseyez-vous sur l'herbe chaude. Sentez la nature vous envelopper.",
+	SceneForestStep7: "Il n'y a pas de précipitation ici. Seulement la paix et l'harmonie avec la nature.",
+
+	// Scene: Beach
+	SceneBeachName:  "Plage océanique",
+	SceneBeachDesc:  "Une plage calme avec du sable chaud",
+	SceneBeachAtmo:  "Brise marine, bruit des vagues",
+	SceneBeachStep1: "Vous marchez pieds nus sur le sable chaud le long de l'océan.",
+	SceneBeachStep2: "Les vagues roulent doucement sur le rivage et se retirent.",
+	SceneBeachStep3: "Une légère brise marine rafraîchit votre visage et joue avec vos cheveux.",
+	SceneBeachStep4: "Vous sentez la chaleur du sable sous vos pieds à chaque pas.",
+	SceneBeachStep5: "Des mouettes volent au loin. Leurs cris se mêlent au bruit des vagues.",
+	SceneBeachStep6: "Arrêtez-vous et regardez l'horizon infini.",
+	SceneBeachStep7: "L'océan est infini, tout comme vos possibilités. Ressentez la liberté.",
+
+	// Scene: Garden
+	SceneGardenName:  "Jardin fleuri",
+	SceneGardenDesc:  "Un beau jardin avec des fleurs et une fontaine",
+	SceneGardenAtmo:  "Parfum des fleurs, murmure de l'eau",
+	SceneGardenStep1: "Vous entrez dans un magnifique jardin plein de plantes fleuries.",
+	SceneGardenStep2: "Roses, lavande, jasmin — leurs parfums se mélangent dans l'air.",
+	SceneGardenStep3: "Une petite fontaine murmure au centre du jardin.",
+	SceneGardenStep4: "Des papillons voltigent entre les fleurs. Tout est plein de vie.",
+	SceneGardenStep5: "Vous vous asseyez sur un banc près de la fontaine et fermez les yeux.",
+	SceneGardenStep6: "Le son de l'eau qui coule apaise votre esprit.",
+	SceneGardenStep7: "Ce jardin est votre lieu sûr. Vous pouvez y revenir à tout moment.",
+
+	// Scene: Starry
+	SceneStarryName:  "Nuit étoilée",
+	SceneStarryDesc:  "Une prairie nocturne sous le ciel étoilé",
+	SceneStarryAtmo:  "Air frais de la nuit, silence",
+	SceneStarryStep1: "Vous êtes allongé sur l'herbe douce par une chaude nuit d'été.",
+	SceneStarryStep2: "Au-dessus de vous, un ciel infini parsemé de millions d'étoiles.",
+	SceneStarryStep3: "La Voie lactée s'étend à travers le ciel — une rivière de lumière.",
+	SceneStarryStep4: "L'air nocturne est agréablement frais. Vous entendez les grillons chanter.",
+	SceneStarryStep5: "Chaque étoile est un soleil dans une galaxie lointaine.",
+	SceneStarryStep6: "Ressentez votre place dans l'univers. Vous faites partie de quelque chose d'immense.",
+	SceneStarryStep7: "Vos soucis se dissolvent dans l'infini de l'espace.",
+
 	// Info
 	InfoText: `ℹ️ *À propos du bot*
 
@@ -178,6 +269,7 @@ Ce bot aide à gérer l'anxiété avec des techniques basées sur des preuves.
 • 🧘 Respiration guidée — différents schémas
 • 💪 Relaxation musculaire — relâcher la tension
 • 🏷️ Étiquetage des pensées — travailler l'anxiété
+• 🌅 Visualisation — relaxation par l'imagination
 
 *Confidentialité :*
 Le bot ne stocke pas de données personnelles. Les sessions sont automatiquement supprimées.

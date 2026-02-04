@@ -19,6 +19,7 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/messages"
 )
 
+// GuidedBreathingHandler handles advanced breathing patterns with different timings.
 type GuidedBreathingHandler struct {
 	ctx            context.Context
 	bot            *telego.Bot
@@ -29,6 +30,7 @@ type GuidedBreathingHandler struct {
 	sessionManager *session.SessionManager
 }
 
+// NewGuidedBreathingHandler creates a new guided breathing exercise handler.
 func NewGuidedBreathingHandler(
 	ctx context.Context,
 	bot *telego.Bot,
@@ -81,8 +83,8 @@ func (h *GuidedBreathingHandler) getMainMenuInline(m localization.Messages) *tel
 	}
 }
 
-// HandleMenuSelect handles selection from main menu
-func (h *GuidedBreathingHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleMenuSelect handles selection from main menu.
+func (h *GuidedBreathingHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		return nil
@@ -112,8 +114,8 @@ func (h *GuidedBreathingHandler) HandleMenuSelect(ctx *th.Context, cb telego.Cal
 	return nil
 }
 
-// HandleCallback handles guided breathing callbacks
-func (h *GuidedBreathingHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleCallback handles guided breathing callbacks.
+func (h *GuidedBreathingHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")

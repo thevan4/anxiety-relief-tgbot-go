@@ -1,3 +1,4 @@
+// Package telegram implements the Telegram bot handlers and routing.
 package telegram
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/handlers"
 )
 
+// BotHandler coordinates all bot message handling and routing.
 type BotHandler struct {
 	ctx            context.Context
 	cancelFunc     context.CancelFunc
@@ -26,6 +28,7 @@ type BotHandler struct {
 	sessionManager *session.SessionManager
 }
 
+// MustNewBotHandler creates a new bot handler or panics on error.
 func MustNewBotHandler(
 	ctx context.Context,
 	token string,
@@ -165,7 +168,7 @@ func (bh *BotHandler) registerStartHandler() {
 
 func (bh *BotHandler) registerMenuCallbackHandler() {
 	// Handle info
-	bh.handler.HandleCallbackQuery(func(ctx *th.Context, cb telego.CallbackQuery) error {
+	bh.handler.HandleCallbackQuery(func(_ *th.Context, cb telego.CallbackQuery) error {
 		msg, ok := cb.Message.(*telego.Message)
 		if !ok || msg == nil {
 			return nil
@@ -188,7 +191,7 @@ func (bh *BotHandler) registerMenuCallbackHandler() {
 	}, th.CallbackDataEqual("menu_info"))
 
 	// Handle back to menu
-	bh.handler.HandleCallbackQuery(func(ctx *th.Context, cb telego.CallbackQuery) error {
+	bh.handler.HandleCallbackQuery(func(_ *th.Context, cb telego.CallbackQuery) error {
 		msg, ok := cb.Message.(*telego.Message)
 		if !ok || msg == nil {
 			return nil
@@ -313,9 +316,9 @@ func (bh *BotHandler) registerLangHandler() {
 	bh.handler.HandleCallbackQuery(langHandler.HandleMenuSelect, th.CallbackDataEqual("menu_lang"))
 }
 
-// registerCatchAllHandler handles any unrecognized messages
+// registerCatchAllHandler handles any unrecognized messages.
 func (bh *BotHandler) registerCatchAllHandler() {
-	bh.handler.HandleMessage(func(ctx *th.Context, message telego.Message) error {
+	bh.handler.HandleMessage(func(_ *th.Context, message telego.Message) error {
 		if message.From == nil {
 			return nil
 		}
@@ -346,7 +349,7 @@ func (bh *BotHandler) registerCatchAllHandler() {
 	}, th.AnyMessage())
 }
 
-// deleteMessage silently deletes a message
+// deleteMessage silently deletes a message.
 func (bh *BotHandler) deleteMessage(chatID int64, messageID int) {
 	if err := bh.bot.DeleteMessage(bh.ctx, &telego.DeleteMessageParams{
 		ChatID:    tu.ID(chatID),
@@ -365,6 +368,7 @@ func (bh *BotHandler) Start() {
 	}
 }
 
+// Stop stops the bot handler gracefully.
 func (bh *BotHandler) Stop() {
 	if err := bh.handler.Stop(); err != nil {
 		log.Printf("ERROR: bot handler stop: %v", err)

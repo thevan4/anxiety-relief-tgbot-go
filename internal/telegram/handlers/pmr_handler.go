@@ -19,6 +19,7 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/messages"
 )
 
+// PMRHandler handles Progressive Muscle Relaxation exercise.
 type PMRHandler struct {
 	ctx            context.Context
 	bot            *telego.Bot
@@ -29,6 +30,7 @@ type PMRHandler struct {
 	sessionManager *session.SessionManager
 }
 
+// NewPMRHandler creates a new PMR exercise handler.
 func NewPMRHandler(
 	ctx context.Context,
 	bot *telego.Bot,
@@ -81,8 +83,8 @@ func (h *PMRHandler) getMainMenuInline(m localization.Messages) *telego.InlineKe
 	}
 }
 
-// HandleMenuSelect handles selection from main menu
-func (h *PMRHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleMenuSelect handles selection from main menu.
+func (h *PMRHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		return nil
@@ -112,8 +114,8 @@ func (h *PMRHandler) HandleMenuSelect(ctx *th.Context, cb telego.CallbackQuery) 
 	return nil
 }
 
-// HandleCallback handles PMR exercise callbacks
-func (h *PMRHandler) HandleCallback(ctx *th.Context, cb telego.CallbackQuery) error {
+// HandleCallback handles PMR exercise callbacks.
+func (h *PMRHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery) error {
 	msg, ok := cb.Message.(*telego.Message)
 	if !ok || msg == nil {
 		log.Printf("ERROR: callback query message is inaccessible")
@@ -222,6 +224,14 @@ func (h *PMRHandler) runMuscleGroup(ctx context.Context, chatID, userID int64, m
 	h.runMuscleGroup(ctx, chatID, userID, messageID, muscleIdx+1)
 }
 
+func (h *PMRHandler) checkPMRRunning(ctx context.Context, userID int64) bool {
+	if ctx.Err() != nil {
+		return false
+	}
+	state, err := h.sessionStorage.GetState(ctx, userID)
+	return err == nil && state == session.StatePMRRunning
+}
+
 func (h *PMRHandler) runPhaseWithProgress(
 	ctx context.Context, chatID, userID int64, messageID int,
 	muscle techniques.MuscleGroup, totalGroups int, isTense bool, duration time.Duration,
@@ -236,12 +246,7 @@ func (h *PMRHandler) runPhaseWithProgress(
 	}
 
 	for elapsed := 0; elapsed <= totalSeconds; elapsed++ {
-		if ctx.Err() != nil {
-			return false
-		}
-
-		state, err := h.sessionStorage.GetState(ctx, userID)
-		if err != nil || state != session.StatePMRRunning {
+		if !h.checkPMRRunning(ctx, userID) {
 			return false
 		}
 

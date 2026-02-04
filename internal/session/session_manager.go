@@ -12,6 +12,7 @@ type SessionManager struct {
 	cancels map[int64]context.CancelFunc
 }
 
+// NewSessionManager creates a new session manager instance.
 func NewSessionManager() *SessionManager {
 	return &SessionManager{
 		cancels: make(map[int64]context.CancelFunc),

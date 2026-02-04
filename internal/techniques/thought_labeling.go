@@ -1,5 +1,6 @@
 package techniques
 
+// ThoughtCategory represents a category of anxious thoughts for labeling.
 type ThoughtCategory struct {
 	ID          string
 	Name        string
@@ -8,6 +9,7 @@ type ThoughtCategory struct {
 	Example     string
 }
 
+// GetThoughtCategories returns the list of thought categories for labeling exercise.
 func GetThoughtCategories() []ThoughtCategory {
 	return buildThoughtCategories()
 }
@@ -73,11 +75,13 @@ func getThoughtCategoryData() []categoryData {
 	}
 }
 
+// LabelingSession tracks user's progress in thought labeling exercise.
 type LabelingSession struct {
 	ThoughtsLabeled int
 	Categories      map[string]int
 }
 
+// NewLabelingSession creates a new thought labeling session tracker.
 func NewLabelingSession() *LabelingSession {
 	return &LabelingSession{
 		ThoughtsLabeled: 0,
@@ -85,11 +89,13 @@ func NewLabelingSession() *LabelingSession {
 	}
 }
 
+// AddLabel records a labeled thought in the session.
 func (s *LabelingSession) AddLabel(categoryID string) {
 	s.ThoughtsLabeled++
 	s.Categories[categoryID]++
 }
 
+// GetMostFrequent returns the most frequently labeled thought category.
 func (s *LabelingSession) GetMostFrequent() string {
 	maxCount := 0
 	mostFrequent := ""

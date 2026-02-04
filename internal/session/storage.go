@@ -4,6 +4,7 @@ import (
 	"context"
 )
 
+// Storage defines the interface for persisting user session data.
 type Storage interface {
 	SetState(ctx context.Context, userID int64, state State) error
 	GetState(ctx context.Context, userID int64) (State, error)
