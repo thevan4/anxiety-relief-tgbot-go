@@ -65,6 +65,21 @@ func (r *RedisStorage) GetMessageID(ctx context.Context, userID int64) (int, err
 	return result, err
 }
 
+func (r *RedisStorage) SetLang(ctx context.Context, userID int64, lang string) error {
+	key := fmt.Sprintf("lang:%d", userID)
+	// Language preference is stored permanently (no TTL)
+	return r.client.Set(ctx, key, lang, 0).Err()
+}
+
+func (r *RedisStorage) GetLang(ctx context.Context, userID int64) (string, error) {
+	key := fmt.Sprintf("lang:%d", userID)
+	result, err := r.client.Get(ctx, key).Result()
+	if errors.Is(err, redis.Nil) {
+		return "", nil
+	}
+	return result, err
+}
+
 func (r *RedisStorage) Close() error {
 	return r.client.Close()
 }

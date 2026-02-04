@@ -11,6 +11,7 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/localization"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
@@ -21,6 +22,7 @@ import (
 type GuidedBreathingHandler struct {
 	ctx            context.Context
 	bot            *telego.Bot
+	localizer      *localization.Localizer
 	rateLimiter    rate_limiter.Limiter
 	statistics     statistic.Stats
 	sessionStorage session.Storage
@@ -30,6 +32,7 @@ type GuidedBreathingHandler struct {
 func NewGuidedBreathingHandler(
 	ctx context.Context,
 	bot *telego.Bot,
+	localizer *localization.Localizer,
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
@@ -38,10 +41,43 @@ func NewGuidedBreathingHandler(
 	return &GuidedBreathingHandler{
 		ctx:            ctx,
 		bot:            bot,
+		localizer:      localizer,
 		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
 		sessionManager: sessionManager,
+	}
+}
+
+// getLang returns user's language from session or default.
+func (h *GuidedBreathingHandler) getLang(ctx context.Context, userID int64) string {
+	lang, err := h.sessionStorage.GetLang(ctx, userID)
+	if err != nil || lang == "" {
+		return localization.DefaultLang
+	}
+	return lang
+}
+
+// getMainMenuInline returns localized main menu keyboard.
+func (h *GuidedBreathingHandler) getMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
+	return &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.MenuBreathing, CallbackData: "menu_breathing"},
+				{Text: m.MenuGrounding, CallbackData: "menu_grounding"},
+			},
+			{
+				{Text: m.MenuGuided, CallbackData: "menu_guided"},
+				{Text: m.MenuPMR, CallbackData: "menu_pmr"},
+			},
+			{
+				{Text: m.MenuThought, CallbackData: "menu_thought"},
+				{Text: m.MenuInfo, CallbackData: "menu_info"},
+			},
+			{
+				{Text: m.MenuLang, CallbackData: "menu_lang"},
+			},
+		},
 	}
 }
 
@@ -123,10 +159,46 @@ func (h *GuidedBreathingHandler) processCallback(chatID, userID int64, messageID
 	}
 }
 
-func (h *GuidedBreathingHandler) buildPatternsInfo(patterns []techniques.BreathingPattern) string {
+// patternEmojis are fixed emojis for each breathing pattern.
+var patternEmojis = []string{"📦", "😴", "⚡", "🚀"}
+
+// getLocalizedPattern returns localized name and description for pattern by index.
+func (h *GuidedBreathingHandler) getLocalizedPattern(idx int, m localization.Messages) (string, string) {
+	switch idx {
+	case 0:
+		return m.PatternBoxName, m.PatternBoxDesc
+	case 1:
+		return m.PatternRelaxingName, m.PatternRelaxingDesc
+	case 2:
+		return m.PatternEnergizingName, m.PatternEnergizingDesc
+	case 3:
+		return m.PatternQuickName, m.PatternQuickDesc
+	default:
+		return "", ""
+	}
+}
+
+// getLocalizedPhaseName returns localized phase name.
+func (h *GuidedBreathingHandler) getLocalizedPhaseName(phaseName string, m localization.Messages) string {
+	switch phaseName {
+	case "Вдох через нос":
+		return m.BreathingInhale
+	case "Задержка":
+		return m.BreathingHold
+	case "Выдох через рот":
+		return m.BreathingExhale
+	case "Пауза":
+		return m.BreathingPause
+	default:
+		return phaseName
+	}
+}
+
+func (h *GuidedBreathingHandler) buildPatternsInfo(m localization.Messages) string {
 	var info string
-	for _, p := range patterns {
-		info += fmt.Sprintf("%s *%s*\n_%s_\n\n", p.Emoji, p.Name, p.Description)
+	for i := 0; i < len(patternEmojis); i++ {
+		name, desc := h.getLocalizedPattern(i, m)
+		info += fmt.Sprintf("%s *%s*\n_%s_\n\n", patternEmojis[i], name, desc)
 	}
 	return info
 }
@@ -136,10 +208,10 @@ func (h *GuidedBreathingHandler) showPatternSelection(ctx context.Context, chatI
 		log.Printf("ERROR: set state guided breathing select: %v", err)
 	}
 
-	patterns := techniques.GetBreathingPatterns()
-	text := messages.GuidedBreathingIntro(h.buildPatternsInfo(patterns))
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	text := m.GuidedIntro + h.buildPatternsInfo(m)
 
-	buttons := h.buildPatternButtons(patterns)
+	buttons := h.buildPatternButtons(m)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
@@ -153,17 +225,16 @@ func (h *GuidedBreathingHandler) showPatternSelection(ctx context.Context, chatI
 	}
 }
 
-func (h *GuidedBreathingHandler) buildPatternButtons(
-	patterns []techniques.BreathingPattern,
-) [][]telego.InlineKeyboardButton {
+func (h *GuidedBreathingHandler) buildPatternButtons(m localization.Messages) [][]telego.InlineKeyboardButton {
 	var buttons [][]telego.InlineKeyboardButton
-	for i, p := range patterns {
+	for i := 0; i < len(patternEmojis); i++ {
+		name, _ := h.getLocalizedPattern(i, m)
 		buttons = append(buttons, []telego.InlineKeyboardButton{
-			{Text: fmt.Sprintf("%s %s", p.Emoji, p.Name), CallbackData: fmt.Sprintf("gbreath_pattern_%d", i)},
+			{Text: fmt.Sprintf("%s %s", patternEmojis[i], name), CallbackData: fmt.Sprintf("gbreath_pattern_%d", i)},
 		})
 	}
 	buttons = append(buttons, []telego.InlineKeyboardButton{
-		{Text: messages.Cancel, CallbackData: "gbreath_cancel"},
+		{Text: m.Back, CallbackData: "gbreath_cancel"},
 	})
 	return buttons
 }
@@ -181,7 +252,7 @@ func (h *GuidedBreathingHandler) startPattern(
 		log.Printf("ERROR: set state guided breathing running: %v", err)
 	}
 
-	if !h.runBreathingCycles(ctx, chatID, userID, messageID, pattern) {
+	if !h.runBreathingCycles(ctx, chatID, userID, messageID, pattern, patternIdx) {
 		return
 	}
 
@@ -189,13 +260,13 @@ func (h *GuidedBreathingHandler) startPattern(
 }
 
 func (h *GuidedBreathingHandler) runBreathingCycles(
-	ctx context.Context, chatID, userID int64, messageID int, pattern techniques.BreathingPattern,
+	ctx context.Context, chatID, userID int64, messageID int, pattern techniques.BreathingPattern, patternIdx int,
 ) bool {
 	phases := techniques.GetBreathingPhases(pattern)
 
 	for cycle := 1; cycle <= pattern.Cycles; cycle++ {
 		for _, phase := range phases {
-			if !h.runPhase(ctx, chatID, userID, messageID, pattern, cycle, phase) {
+			if !h.runPhase(ctx, chatID, userID, messageID, pattern, patternIdx, cycle, phase) {
 				return false
 			}
 		}
@@ -205,15 +276,20 @@ func (h *GuidedBreathingHandler) runBreathingCycles(
 
 func (h *GuidedBreathingHandler) runPhase(
 	ctx context.Context, chatID, userID int64, messageID int,
-	pattern techniques.BreathingPattern, cycle int, phase techniques.BreathingPhase,
+	pattern techniques.BreathingPattern, patternIdx, cycle int, phase techniques.BreathingPhase,
 ) bool {
 	totalSeconds := int(phase.Duration.Seconds())
+	m := h.localizer.Get(h.getLang(ctx, userID))
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: messages.Stop, CallbackData: "gbreath_stop"}},
+			{{Text: m.Stop, CallbackData: "gbreath_stop"}},
 		},
 	}
+
+	patternName, _ := h.getLocalizedPattern(patternIdx, m)
+	phaseName := h.getLocalizedPhaseName(phase.Name, m)
+	patternEmoji := patternEmojis[patternIdx]
 
 	for elapsed := 0; elapsed <= totalSeconds; elapsed++ {
 		if ctx.Err() != nil {
@@ -225,10 +301,8 @@ func (h *GuidedBreathingHandler) runPhase(
 			return false
 		}
 
-		text := messages.GuidedBreathingPhase(
-			pattern.Emoji, pattern.Name, cycle, pattern.Cycles,
-			phase.Emoji, phase.Name, elapsed, totalSeconds,
-		)
+		progress := messages.TimerCountdown(elapsed, totalSeconds)
+		text := m.FormatGuidedPhase(patternEmoji, patternName, cycle, pattern.Cycles, phase.Emoji, phaseName, progress)
 
 		if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 			ChatID:      tu.ID(chatID),
@@ -261,16 +335,16 @@ func (h *GuidedBreathingHandler) sendCompletion(
 		return
 	}
 
-	patterns := techniques.GetBreathingPatterns()
-	pattern := patterns[patternIdx]
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	patternName, _ := h.getLocalizedPattern(patternIdx, m)
 
-	text := messages.GuidedBreathingCompletion(pattern.Name)
+	text := fmt.Sprintf(m.GuidedCompletion, patternName)
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: messages.FeelBetter, CallbackData: "gbreath_complete"},
-				{Text: messages.Repeat, CallbackData: fmt.Sprintf("gbreath_pattern_%d", patternIdx)},
+				{Text: m.FeelBetter, CallbackData: "gbreath_complete"},
+				{Text: m.Repeat, CallbackData: fmt.Sprintf("gbreath_pattern_%d", patternIdx)},
 			},
 		},
 	}
@@ -291,10 +365,10 @@ func (h *GuidedBreathingHandler) stopBreathing(ctx context.Context, chatID, user
 		log.Printf("ERROR: set state guided breathing select: %v", err)
 	}
 
-	patterns := techniques.GetBreathingPatterns()
-	text := messages.GuidedBreathingStoppedIntro(h.buildPatternsInfo(patterns))
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	text := m.GuidedStopped + h.buildPatternsInfo(m)
 
-	buttons := h.buildPatternButtons(patterns)
+	buttons := h.buildPatternButtons(m)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
@@ -313,12 +387,14 @@ func (h *GuidedBreathingHandler) completeBreathing(ctx context.Context, chatID, 
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        messages.GuidedBreathingThanks,
+		Text:        m.GuidedThanks,
 		ParseMode:   "Markdown",
-		ReplyMarkup: GetMainMenuInline(),
+		ReplyMarkup: h.getMainMenuInline(m),
 	}); err != nil {
 		log.Printf("ERROR: edit guided breathing complete: %v", err)
 	}
@@ -329,12 +405,14 @@ func (h *GuidedBreathingHandler) cancelBreathing(ctx context.Context, chatID, us
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        MainMenuText,
+		Text:        m.MainMenuText,
 		ParseMode:   "Markdown",
-		ReplyMarkup: GetMainMenuInline(),
+		ReplyMarkup: h.getMainMenuInline(m),
 	}); err != nil {
 		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
 			log.Printf("ERROR: edit guided breathing cancel: %v", err)

@@ -10,6 +10,7 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/localization"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
@@ -25,6 +26,7 @@ const (
 type VisualizationHandler struct {
 	ctx            context.Context
 	bot            *telego.Bot
+	localizer      *localization.Localizer
 	rateLimiter    rate_limiter.Limiter
 	statistics     statistic.Stats
 	sessionStorage session.Storage
@@ -34,6 +36,7 @@ type VisualizationHandler struct {
 func NewVisualizationHandler(
 	ctx context.Context,
 	bot *telego.Bot,
+	localizer *localization.Localizer,
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
@@ -42,10 +45,43 @@ func NewVisualizationHandler(
 	return &VisualizationHandler{
 		ctx:            ctx,
 		bot:            bot,
+		localizer:      localizer,
 		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
 		sessionManager: sessionManager,
+	}
+}
+
+// getLang returns user's language from session or default.
+func (h *VisualizationHandler) getLang(ctx context.Context, userID int64) string {
+	lang, err := h.sessionStorage.GetLang(ctx, userID)
+	if err != nil || lang == "" {
+		return localization.DefaultLang
+	}
+	return lang
+}
+
+// getMainMenuInline returns localized main menu keyboard.
+func (h *VisualizationHandler) getMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
+	return &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.MenuBreathing, CallbackData: "menu_breathing"},
+				{Text: m.MenuGrounding, CallbackData: "menu_grounding"},
+			},
+			{
+				{Text: m.MenuGuided, CallbackData: "menu_guided"},
+				{Text: m.MenuPMR, CallbackData: "menu_pmr"},
+			},
+			{
+				{Text: m.MenuThought, CallbackData: "menu_thought"},
+				{Text: m.MenuInfo, CallbackData: "menu_info"},
+			},
+			{
+				{Text: m.MenuLang, CallbackData: "menu_lang"},
+			},
+		},
 	}
 }
 
@@ -137,10 +173,11 @@ func (h *VisualizationHandler) showSceneSelection(ctx context.Context, chatID, u
 		log.Printf("ERROR: set state visualization select: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
 	scenes := techniques.GetVisualizationScenes()
 	text := messages.VisualizationIntro(h.buildScenesInfo(scenes))
 
-	buttons := h.buildSceneButtons(scenes)
+	buttons := h.buildSceneButtons(scenes, m)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
@@ -155,7 +192,7 @@ func (h *VisualizationHandler) showSceneSelection(ctx context.Context, chatID, u
 }
 
 func (h *VisualizationHandler) buildSceneButtons(
-	scenes []techniques.VisualizationScene,
+	scenes []techniques.VisualizationScene, m localization.Messages,
 ) [][]telego.InlineKeyboardButton {
 	var buttons [][]telego.InlineKeyboardButton
 	for _, scene := range scenes {
@@ -167,7 +204,7 @@ func (h *VisualizationHandler) buildSceneButtons(
 		})
 	}
 	buttons = append(buttons, []telego.InlineKeyboardButton{
-		{Text: messages.Cancel, CallbackData: "visual_cancel"},
+		{Text: m.Back, CallbackData: "visual_cancel"},
 	})
 	return buttons
 }
@@ -209,10 +246,11 @@ func (h *VisualizationHandler) showSceneIntro(
 	ctx context.Context, chatID, userID int64, messageID int, scene *techniques.VisualizationScene,
 ) bool {
 	totalSeconds := int(visualizationIntroDuration.Seconds())
+	m := h.localizer.Get(h.getLang(ctx, userID))
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: messages.Stop, CallbackData: "visual_stop"}},
+			{{Text: m.Stop, CallbackData: "visual_stop"}},
 		},
 	}
 
@@ -257,9 +295,11 @@ func (h *VisualizationHandler) showSceneIntro(
 func (h *VisualizationHandler) runSceneSteps(
 	ctx context.Context, chatID, userID int64, messageID int, scene *techniques.VisualizationScene,
 ) bool {
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: messages.Stop, CallbackData: "visual_stop"}},
+			{{Text: m.Stop, CallbackData: "visual_stop"}},
 		},
 	}
 
@@ -318,13 +358,14 @@ func (h *VisualizationHandler) sendCompletion(
 		return
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
 	text := messages.VisualizationCompletion(scene.Name)
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: messages.FeelBetter, CallbackData: "visual_complete"},
-				{Text: messages.Repeat, CallbackData: fmt.Sprintf("visual_scene_%s", sceneID)},
+				{Text: m.FeelBetter, CallbackData: "visual_complete"},
+				{Text: m.Repeat, CallbackData: fmt.Sprintf("visual_scene_%s", sceneID)},
 			},
 		},
 	}
@@ -345,10 +386,11 @@ func (h *VisualizationHandler) stopExercise(ctx context.Context, chatID, userID 
 		log.Printf("ERROR: set state visualization select: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
 	scenes := techniques.GetVisualizationScenes()
 	text := messages.VisualizationStoppedIntro(h.buildScenesInfo(scenes))
 
-	buttons := h.buildSceneButtons(scenes)
+	buttons := h.buildSceneButtons(scenes, m)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
@@ -367,12 +409,14 @@ func (h *VisualizationHandler) completeExercise(ctx context.Context, chatID, use
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
 		Text:        messages.VisualizationThanks,
 		ParseMode:   "Markdown",
-		ReplyMarkup: GetMainMenuInline(),
+		ReplyMarkup: h.getMainMenuInline(m),
 	}); err != nil {
 		log.Printf("ERROR: edit visualization complete: %v", err)
 	}
@@ -383,12 +427,14 @@ func (h *VisualizationHandler) cancelExercise(ctx context.Context, chatID, userI
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        MainMenuText,
+		Text:        m.MainMenuText,
 		ParseMode:   "Markdown",
-		ReplyMarkup: GetMainMenuInline(),
+		ReplyMarkup: h.getMainMenuInline(m),
 	}); err != nil {
 		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
 			log.Printf("ERROR: edit visualization cancel: %v", err)

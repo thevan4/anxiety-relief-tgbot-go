@@ -9,16 +9,17 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/localization"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/techniques"
-	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/messages"
 )
 
 type ThoughtLabelingHandler struct {
 	ctx            context.Context
 	bot            *telego.Bot
+	localizer      *localization.Localizer
 	rateLimiter    rate_limiter.Limiter
 	statistics     statistic.Stats
 	sessionStorage session.Storage
@@ -28,6 +29,7 @@ type ThoughtLabelingHandler struct {
 func NewThoughtLabelingHandler(
 	ctx context.Context,
 	bot *telego.Bot,
+	localizer *localization.Localizer,
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
@@ -36,10 +38,43 @@ func NewThoughtLabelingHandler(
 	return &ThoughtLabelingHandler{
 		ctx:            ctx,
 		bot:            bot,
+		localizer:      localizer,
 		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
 		sessionManager: sessionManager,
+	}
+}
+
+// getLang returns user's language from session or default.
+func (h *ThoughtLabelingHandler) getLang(ctx context.Context, userID int64) string {
+	lang, err := h.sessionStorage.GetLang(ctx, userID)
+	if err != nil || lang == "" {
+		return localization.DefaultLang
+	}
+	return lang
+}
+
+// getMainMenuInline returns localized main menu keyboard.
+func (h *ThoughtLabelingHandler) getMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
+	return &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.MenuBreathing, CallbackData: "menu_breathing"},
+				{Text: m.MenuGrounding, CallbackData: "menu_grounding"},
+			},
+			{
+				{Text: m.MenuGuided, CallbackData: "menu_guided"},
+				{Text: m.MenuPMR, CallbackData: "menu_pmr"},
+			},
+			{
+				{Text: m.MenuThought, CallbackData: "menu_thought"},
+				{Text: m.MenuInfo, CallbackData: "menu_info"},
+			},
+			{
+				{Text: m.MenuLang, CallbackData: "menu_lang"},
+			},
+		},
 	}
 }
 
@@ -120,11 +155,13 @@ func (h *ThoughtLabelingHandler) showIntro(ctx context.Context, chatID, userID i
 		log.Printf("ERROR: set state thought labeling active: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: messages.Start, CallbackData: "thought_start"},
-				{Text: messages.Cancel, CallbackData: "thought_cancel"},
+				{Text: m.Back, CallbackData: "thought_cancel"},
+				{Text: m.Start, CallbackData: "thought_start"},
 			},
 		},
 	}
@@ -132,7 +169,7 @@ func (h *ThoughtLabelingHandler) showIntro(ctx context.Context, chatID, userID i
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        messages.ThoughtLabelingIntro,
+		Text:        m.ThoughtIntro,
 		ParseMode:   "Markdown",
 		ReplyMarkup: keyboard,
 	}); err != nil {
@@ -150,16 +187,18 @@ func (h *ThoughtLabelingHandler) promptForThought(ctx context.Context, chatID, u
 		log.Printf("ERROR: set state thought labeling input: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: messages.Cancel, CallbackData: "thought_cancel"}},
+			{{Text: m.Back, CallbackData: "thought_cancel"}},
 		},
 	}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        messages.ThoughtLabelingPrompt,
+		Text:        m.ThoughtPrompt,
 		ParseMode:   "Markdown",
 		ReplyMarkup: keyboard,
 	}); err != nil {
@@ -182,10 +221,11 @@ func (h *ThoughtLabelingHandler) showCategories(ctx context.Context, chatID, use
 		log.Printf("ERROR: set state thought labeling category: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
 	categories := techniques.GetThoughtCategories()
-	text := messages.ThoughtLabelingCategories(thought)
+	text := fmt.Sprintf(m.ThoughtCategories, thought)
 
-	buttons := h.buildCategoryButtons(categories)
+	buttons := h.buildCategoryButtons(categories, m)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
@@ -200,7 +240,7 @@ func (h *ThoughtLabelingHandler) showCategories(ctx context.Context, chatID, use
 }
 
 func (h *ThoughtLabelingHandler) buildCategoryButtons(
-	categories []techniques.ThoughtCategory,
+	categories []techniques.ThoughtCategory, m localization.Messages,
 ) [][]telego.InlineKeyboardButton {
 	var buttons [][]telego.InlineKeyboardButton
 	row := []telego.InlineKeyboardButton{}
@@ -215,7 +255,7 @@ func (h *ThoughtLabelingHandler) buildCategoryButtons(
 		}
 	}
 	buttons = append(buttons, []telego.InlineKeyboardButton{
-		{Text: messages.Cancel, CallbackData: "thought_cancel"},
+		{Text: m.Back, CallbackData: "thought_cancel"},
 	})
 	return buttons
 }
@@ -239,13 +279,15 @@ func (h *ThoughtLabelingHandler) showCategoryInfo(
 		log.Printf("ERROR: set state thought labeling active: %v", err)
 	}
 
-	text := messages.ThoughtLabelingCategoryInfo(category.Emoji, category.Name, category.Description, category.Example)
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	text := fmt.Sprintf(m.ThoughtResult, category.Emoji, category.Name, category.Description, category.Example) +
+		"\n\n" + m.ThoughtCompletion
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: messages.AnotherThought, CallbackData: "thought_another"},
-				{Text: messages.Done, CallbackData: "thought_complete"},
+				{Text: m.Repeat, CallbackData: "thought_another"},
+				{Text: m.Done, CallbackData: "thought_complete"},
 			},
 		},
 	}
@@ -266,12 +308,14 @@ func (h *ThoughtLabelingHandler) completeExercise(ctx context.Context, chatID, u
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        messages.ThoughtLabelingThanks,
+		Text:        m.ThoughtThanks,
 		ParseMode:   "Markdown",
-		ReplyMarkup: GetMainMenuInline(),
+		ReplyMarkup: h.getMainMenuInline(m),
 	}); err != nil {
 		log.Printf("ERROR: edit thought complete: %v", err)
 	}
@@ -282,12 +326,14 @@ func (h *ThoughtLabelingHandler) cancelExercise(ctx context.Context, chatID, use
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        MainMenuText,
+		Text:        m.MainMenuText,
 		ParseMode:   "Markdown",
-		ReplyMarkup: GetMainMenuInline(),
+		ReplyMarkup: h.getMainMenuInline(m),
 	}); err != nil {
 		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
 			log.Printf("ERROR: edit thought cancel: %v", err)

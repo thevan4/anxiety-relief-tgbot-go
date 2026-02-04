@@ -7,6 +7,7 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/localization"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
@@ -18,6 +19,7 @@ type BotHandler struct {
 	cancelFunc     context.CancelFunc
 	bot            *telego.Bot
 	handler        *th.BotHandler
+	localizer      *localization.Localizer
 	rateLimiter    rate_limiter.Limiter
 	statistics     statistic.Stats
 	sessionStorage session.Storage
@@ -56,6 +58,7 @@ func MustNewBotHandler(
 		cancelFunc:     cancel,
 		bot:            bot,
 		handler:        botHandler,
+		localizer:      localization.NewLocalizer(),
 		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
@@ -72,6 +75,38 @@ func (bh *BotHandler) registerHandlers() {
 	bh.registerMenuCallbackHandler()
 	bh.registerTechniqueHandlers()
 	bh.registerCatchAllHandler() // Must be last!
+}
+
+// getLang returns user's language from session or default.
+func (bh *BotHandler) getLang(userID int64) string {
+	lang, err := bh.sessionStorage.GetLang(bh.ctx, userID)
+	if err != nil || lang == "" {
+		return localization.DefaultLang
+	}
+	return lang
+}
+
+// getMainMenuInline returns localized main menu keyboard.
+func (bh *BotHandler) getMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
+	return &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.MenuBreathing, CallbackData: "menu_breathing"},
+				{Text: m.MenuGrounding, CallbackData: "menu_grounding"},
+			},
+			{
+				{Text: m.MenuGuided, CallbackData: "menu_guided"},
+				{Text: m.MenuPMR, CallbackData: "menu_pmr"},
+			},
+			{
+				{Text: m.MenuThought, CallbackData: "menu_thought"},
+				{Text: m.MenuInfo, CallbackData: "menu_info"},
+			},
+			{
+				{Text: m.MenuLang, CallbackData: "menu_lang"},
+			},
+		},
+	}
 }
 
 func (bh *BotHandler) registerStartHandler() {
@@ -107,14 +142,13 @@ func (bh *BotHandler) registerStartHandler() {
 			message.From.IsBot,
 		)
 
-		welcomeText := `👋 Привет, *` + message.From.FirstName + `*!
-
-` + handlers.MainMenuText
+		m := bh.localizer.Get(bh.getLang(userID))
+		welcomeText := "👋 *" + message.From.FirstName + "*!\n\n" + m.MainMenuText
 
 		sentMsg, err := ctx.Bot().SendMessage(ctx, tu.Message(
 			tu.ID(chatID),
 			welcomeText,
-		).WithParseMode("Markdown").WithReplyMarkup(handlers.GetMainMenuInline()))
+		).WithParseMode("Markdown").WithReplyMarkup(bh.getMainMenuInline(m)))
 		if err != nil {
 			log.Printf("ERROR: send start message: %v", err)
 			return err
@@ -149,7 +183,7 @@ func (bh *BotHandler) registerMenuCallbackHandler() {
 			return bh.ctx.Err()
 		}
 
-		bh.showInfo(chatID, messageID)
+		bh.showInfo(chatID, cb.From.ID, messageID)
 		return nil
 	}, th.CallbackDataEqual("menu_info"))
 
@@ -172,19 +206,20 @@ func (bh *BotHandler) registerMenuCallbackHandler() {
 			return bh.ctx.Err()
 		}
 
-		bh.showMainMenu(chatID, messageID)
+		bh.showMainMenu(chatID, cb.From.ID, messageID)
 		return nil
 	}, th.CallbackDataEqual("menu_back"))
-
 }
 
-func (bh *BotHandler) showMainMenu(chatID int64, messageID int) {
+func (bh *BotHandler) showMainMenu(chatID, userID int64, messageID int) {
+	m := bh.localizer.Get(bh.getLang(userID))
+
 	if _, err := bh.bot.EditMessageText(bh.ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        handlers.MainMenuText,
+		Text:        m.MainMenuText,
 		ParseMode:   "Markdown",
-		ReplyMarkup: handlers.GetMainMenuInline(),
+		ReplyMarkup: bh.getMainMenuInline(m),
 	}); err != nil {
 		if !handlers.HandleEditError(bh.ctx, bh.bot, err, chatID, messageID) {
 			log.Printf("ERROR: edit to main menu: %v", err)
@@ -192,25 +227,19 @@ func (bh *BotHandler) showMainMenu(chatID int64, messageID int) {
 	}
 }
 
-func (bh *BotHandler) showInfo(chatID int64, messageID int) {
-	infoText := `ℹ️ *О боте AnxietyHelp*
-
-Бот предоставляет научно обоснованные техники для снижения тревожности.
-
-💡 *Совет:* Практикуйте регулярно для лучшего эффекта.
-
-⚠️ При постоянной тревоге обратитесь к специалисту.`
+func (bh *BotHandler) showInfo(chatID, userID int64, messageID int) {
+	m := bh.localizer.Get(bh.getLang(userID))
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: "🏠 В меню", CallbackData: "menu_back"}},
+			{{Text: m.BackToMenu, CallbackData: "menu_back"}},
 		},
 	}
 
 	if _, err := bh.bot.EditMessageText(bh.ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        infoText,
+		Text:        m.InfoText,
 		ParseMode:   "Markdown",
 		ReplyMarkup: keyboard,
 	}); err != nil {
@@ -225,11 +254,12 @@ func (bh *BotHandler) registerTechniqueHandlers() {
 	bh.registerPMRHandler()
 	bh.registerThoughtLabelingHandler()
 	bh.registerVisualizationHandler()
+	bh.registerLangHandler()
 }
 
 func (bh *BotHandler) registerBreathingHandler() {
 	breathingHandler := handlers.NewBreathingHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
+		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(breathingHandler.HandleCallback, th.CallbackDataPrefix("breathing_"))
 	bh.handler.HandleCallbackQuery(breathingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_breathing"))
@@ -237,7 +267,7 @@ func (bh *BotHandler) registerBreathingHandler() {
 
 func (bh *BotHandler) registerGroundingHandler() {
 	groundingHandler := handlers.NewGroundingHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
+		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(groundingHandler.HandleCallback, th.CallbackDataPrefix("grounding_"))
 	bh.handler.HandleCallbackQuery(groundingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_grounding"))
@@ -245,7 +275,7 @@ func (bh *BotHandler) registerGroundingHandler() {
 
 func (bh *BotHandler) registerGuidedBreathingHandler() {
 	guidedBreathingHandler := handlers.NewGuidedBreathingHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
+		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(guidedBreathingHandler.HandleCallback, th.CallbackDataPrefix("gbreath_"))
 	bh.handler.HandleCallbackQuery(guidedBreathingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_guided"))
@@ -253,7 +283,7 @@ func (bh *BotHandler) registerGuidedBreathingHandler() {
 
 func (bh *BotHandler) registerPMRHandler() {
 	pmrHandler := handlers.NewPMRHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
+		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(pmrHandler.HandleCallback, th.CallbackDataPrefix("pmr_"))
 	bh.handler.HandleCallbackQuery(pmrHandler.HandleMenuSelect, th.CallbackDataEqual("menu_pmr"))
@@ -261,7 +291,7 @@ func (bh *BotHandler) registerPMRHandler() {
 
 func (bh *BotHandler) registerThoughtLabelingHandler() {
 	thoughtLabelingHandler := handlers.NewThoughtLabelingHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
+		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(thoughtLabelingHandler.HandleCallback, th.CallbackDataPrefix("thought_"))
 	bh.handler.HandleCallbackQuery(thoughtLabelingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_thought"))
@@ -269,10 +299,18 @@ func (bh *BotHandler) registerThoughtLabelingHandler() {
 
 func (bh *BotHandler) registerVisualizationHandler() {
 	visualizationHandler := handlers.NewVisualizationHandler(
-		bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
+		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 	)
 	bh.handler.HandleCallbackQuery(visualizationHandler.HandleCallback, th.CallbackDataPrefix("visual_"))
 	bh.handler.HandleCallbackQuery(visualizationHandler.HandleMenuSelect, th.CallbackDataEqual("menu_visual"))
+}
+
+func (bh *BotHandler) registerLangHandler() {
+	langHandler := handlers.NewLangHandler(
+		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics, bh.sessionStorage,
+	)
+	bh.handler.HandleCallbackQuery(langHandler.HandleCallback, th.CallbackDataPrefix("lang_"))
+	bh.handler.HandleCallbackQuery(langHandler.HandleMenuSelect, th.CallbackDataEqual("menu_lang"))
 }
 
 // registerCatchAllHandler handles any unrecognized messages
@@ -295,7 +333,7 @@ func (bh *BotHandler) registerCatchAllHandler() {
 
 				// Process thought input
 				thoughtHandler := handlers.NewThoughtLabelingHandler(
-					bh.ctx, bh.bot, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
+					bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics, bh.sessionStorage, bh.sessionManager,
 				)
 				thoughtHandler.ProcessThoughtInput(chatID, userID, botMessageID, message.Text)
 				return nil

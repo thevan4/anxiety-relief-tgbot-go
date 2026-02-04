@@ -20,8 +20,6 @@ _%s_
 Закройте глаза и погрузитесь в эту сцену...`, emoji, name, description, atmosphere)
 }
 
-const visualizationProgressBarWidth = 10
-
 // VisualizationStep returns formatted text for visualization step (legacy).
 func VisualizationStep(emoji, name string, stepNum, totalSteps int, instruction string) string {
 	return fmt.Sprintf(`%s *%s*
@@ -31,21 +29,21 @@ func VisualizationStep(emoji, name string, stepNum, totalSteps int, instruction 
 %s`, emoji, name, stepNum, totalSteps, instruction)
 }
 
-// VisualizationStepWithProgress returns formatted text for visualization step with progress bar.
+// VisualizationStepWithProgress returns formatted text for visualization step with timer countdown.
 func VisualizationStepWithProgress(emoji, name string, stepNum, totalSteps int, instruction string, elapsed, totalSec int) string {
-	progress := ProgressBar(elapsed, totalSec, visualizationProgressBarWidth)
+	timer := TimerCountdown(elapsed, totalSec)
 	return fmt.Sprintf(`%s *%s*
 
 *Шаг %d/%d*
 
 %s
 
-%s`, emoji, name, stepNum, totalSteps, instruction, progress)
+%s`, emoji, name, stepNum, totalSteps, instruction, timer)
 }
 
-// VisualizationIntroWithProgress returns formatted text for scene intro with progress bar.
+// VisualizationIntroWithProgress returns formatted text for scene intro with timer countdown.
 func VisualizationIntroWithProgress(emoji, name, description, atmosphere string, elapsed, totalSec int) string {
-	progress := ProgressBar(elapsed, totalSec, visualizationProgressBarWidth)
+	timer := TimerCountdown(elapsed, totalSec)
 	return fmt.Sprintf(`%s *%s*
 
 _%s_
@@ -54,7 +52,7 @@ _%s_
 
 Закройте глаза и погрузитесь в эту сцену...
 
-%s`, emoji, name, description, atmosphere, progress)
+%s`, emoji, name, description, atmosphere, timer)
 }
 
 func VisualizationCompletion(sceneName string) string {

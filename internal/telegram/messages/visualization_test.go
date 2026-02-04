@@ -76,9 +76,9 @@ func TestVisualizationStepWithProgress(t *testing.T) {
 			if !strings.Contains(result, tt.instruction) {
 				t.Errorf("expected instruction %q, got %q", tt.instruction, result)
 			}
-			// Progress bar should be present
-			if !strings.Contains(result, "▓") && !strings.Contains(result, "░") {
-				t.Errorf("expected progress bar in result, got %q", result)
+			// Timer countdown should be present
+			if !strings.Contains(result, "⏱️") && !strings.Contains(result, "✨") {
+				t.Errorf("expected timer countdown in result, got %q", result)
 			}
 		})
 	}
@@ -102,9 +102,9 @@ func TestVisualizationIntroWithProgress(t *testing.T) {
 	if !strings.Contains(result, "Шум волн") {
 		t.Errorf("expected atmosphere, got %q", result)
 	}
-	// Progress bar should be present
-	if !strings.Contains(result, "▓") && !strings.Contains(result, "░") {
-		t.Errorf("expected progress bar in result, got %q", result)
+	// Timer countdown should be present
+	if !strings.Contains(result, "⏱️") && !strings.Contains(result, "✨") {
+		t.Errorf("expected timer countdown in result, got %q", result)
 	}
 }
 

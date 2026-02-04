@@ -13,5 +13,10 @@ type Storage interface {
 	SetMessageID(ctx context.Context, userID int64, messageID int) error
 	GetMessageID(ctx context.Context, userID int64) (int, error)
 
+	// SetLang stores user's language preference
+	SetLang(ctx context.Context, userID int64, lang string) error
+	// GetLang returns user's language preference (empty string if not set)
+	GetLang(ctx context.Context, userID int64) (string, error)
+
 	Close() error
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/localization"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
@@ -18,6 +19,7 @@ import (
 type BreathingHandler struct {
 	ctx            context.Context
 	bot            *telego.Bot
+	localizer      *localization.Localizer
 	rateLimiter    rate_limiter.Limiter
 	statistics     statistic.Stats
 	sessionStorage session.Storage
@@ -27,6 +29,7 @@ type BreathingHandler struct {
 func NewBreathingHandler(
 	ctx context.Context,
 	bot *telego.Bot,
+	localizer *localization.Localizer,
 	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
@@ -35,11 +38,21 @@ func NewBreathingHandler(
 	return &BreathingHandler{
 		ctx:            ctx,
 		bot:            bot,
+		localizer:      localizer,
 		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
 		sessionManager: sessionManager,
 	}
+}
+
+// getLang returns user's language from session or default
+func (h *BreathingHandler) getLang(ctx context.Context, userID int64) string {
+	lang, err := h.sessionStorage.GetLang(ctx, userID)
+	if err != nil || lang == "" {
+		return localization.DefaultLang
+	}
+	return lang
 }
 
 // HandleMenuSelect handles selection from main menu
@@ -125,11 +138,13 @@ func (h *BreathingHandler) showBreathingIntro(ctx context.Context, chatID, userI
 		log.Printf("ERROR: set state breathing active: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: messages.Start, CallbackData: "breathing_start"},
-				{Text: messages.Cancel, CallbackData: "breathing_cancel"},
+				{Text: m.Back, CallbackData: "breathing_cancel"},
+				{Text: m.Start, CallbackData: "breathing_start"},
 			},
 		},
 	}
@@ -137,7 +152,7 @@ func (h *BreathingHandler) showBreathingIntro(ctx context.Context, chatID, userI
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        messages.BreathingIntro,
+		Text:        m.BreathingIntro,
 		ParseMode:   "Markdown",
 		ReplyMarkup: keyboard,
 	}); err != nil {
@@ -163,14 +178,18 @@ func (h *BreathingHandler) runPhaseWithProgress(
 	cycleNum := stepIndex/breathingStepsPerCycle + 1
 	totalSeconds := int(cycle.Duration.Seconds())
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
+	// Get localized phase name
+	phaseName := h.getLocalizedPhaseName(cycle.Name, m)
+
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: messages.Stop, CallbackData: "breathing_stop"}},
+			{{Text: m.Stop, CallbackData: "breathing_stop"}},
 		},
 	}
 
 	for elapsed := 0; elapsed <= totalSeconds; elapsed++ {
-		// Check if context was cancelled
 		if ctx.Err() != nil {
 			return false
 		}
@@ -179,12 +198,8 @@ func (h *BreathingHandler) runPhaseWithProgress(
 			return false
 		}
 
-		// Update progress bar
-		text := messages.BreathingPhaseText(
-			cycleNum, techniques.BreathCycles,
-			cycle.Name, cycle.Emoji,
-			elapsed, totalSeconds,
-		)
+		progress := messages.TimerCountdown(elapsed, totalSeconds)
+		text := m.FormatBreathingPhase(cycleNum, techniques.BreathCycles, phaseName, cycle.Emoji, progress)
 
 		if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 			ChatID:      tu.ID(chatID),
@@ -196,7 +211,6 @@ func (h *BreathingHandler) runPhaseWithProgress(
 			log.Printf("ERROR: edit breathing message: %v", err)
 		}
 
-		// Wait 1 second (except on last iteration)
 		if elapsed < totalSeconds {
 			timer := time.NewTimer(1 * time.Second)
 			select {
@@ -210,23 +224,40 @@ func (h *BreathingHandler) runPhaseWithProgress(
 	return true
 }
 
+// getLocalizedPhaseName returns localized name for breathing phase
+func (h *BreathingHandler) getLocalizedPhaseName(name string, m localization.Messages) string {
+	switch name {
+	case "Вдох":
+		return m.BreathingInhale
+	case "Задержка":
+		return m.BreathingHold
+	case "Выдох":
+		return m.BreathingExhale
+	default:
+		return name
+	}
+}
+
 func (h *BreathingHandler) sendBreathingCompletion(ctx context.Context, chatID, userID int64, messageID int) {
 	state, err := h.sessionStorage.GetState(ctx, userID)
 	if err != nil || state != session.StateBreathingRunning {
 		return
 	}
+
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: messages.FeelBetter, CallbackData: "breathing_complete"},
-				{Text: messages.Repeat, CallbackData: "breathing_start"},
+				{Text: m.FeelBetter, CallbackData: "breathing_complete"},
+				{Text: m.Repeat, CallbackData: "breathing_start"},
 			},
 		},
 	}
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        messages.BreathingCompletion,
+		Text:        m.BreathingCompletion,
 		ParseMode:   "Markdown",
 		ReplyMarkup: keyboard,
 	}); err != nil {
@@ -246,15 +277,39 @@ func (h *BreathingHandler) completeBreathing(ctx context.Context, chatID, userID
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
-	// Show thanks message then return to main menu
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        messages.BreathingThanks,
+		Text:        m.BreathingThanks,
 		ParseMode:   "Markdown",
-		ReplyMarkup: GetMainMenuInline(),
+		ReplyMarkup: h.getMainMenuInline(m),
 	}); err != nil {
 		log.Printf("ERROR: edit breathing complete: %v", err)
+	}
+}
+
+// getMainMenuInline returns localized main menu keyboard
+func (h *BreathingHandler) getMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
+	return &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.MenuBreathing, CallbackData: "menu_breathing"},
+				{Text: m.MenuGrounding, CallbackData: "menu_grounding"},
+			},
+			{
+				{Text: m.MenuGuided, CallbackData: "menu_guided"},
+				{Text: m.MenuPMR, CallbackData: "menu_pmr"},
+			},
+			{
+				{Text: m.MenuThought, CallbackData: "menu_thought"},
+				{Text: m.MenuInfo, CallbackData: "menu_info"},
+			},
+			{
+				{Text: m.MenuLang, CallbackData: "menu_lang"},
+			},
+		},
 	}
 }
 
@@ -263,12 +318,14 @@ func (h *BreathingHandler) cancelBreathing(ctx context.Context, chatID, userID i
 		log.Printf("ERROR: clear state: %v", err)
 	}
 
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        MainMenuText,
+		Text:        m.MainMenuText,
 		ParseMode:   "Markdown",
-		ReplyMarkup: GetMainMenuInline(),
+		ReplyMarkup: h.getMainMenuInline(m),
 	}); err != nil {
 		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
 			log.Printf("ERROR: edit breathing cancel: %v", err)
