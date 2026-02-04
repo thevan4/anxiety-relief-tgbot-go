@@ -29,7 +29,10 @@ func NewRedisStorage(addr string) (Storage, error) {
 	return &RedisStorage{client: client}, nil
 }
 
-const sessionTTL = 5 * time.Minute
+const (
+	sessionTTL   = 5 * time.Minute
+	messageIDTTL = 48 * time.Hour // Telegram API limit for delete/edit operations
+)
 
 // SetState stores user's session state in Redis with TTL.
 func (r *RedisStorage) SetState(ctx context.Context, userID int64, state State) error {
@@ -50,17 +53,17 @@ func (r *RedisStorage) GetState(ctx context.Context, userID int64) (State, error
 	return State(result), nil
 }
 
-// ClearState removes user's session state and message ID from Redis.
+// ClearState removes user's session state from Redis.
+// Note: messageID is NOT cleared - it's needed to validate callbacks and delete old messages.
 func (r *RedisStorage) ClearState(ctx context.Context, userID int64) error {
 	stateKey := fmt.Sprintf("session:%d", userID)
-	msgKey := fmt.Sprintf("message:%d", userID)
-	return r.client.Del(ctx, stateKey, msgKey).Err()
+	return r.client.Del(ctx, stateKey).Err()
 }
 
-// SetMessageID stores Telegram message ID for user session with TTL.
+// SetMessageID stores Telegram message ID for user session with 90 day TTL.
 func (r *RedisStorage) SetMessageID(ctx context.Context, userID int64, messageID int) error {
 	key := fmt.Sprintf("message:%d", userID)
-	return r.client.Set(ctx, key, messageID, sessionTTL).Err()
+	return r.client.Set(ctx, key, messageID, messageIDTTL).Err()
 }
 
 // GetMessageID retrieves stored Telegram message ID for user. Returns 0 if not found.

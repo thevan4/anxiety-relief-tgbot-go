@@ -128,11 +128,6 @@ func (bh *BotHandler) registerStartHandler() {
 		// Cancel any running session (stops active goroutines)
 		bh.sessionManager.CancelSession(userID)
 
-		// Delete old bot message if exists
-		if oldMsgID, err := bh.sessionStorage.GetMessageID(bh.ctx, userID); err == nil && oldMsgID != 0 {
-			bh.deleteMessage(chatID, oldMsgID)
-		}
-
 		// Clear session state
 		if err := bh.sessionStorage.ClearState(bh.ctx, userID); err != nil {
 			log.Printf("ERROR: clear state on start: %v", err)
@@ -148,6 +143,12 @@ func (bh *BotHandler) registerStartHandler() {
 		m := bh.localizer.Get(bh.getLang(userID))
 		welcomeText := "👋 *" + message.From.FirstName + "*!\n\n" + m.MainMenuText
 
+		// Delete old bot message if exists
+		if oldMsgID, err := bh.sessionStorage.GetMessageID(bh.ctx, userID); err == nil && oldMsgID != 0 {
+			bh.deleteMessage(chatID, oldMsgID)
+		}
+
+		// Send new message
 		sentMsg, err := ctx.Bot().SendMessage(ctx, tu.Message(
 			tu.ID(chatID),
 			welcomeText,
@@ -157,7 +158,7 @@ func (bh *BotHandler) registerStartHandler() {
 			return err
 		}
 
-		// Save new message ID for future deletion
+		// Save new message ID
 		if err := bh.sessionStorage.SetMessageID(bh.ctx, userID, sentMsg.MessageID); err != nil {
 			log.Printf("ERROR: save message id: %v", err)
 		}
@@ -166,50 +167,51 @@ func (bh *BotHandler) registerStartHandler() {
 	}, th.CommandEqual("start"))
 }
 
+func (bh *BotHandler) validateCallback(cb telego.CallbackQuery) (chatID int64, messageID int, userID int64, valid bool) {
+	msg, ok := cb.Message.(*telego.Message)
+	if !ok || msg == nil {
+		return 0, 0, 0, false
+	}
+	chatID = msg.Chat.ID
+	messageID = msg.MessageID
+	userID = cb.From.ID
+
+	// Answer callback FIRST; if too old - delete message and stop
+	if !handlers.AnswerCallbackOrDelete(bh.ctx, bh.bot, cb.ID, chatID, messageID) {
+		return 0, 0, 0, false
+	}
+
+	// Check if this is the active message (ignore stale messages)
+	if !handlers.IsActiveMessage(bh.ctx, bh.bot, bh.sessionStorage, userID, chatID, messageID, cb.ID) {
+		return 0, 0, 0, false
+	}
+
+	bh.rateLimiter.WaitAndGo(bh.ctx, userID)
+	if bh.ctx.Err() != nil {
+		return 0, 0, 0, false
+	}
+
+	return chatID, messageID, userID, true
+}
+
 func (bh *BotHandler) registerMenuCallbackHandler() {
 	// Handle info
 	bh.handler.HandleCallbackQuery(func(_ *th.Context, cb telego.CallbackQuery) error {
-		msg, ok := cb.Message.(*telego.Message)
-		if !ok || msg == nil {
+		chatID, messageID, userID, valid := bh.validateCallback(cb)
+		if !valid {
 			return nil
 		}
-		chatID := msg.Chat.ID
-		messageID := msg.MessageID
-
-		// Answer callback FIRST; if too old - delete message and stop
-		if !handlers.AnswerCallbackOrDelete(bh.ctx, bh.bot, cb.ID, chatID, messageID) {
-			return nil
-		}
-
-		bh.rateLimiter.WaitAndGo(bh.ctx, cb.From.ID)
-		if bh.ctx.Err() != nil {
-			return bh.ctx.Err()
-		}
-
-		bh.showInfo(chatID, cb.From.ID, messageID)
+		bh.showInfo(chatID, userID, messageID)
 		return nil
 	}, th.CallbackDataEqual("menu_info"))
 
 	// Handle back to menu
 	bh.handler.HandleCallbackQuery(func(_ *th.Context, cb telego.CallbackQuery) error {
-		msg, ok := cb.Message.(*telego.Message)
-		if !ok || msg == nil {
+		chatID, messageID, userID, valid := bh.validateCallback(cb)
+		if !valid {
 			return nil
 		}
-		chatID := msg.Chat.ID
-		messageID := msg.MessageID
-
-		// Answer callback FIRST; if too old - delete message and stop
-		if !handlers.AnswerCallbackOrDelete(bh.ctx, bh.bot, cb.ID, chatID, messageID) {
-			return nil
-		}
-
-		bh.rateLimiter.WaitAndGo(bh.ctx, cb.From.ID)
-		if bh.ctx.Err() != nil {
-			return bh.ctx.Err()
-		}
-
-		bh.showMainMenu(chatID, cb.From.ID, messageID)
+		bh.showMainMenu(chatID, userID, messageID)
 		return nil
 	}, th.CallbackDataEqual("menu_back"))
 }

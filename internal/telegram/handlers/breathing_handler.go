@@ -73,6 +73,11 @@ func (h *BreathingHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQue
 		return nil
 	}
 
+	// Check if this is the active message (ignore stale messages)
+	if !IsActiveMessage(h.ctx, h.bot, h.sessionStorage, userID, chatID, messageID, cb.ID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
@@ -102,6 +107,11 @@ func (h *BreathingHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery
 
 	// Answer callback FIRST; if too old - delete message and stop
 	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
+	// Check if this is the active message (ignore stale messages)
+	if !IsActiveMessage(h.ctx, h.bot, h.sessionStorage, userID, chatID, messageID, cb.ID) {
 		return nil
 	}
 

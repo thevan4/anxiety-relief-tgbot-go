@@ -90,6 +90,11 @@ func (h *LangHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) e
 		return nil
 	}
 
+	// Check if this is the active message (ignore stale messages)
+	if !IsActiveMessage(h.ctx, h.bot, h.sessionStorage, userID, chatID, messageID, cb.ID) {
+		return nil
+	}
+
 	h.rateLimiter.WaitAndGo(h.ctx, userID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
@@ -118,6 +123,11 @@ func (h *LangHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery) err
 	messageID := msg.MessageID
 
 	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+		return nil
+	}
+
+	// Check if this is the active message (ignore stale messages)
+	if !IsActiveMessage(h.ctx, h.bot, h.sessionStorage, userID, chatID, messageID, cb.ID) {
 		return nil
 	}
 
