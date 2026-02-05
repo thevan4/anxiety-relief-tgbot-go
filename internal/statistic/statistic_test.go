@@ -5,6 +5,7 @@ import (
 )
 
 func TestNewStatistic(t *testing.T) {
+	t.Parallel()
 	s := NewStatistic("testuser", true, false, 10)
 	if s == nil {
 		t.Fatal("NewStatistic returned nil")
@@ -24,6 +25,7 @@ func TestNewStatistic(t *testing.T) {
 }
 
 func TestStatisticNilSafety(t *testing.T) {
+	t.Parallel()
 	var s *Statistic
 
 	if s.GetUsername() != "" {
@@ -41,6 +43,7 @@ func TestStatisticNilSafety(t *testing.T) {
 }
 
 func TestNewStatistics(t *testing.T) {
+	t.Parallel()
 	// Test with nil
 	stats := NewStatistics(nil)
 	if stats == nil {
@@ -68,6 +71,7 @@ func TestNewStatistics(t *testing.T) {
 }
 
 func TestIncreaseRequestsStatisticForUser(t *testing.T) {
+	t.Parallel()
 	stats := NewStatistics(nil)
 
 	// First request creates new entry
@@ -105,6 +109,7 @@ func TestIncreaseRequestsStatisticForUser(t *testing.T) {
 }
 
 func TestGetStatisticsCopy(t *testing.T) {
+	t.Parallel()
 	stats := NewStatistics(nil)
 	stats.IncreaseRequestsStatisticForUser(123, "user1", true, false)
 
@@ -118,11 +123,13 @@ func TestGetStatisticsCopy(t *testing.T) {
 	}
 }
 
-func TestStatsInterface(_ *testing.T) {
+func TestStatsInterface(t *testing.T) {
+	t.Parallel()
 	var _ Stats = NewStatistics(nil)
 }
 
 func TestConcurrentStatistics(t *testing.T) {
+	t.Parallel()
 	stats := NewStatistics(nil)
 	done := make(chan bool)
 

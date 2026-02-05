@@ -3,6 +3,7 @@ package session
 import "testing"
 
 func TestStateIsRunning(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		state State
 		want  bool
@@ -28,7 +29,9 @@ func TestStateIsRunning(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(string(tt.state), func(t *testing.T) {
+			t.Parallel()
 			if got := tt.state.IsRunning(); got != tt.want {
 				t.Errorf("State(%q).IsRunning() = %v, want %v", tt.state, got, tt.want)
 			}
@@ -37,6 +40,7 @@ func TestStateIsRunning(t *testing.T) {
 }
 
 func TestStateIsActive(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		state State
 		want  bool
@@ -62,7 +66,9 @@ func TestStateIsActive(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(string(tt.state), func(t *testing.T) {
+			t.Parallel()
 			if got := tt.state.IsActive(); got != tt.want {
 				t.Errorf("State(%q).IsActive() = %v, want %v", tt.state, got, tt.want)
 			}
@@ -71,6 +77,7 @@ func TestStateIsActive(t *testing.T) {
 }
 
 func TestStateConstants(t *testing.T) {
+	t.Parallel()
 	// Verify state constants are unique
 	states := []State{
 		StateUnknown,

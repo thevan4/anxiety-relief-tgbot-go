@@ -5,6 +5,7 @@ import (
 )
 
 func TestIsCallbackTooOldError(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 		err  error
@@ -17,7 +18,9 @@ func TestIsCallbackTooOldError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			if got := IsCallbackTooOldError(tt.err); got != tt.want {
 				t.Errorf("IsCallbackTooOldError() = %v, want %v", got, tt.want)
 			}
@@ -26,6 +29,7 @@ func TestIsCallbackTooOldError(t *testing.T) {
 }
 
 func TestIsMessageNotModifiedError(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 		err  error
@@ -37,7 +41,9 @@ func TestIsMessageNotModifiedError(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			if got := IsMessageNotModifiedError(tt.err); got != tt.want {
 				t.Errorf("IsMessageNotModifiedError() = %v, want %v", got, tt.want)
 			}

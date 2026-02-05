@@ -21,9 +21,9 @@ func GetBreathingCycles() []BreathingCycle {
 	exhale := time.Duration(BreathExhaleSec) * time.Second
 
 	cycleSteps := []BreathingCycle{
-		{Name: "Вдох", Emoji: "🫁", Duration: inhale, Instruction: "Вдох через нос"},
-		{Name: "Задержка", Emoji: "⏸️", Duration: hold, Instruction: "Задержите дыхание"},
-		{Name: "Выдох", Emoji: "🌬️", Duration: exhale, Instruction: "Выдох через рот"},
+		{Phase: "inhale", Emoji: "🫁", Duration: inhale},
+		{Phase: "hold", Emoji: "⏸️", Duration: hold},
+		{Phase: "exhale", Emoji: "🌬️", Duration: exhale},
 	}
 
 	result := make([]BreathingCycle, 0, BreathCycles*len(cycleSteps))

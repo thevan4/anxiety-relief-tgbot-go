@@ -17,19 +17,18 @@ const (
 
 // BreathingPattern defines a guided breathing exercise with specific timing.
 type BreathingPattern struct {
-	Name        string
-	Description string
-	Emoji       string
-	Inhale      time.Duration
-	HoldIn      time.Duration
-	Exhale      time.Duration
-	HoldOut     time.Duration
-	Cycles      int
+	ID      string
+	Emoji   string
+	Inhale  time.Duration
+	HoldIn  time.Duration
+	Exhale  time.Duration
+	HoldOut time.Duration
+	Cycles  int
 }
 
 // BreathingPhase represents one phase in a guided breathing pattern.
 type BreathingPhase struct {
-	Name     string
+	Phase    string
 	Duration time.Duration
 	Emoji    string
 }
@@ -38,44 +37,40 @@ type BreathingPhase struct {
 func GetBreathingPatterns() []BreathingPattern {
 	return []BreathingPattern{
 		{
-			Name:        "Коробочное дыхание",
-			Description: "4-4-4-4 — для фокуса и концентрации",
-			Emoji:       "📦",
-			Inhale:      breathSec4,
-			HoldIn:      breathSec4,
-			Exhale:      breathSec4,
-			HoldOut:     breathSec4,
-			Cycles:      cycles6,
+			ID:      "box",
+			Emoji:   "📦",
+			Inhale:  breathSec4,
+			HoldIn:  breathSec4,
+			Exhale:  breathSec4,
+			HoldOut: breathSec4,
+			Cycles:  cycles6,
 		},
 		{
-			Name:        "Расслабляющее 4-7-8",
-			Description: "Для глубокого расслабления и сна",
-			Emoji:       "😴",
-			Inhale:      breathSec4,
-			HoldIn:      breathSec7,
-			Exhale:      breathSec8,
-			HoldOut:     0,
-			Cycles:      cycles4,
+			ID:      "relaxing",
+			Emoji:   "😴",
+			Inhale:  breathSec4,
+			HoldIn:  breathSec7,
+			Exhale:  breathSec8,
+			HoldOut: 0,
+			Cycles:  cycles4,
 		},
 		{
-			Name:        "Энергичное 4-4-6",
-			Description: "Для бодрости и ясности ума",
-			Emoji:       "⚡",
-			Inhale:      breathSec4,
-			HoldIn:      breathSec4,
-			Exhale:      breathSec6,
-			HoldOut:     0,
-			Cycles:      cycles6,
+			ID:      "energizing",
+			Emoji:   "⚡",
+			Inhale:  breathSec4,
+			HoldIn:  breathSec4,
+			Exhale:  breathSec6,
+			HoldOut: 0,
+			Cycles:  cycles6,
 		},
 		{
-			Name:        "Быстрый сброс 3-3-3",
-			Description: "Быстрое снятие напряжения",
-			Emoji:       "🚀",
-			Inhale:      breathSec3,
-			HoldIn:      breathSec3,
-			Exhale:      breathSec3,
-			HoldOut:     0,
-			Cycles:      cycles5,
+			ID:      "quick",
+			Emoji:   "🚀",
+			Inhale:  breathSec3,
+			HoldIn:  breathSec3,
+			Exhale:  breathSec3,
+			HoldOut: 0,
+			Cycles:  cycles5,
 		},
 	}
 }
@@ -86,7 +81,7 @@ func GetBreathingPhases(pattern BreathingPattern) []BreathingPhase {
 
 	if pattern.Inhale > 0 {
 		phases = append(phases, BreathingPhase{
-			Name:     "Вдох через нос",
+			Phase:    "inhale",
 			Duration: pattern.Inhale,
 			Emoji:    "💨",
 		})
@@ -94,7 +89,7 @@ func GetBreathingPhases(pattern BreathingPattern) []BreathingPhase {
 
 	if pattern.HoldIn > 0 {
 		phases = append(phases, BreathingPhase{
-			Name:     "Задержка",
+			Phase:    "hold_in",
 			Duration: pattern.HoldIn,
 			Emoji:    "⏸️",
 		})
@@ -102,7 +97,7 @@ func GetBreathingPhases(pattern BreathingPattern) []BreathingPhase {
 
 	if pattern.Exhale > 0 {
 		phases = append(phases, BreathingPhase{
-			Name:     "Выдох через рот",
+			Phase:    "exhale",
 			Duration: pattern.Exhale,
 			Emoji:    "🌬️",
 		})
@@ -110,7 +105,7 @@ func GetBreathingPhases(pattern BreathingPattern) []BreathingPhase {
 
 	if pattern.HoldOut > 0 {
 		phases = append(phases, BreathingPhase{
-			Name:     "Пауза",
+			Phase:    "hold_out",
 			Duration: pattern.HoldOut,
 			Emoji:    "⏸️",
 		})

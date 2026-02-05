@@ -28,17 +28,8 @@ func TestGetThoughtCategories_ValidData(t *testing.T) {
 		if c.ID == "" {
 			t.Errorf("category %d: ID should not be empty", i)
 		}
-		if c.Name == "" {
-			t.Errorf("category %d: name should not be empty", i)
-		}
 		if c.Emoji == "" {
 			t.Errorf("category %d: emoji should not be empty", i)
-		}
-		if c.Description == "" {
-			t.Errorf("category %d: description should not be empty", i)
-		}
-		if c.Example == "" {
-			t.Errorf("category %d: example should not be empty", i)
 		}
 	}
 }

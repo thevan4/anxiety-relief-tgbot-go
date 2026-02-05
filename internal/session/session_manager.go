@@ -7,6 +7,8 @@ import (
 
 // SessionManager manages user sessions with cancellation support.
 // It allows cancelling running exercises when user starts a new action.
+//
+//nolint:revive // Public API uses package prefix.
 type SessionManager struct {
 	mu      sync.RWMutex
 	cancels map[int64]context.CancelFunc

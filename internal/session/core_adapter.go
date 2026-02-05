@@ -2,9 +2,15 @@ package session
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/sessioncore"
+)
+
+const (
+	resourceHolder = "holder"
+	resourceMenu   = "menu"
 )
 
 // CoreStorageAdapter adapts session.Storage to sessioncore.Storage interface.
@@ -37,9 +43,9 @@ func (a *CoreStorageAdapter) ClearState(ctx context.Context, userID int64) error
 // GetResourceID implements sessioncore.Storage.
 func (a *CoreStorageAdapter) GetResourceID(ctx context.Context, userID int64, kind string) (int, error) {
 	switch kind {
-	case "holder":
+	case resourceHolder:
 		return a.storage.GetHolderMessageID(ctx, userID)
-	case "menu":
+	case resourceMenu:
 		return a.storage.GetMenuMessageID(ctx, userID)
 	default:
 		return a.storage.GetMenuMessageID(ctx, userID)
@@ -49,9 +55,9 @@ func (a *CoreStorageAdapter) GetResourceID(ctx context.Context, userID int64, ki
 // SetResourceID implements sessioncore.Storage.
 func (a *CoreStorageAdapter) SetResourceID(ctx context.Context, userID int64, kind string, id int) error {
 	switch kind {
-	case "holder":
+	case resourceHolder:
 		return a.storage.SetHolderMessageID(ctx, userID, id)
-	case "menu":
+	case resourceMenu:
 		return a.storage.SetMenuMessageID(ctx, userID, id)
 	default:
 		return a.storage.SetMenuMessageID(ctx, userID, id)
@@ -61,9 +67,9 @@ func (a *CoreStorageAdapter) SetResourceID(ctx context.Context, userID int64, ki
 // ClearResourceID implements sessioncore.Storage.
 func (a *CoreStorageAdapter) ClearResourceID(ctx context.Context, userID int64, kind string) error {
 	switch kind {
-	case "holder":
+	case resourceHolder:
 		return a.storage.ClearHolderMessageID(ctx, userID)
-	case "menu":
+	case resourceMenu:
 		return a.storage.ClearMenuMessageID(ctx, userID)
 	default:
 		return a.storage.ClearMenuMessageID(ctx, userID)
@@ -71,13 +77,13 @@ func (a *CoreStorageAdapter) ClearResourceID(ctx context.Context, userID int64, 
 }
 
 // GetResourceCreatedAt implements sessioncore.Storage.
-func (a *CoreStorageAdapter) GetResourceCreatedAt(ctx context.Context, userID int64, kind string) (time.Time, error) {
+func (a *CoreStorageAdapter) GetResourceCreatedAt(ctx context.Context, userID int64, _ string) (time.Time, error) {
 	// Currently only menu has creation timestamp
 	return a.storage.GetMenuCreatedAt(ctx, userID)
 }
 
 // SetResourceCreatedAt implements sessioncore.Storage.
-func (a *CoreStorageAdapter) SetResourceCreatedAt(ctx context.Context, userID int64, kind string, t time.Time) error {
+func (a *CoreStorageAdapter) SetResourceCreatedAt(ctx context.Context, userID int64, _ string, t time.Time) error {
 	return a.storage.SetMenuCreatedAt(ctx, userID, t)
 }
 
@@ -99,6 +105,9 @@ func (a *CoreStorageAdapter) RemoveFromCleanupQueue(ctx context.Context, userID 
 // GetCleanupRetry implements sessioncore.Storage.
 func (a *CoreStorageAdapter) GetCleanupRetry(ctx context.Context, userID int64) (*sessioncore.CleanupRetry, error) {
 	retry, err := a.storage.GetCleanupRetry(ctx, userID)
+	if errors.Is(err, ErrCleanupRetryNotFound) {
+		return nil, sessioncore.ErrCleanupRetryNotFound
+	}
 	if err != nil || retry == nil {
 		return nil, err
 	}

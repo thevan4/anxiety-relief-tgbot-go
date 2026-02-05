@@ -1,6 +1,7 @@
 //nolint:dupl // Localization files have identical structure by design, only text values differ.
 package localization
 
+//nolint:gochecknoglobals // Localization bundle.
 var messagesRU = Messages{
 	// Buttons
 	Start:      "▶️ Начать",
@@ -106,11 +107,13 @@ var messagesRU = Messages{
 	GroundingStep1Title: "Шаг 1: Зрение",
 	GroundingStep1Desc:  "Назовите 5 вещей, которые вы видите вокруг себя.\n\nНапример: стол, лампа, книга, окно, стул.",
 	GroundingStep2Title: "Шаг 2: Осязание",
-	GroundingStep2Desc:  "Назовите 4 вещи, которые вы ощущаете телом.\n\nНапример: ноги на полу, спина на стуле, руки на столе, одежда на теле.",
+	GroundingStep2Desc: "Назовите 4 вещи, которые вы ощущаете телом.\n\n" +
+		"Например: ноги на полу, спина на стуле, руки на столе, одежда на теле.",
 	GroundingStep3Title: "Шаг 3: Слух",
 	GroundingStep3Desc:  "Назовите 3 звука, которые вы слышите.\n\nНапример: шум улицы, тиканье часов, ваше дыхание.",
 	GroundingStep4Title: "Шаг 4: Обоняние",
-	GroundingStep4Desc:  "Назовите 2 запаха, которые вы чувствуете или любите.\n\nНапример: кофе, свежий воздух, аромат цветов.",
+	GroundingStep4Desc: "Назовите 2 запаха, которые вы чувствуете или любите.\n\n" +
+		"Например: кофе, свежий воздух, аромат цветов.",
 	GroundingStep5Title: "Шаг 5: Вкус",
 	GroundingStep5Desc:  "Назовите 1 вкус, который вы ощущаете во рту.\n\nЕсли ничего нет — вспомните любимый вкус.",
 
@@ -133,6 +136,12 @@ var messagesRU = Messages{
 	PatternEnergizingDesc: "Бодрость и ясность ума",
 	PatternQuickName:      "Быстрый сброс 3-3-3",
 	PatternQuickDesc:      "Быстрое снятие напряжения",
+
+	// Guided breathing phases
+	GuidedInhale:  "Вдох",
+	GuidedHoldIn:  "Задержка",
+	GuidedExhale:  "Выдох",
+	GuidedHoldOut: "Пауза",
 
 	// PMR
 	PMRIntro: `💪 *Прогрессивная мышечная релаксация*
@@ -165,6 +174,47 @@ var messagesRU = Messages{
 
 Выберите технику из меню ниже.`,
 
+	// PMR muscle groups
+	PMRHandsName:  "Кисти рук",
+	PMRHandsTense: "Сожмите кулаки как можно сильнее. Почувствуйте напряжение в пальцах и ладонях.",
+	PMRHandsRelax: "Разожмите кулаки и расслабьте руки. Почувствуйте тепло и расслабление.",
+
+	PMRForearmsName:  "Предплечья и бицепсы",
+	PMRForearmsTense: "Согните руки в локтях и напрягите бицепсы. Держите напряжение.",
+	PMRForearmsRelax: "Опустите руки и полностью расслабьте их. Руки становятся тяжёлыми.",
+
+	PMRForeheadName:  "Лоб",
+	PMRForeheadTense: "Поднимите брови как можно выше, наморщите лоб. Почувствуйте напряжение.",
+	PMRForeheadRelax: "Расслабьте лоб. Позвольте бровям опуститься. Лоб становится гладким.",
+
+	PMREyesName:  "Глаза и нос",
+	PMREyesTense: "Крепко зажмурьтесь и наморщите нос. Почувствуйте напряжение вокруг глаз.",
+	PMREyesRelax: "Расслабьте глаза и нос. Веки становятся лёгкими и спокойными.",
+
+	PMRJawName:  "Челюсть",
+	PMRJawTense: "Сожмите челюсти и растяните губы в напряжённой улыбке.",
+	PMRJawRelax: "Расслабьте челюсть, слегка приоткройте рот. Язык расслаблен.",
+
+	PMRNeckName:  "Шея и плечи",
+	PMRNeckTense: "Поднимите плечи к ушам и напрягите шею. Держите напряжение.",
+	PMRNeckRelax: "Опустите плечи вниз и расслабьте шею. Почувствуйте облегчение.",
+
+	PMRChestName:  "Грудь и спина",
+	PMRChestTense: "Глубоко вдохните, задержите дыхание и напрягите мышцы груди и спины.",
+	PMRChestRelax: "Медленно выдохните и расслабьте грудь и спину. Дышите спокойно.",
+
+	PMRStomachName:  "Живот",
+	PMRStomachTense: "Втяните живот и напрягите мышцы пресса. Держите напряжение.",
+	PMRStomachRelax: "Расслабьте живот. Позвольте ему свободно двигаться при дыхании.",
+
+	PMRThighsName:  "Бёдра и ягодицы",
+	PMRThighsTense: "Напрягите ягодицы и бёдра, прижмите их к сиденью.",
+	PMRThighsRelax: "Расслабьте ягодицы и бёдра. Почувствуйте тяжесть в ногах.",
+
+	PMRCalvesName:  "Икры и стопы",
+	PMRCalvesTense: "Потяните носки на себя, напрягите икры. Почувствуйте натяжение.",
+	PMRCalvesRelax: "Расслабьте стопы и икры. Ноги становятся тёплыми и тяжёлыми.",
+
 	// Thought labeling
 	ThoughtIntro: `🏷️ *Маркировка мыслей*
 
@@ -187,6 +237,51 @@ var messagesRU = Messages{
 Маркировка мыслей помогает распознавать когнитивные искажения и снижать их влияние.
 
 Выберите технику из меню ниже.`,
+
+	// Thought labeling categories
+	ThoughtWorryName:    "Беспокойство",
+	ThoughtWorryDesc:    "Тревога о будущих событиях или исходах",
+	ThoughtWorryReframe: "«А что если я провалю собеседование?»",
+
+	ThoughtCatastrophicName:    "Катастрофизация",
+	ThoughtCatastrophicDesc:    "Представление наихудшего сценария",
+	ThoughtCatastrophicReframe: "«Если я ошибусь, всё будет ужасно!»",
+
+	ThoughtSelfDoubtName:    "Самосомнение",
+	ThoughtSelfDoubtDesc:    "Сомнения в своих способностях",
+	ThoughtSelfDoubtReframe: "«Я недостаточно хорош для этого»",
+
+	ThoughtPerfectionistName:    "Перфекционизм",
+	ThoughtPerfectionistDesc:    "Нереалистично высокие стандарты",
+	ThoughtPerfectionistReframe: "«Если не идеально — значит плохо»",
+
+	ThoughtComparisonName:    "Сравнение",
+	ThoughtComparisonDesc:    "Сравнение себя с другими",
+	ThoughtComparisonReframe: "«Все справляются лучше меня»",
+
+	ThoughtRuminationName:    "Руминация",
+	ThoughtRuminationDesc:    "Постоянное возвращение к прошлым событиям",
+	ThoughtRuminationReframe: "«Почему я тогда так сказал?»",
+
+	ThoughtControlName:    "Контроль",
+	ThoughtControlDesc:    "Желание контролировать неконтролируемое",
+	ThoughtControlReframe: "«Я должен всё предусмотреть»",
+
+	ThoughtRejectionName:    "Страх отвержения",
+	ThoughtRejectionDesc:    "Боязнь быть отвергнутым",
+	ThoughtRejectionReframe: "«Они подумают, что я странный»",
+
+	ThoughtHealthName:    "Тревога о здоровье",
+	ThoughtHealthDesc:    "Чрезмерное беспокойство о здоровье",
+	ThoughtHealthReframe: "«Этот симптом — признак болезни?»",
+
+	ThoughtSocialName:    "Социальная тревога",
+	ThoughtSocialDesc:    "Страх социальных ситуаций",
+	ThoughtSocialReframe: "«Все будут на меня смотреть»",
+
+	ThoughtFinancialName:    "Финансовые переживания",
+	ThoughtFinancialDesc:    "Стресс из-за денег",
+	ThoughtFinancialReframe: "«Что если денег не хватит?»",
 
 	// Visualization
 	VisualizationIntro: `🌅 *Мирная визуализация*

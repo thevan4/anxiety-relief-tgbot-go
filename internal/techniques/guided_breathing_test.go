@@ -15,10 +15,10 @@ func TestGetBreathingPatterns(t *testing.T) {
 	}
 
 	expectedPatterns := []string{
-		"Коробочное дыхание",
-		"Расслабляющее 4-7-8",
-		"Энергичное 4-4-6",
-		"Быстрый сброс 3-3-3",
+		"box",
+		"relaxing",
+		"energizing",
+		"quick",
 	}
 
 	if len(patterns) != len(expectedPatterns) {
@@ -26,8 +26,8 @@ func TestGetBreathingPatterns(t *testing.T) {
 	}
 
 	for i, expected := range expectedPatterns {
-		if patterns[i].Name != expected {
-			t.Errorf("pattern %d: expected name %q, got %q", i, expected, patterns[i].Name)
+		if patterns[i].ID != expected {
+			t.Errorf("pattern %d: expected id %q, got %q", i, expected, patterns[i].ID)
 		}
 	}
 }
@@ -39,13 +39,13 @@ func TestGetBreathingPatterns_ValidDurations(t *testing.T) {
 
 	for _, p := range patterns {
 		if p.Inhale <= 0 {
-			t.Errorf("pattern %q: inhale duration should be positive", p.Name)
+			t.Errorf("pattern %q: inhale duration should be positive", p.ID)
 		}
 		if p.Exhale <= 0 {
-			t.Errorf("pattern %q: exhale duration should be positive", p.Name)
+			t.Errorf("pattern %q: exhale duration should be positive", p.ID)
 		}
 		if p.Cycles <= 0 {
-			t.Errorf("pattern %q: cycles should be positive", p.Name)
+			t.Errorf("pattern %q: cycles should be positive", p.ID)
 		}
 	}
 }
@@ -54,7 +54,7 @@ func TestGetBreathingPhases(t *testing.T) {
 	t.Parallel()
 
 	pattern := BreathingPattern{
-		Name:    "Test",
+		ID:      "test",
 		Inhale:  4 * time.Second,
 		HoldIn:  4 * time.Second,
 		Exhale:  4 * time.Second,
@@ -73,7 +73,7 @@ func TestGetBreathingPhases_NoHoldOut(t *testing.T) {
 	t.Parallel()
 
 	pattern := BreathingPattern{
-		Name:    "Test",
+		ID:      "test",
 		Inhale:  4 * time.Second,
 		HoldIn:  7 * time.Second,
 		Exhale:  8 * time.Second,

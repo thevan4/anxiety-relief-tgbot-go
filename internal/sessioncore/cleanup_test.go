@@ -5,19 +5,18 @@ import (
 	"time"
 )
 
-func TestCleanupProcessor_EvaluateCleanup(t *testing.T) {
-	cfg := DefaultConfig()
-	p := NewCleanupProcessor(cfg)
-	now := time.Now()
+type evaluateCleanupCase struct {
+	name              string
+	resourceCreatedAt time.Time
+	currentState      string
+	retry             *CleanupRetry
+	wantDecision      CleanupDecision
+	wantReason        string
+}
 
-	tests := []struct {
-		name              string
-		resourceCreatedAt time.Time
-		currentState      string
-		retry             *CleanupRetry
-		wantDecision      CleanupDecision
-		wantReason        string
-	}{
+//nolint:funlen // Large table of cases is easier to read.
+func evaluateCleanupCases(now time.Time) []evaluateCleanupCase {
+	return []evaluateCleanupCase{
 		// Edge cases for resource creation time
 		{
 			name:              "no creation time - delete",
@@ -59,7 +58,6 @@ func TestCleanupProcessor_EvaluateCleanup(t *testing.T) {
 			wantDecision:      DecisionDelete,
 			wantReason:        "user inactive on first check",
 		},
-
 		// First check scenarios (retry == nil)
 		{
 			name:              "first check, user inactive (empty state) - delete",
@@ -77,7 +75,6 @@ func TestCleanupProcessor_EvaluateCleanup(t *testing.T) {
 			wantDecision:      DecisionRetry,
 			wantReason:        "user active, scheduling retry",
 		},
-
 		// Retry check: user finished (state became empty)
 		{
 			name:              "retry, user finished activity - keep",
@@ -95,7 +92,6 @@ func TestCleanupProcessor_EvaluateCleanup(t *testing.T) {
 			wantDecision:      DecisionKeep,
 			wantReason:        "user finished activity, keeping resource",
 		},
-
 		// Retry check: user stuck in same state
 		{
 			name:              "retry, user stuck in same state - delete",
@@ -113,7 +109,6 @@ func TestCleanupProcessor_EvaluateCleanup(t *testing.T) {
 			wantDecision:      DecisionDelete,
 			wantReason:        "user stuck in same state",
 		},
-
 		// Retry check: user switched states (active)
 		{
 			name:              "retry, user switched state, attempt 1 - retry again",
@@ -131,7 +126,6 @@ func TestCleanupProcessor_EvaluateCleanup(t *testing.T) {
 			wantDecision:      DecisionRetry,
 			wantReason:        "user switched states, scheduling retry",
 		},
-
 		// Retry check: max retries exceeded
 		{
 			name:              "retry, max attempts reached (6) - delete",
@@ -150,9 +144,39 @@ func TestCleanupProcessor_EvaluateCleanup(t *testing.T) {
 			wantReason:        "max retries exceeded",
 		},
 	}
+}
 
+func assertDecision(t *testing.T, step string, result CleanupResult, want CleanupDecision) {
+	t.Helper()
+	if result.Decision != want {
+		t.Fatalf("%s: expected %v, got %v", step, want, result.Decision)
+	}
+}
+
+func assertRetry(t *testing.T, step string, retry *CleanupRetry, wantAttempt int, wantState string) {
+	t.Helper()
+	if retry == nil {
+		t.Fatalf("%s: expected retry data, got nil", step)
+	}
+	if retry.Attempt != wantAttempt {
+		t.Fatalf("%s: expected attempt %d, got %d", step, wantAttempt, retry.Attempt)
+	}
+	if retry.State != wantState {
+		t.Fatalf("%s: expected state %q, got %q", step, wantState, retry.State)
+	}
+}
+
+func TestCleanupProcessor_EvaluateCleanup(t *testing.T) {
+	t.Parallel()
+	cfg := DefaultConfig()
+	p := NewCleanupProcessor(cfg)
+	now := time.Now()
+
+	tests := evaluateCleanupCases(now)
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := p.EvaluateCleanup(tt.resourceCreatedAt, tt.currentState, tt.retry, now)
 			if result.Decision != tt.wantDecision {
 				t.Errorf("got decision %v, want %v (reason: %s)", result.Decision, tt.wantDecision, result.Reason)
@@ -165,6 +189,7 @@ func TestCleanupProcessor_EvaluateCleanup(t *testing.T) {
 }
 
 func TestCleanupProcessor_RetryIncrement(t *testing.T) {
+	t.Parallel()
 	cfg := DefaultConfig()
 	p := NewCleanupProcessor(cfg)
 	now := time.Now()
@@ -174,53 +199,32 @@ func TestCleanupProcessor_RetryIncrement(t *testing.T) {
 
 	// Step 1: First check when active
 	result := p.EvaluateCleanup(resourceCreated, "state_a", nil, now)
-	if result.Decision != DecisionRetry {
-		t.Fatalf("step 1: expected retry, got %v", result.Decision)
-	}
-	if result.Retry == nil || result.Retry.Attempt != 1 {
-		t.Fatalf("step 1: expected attempt 1, got %v", result.Retry)
-	}
-	if result.Retry.State != "state_a" {
-		t.Errorf("step 1: expected state 'state_a', got %q", result.Retry.State)
-	}
+	assertDecision(t, "step 1", result, DecisionRetry)
+	assertRetry(t, "step 1", result.Retry, 1, "state_a")
 
 	// Step 2: User switches to state_b
 	result = p.EvaluateCleanup(resourceCreated, "state_b", result.Retry, now)
-	if result.Decision != DecisionRetry {
-		t.Fatalf("step 2: expected retry, got %v", result.Decision)
-	}
-	if result.Retry.Attempt != 2 {
-		t.Errorf("step 2: expected attempt 2, got %d", result.Retry.Attempt)
-	}
-	if result.Retry.State != "state_b" {
-		t.Errorf("step 2: expected state 'state_b', got %q", result.Retry.State)
-	}
+	assertDecision(t, "step 2", result, DecisionRetry)
+	assertRetry(t, "step 2", result.Retry, 2, "state_b")
 
 	// Step 3: User switches to state_c
 	result = p.EvaluateCleanup(resourceCreated, "state_c", result.Retry, now)
-	if result.Decision != DecisionRetry {
-		t.Fatalf("step 3: expected retry, got %v", result.Decision)
-	}
-	if result.Retry.Attempt != 3 {
-		t.Errorf("step 3: expected attempt 3, got %d", result.Retry.Attempt)
-	}
+	assertDecision(t, "step 3", result, DecisionRetry)
+	assertRetry(t, "step 3", result.Retry, 3, "state_c")
 
 	// Step 4-6: Continue switching until max
 	for i := 4; i <= 6; i++ {
 		result = p.EvaluateCleanup(resourceCreated, "state_"+string(rune('a'+i)), result.Retry, now)
-		if result.Decision != DecisionRetry {
-			t.Fatalf("step %d: expected retry, got %v", i, result.Decision)
-		}
+		assertDecision(t, "step "+string(rune('0'+i)), result, DecisionRetry)
 	}
 
 	// Step 7: Max retries, should delete
 	result = p.EvaluateCleanup(resourceCreated, "state_final", result.Retry, now)
-	if result.Decision != DecisionDelete {
-		t.Errorf("step 7: expected delete after max retries, got %v", result.Decision)
-	}
+	assertDecision(t, "step 7", result, DecisionDelete)
 }
 
 func TestCleanupProcessor_RetryNextCheckTime(t *testing.T) {
+	t.Parallel()
 	cfg := Config{
 		StateTTL:      5 * time.Minute,
 		ResourceTTL:   48 * time.Hour,
@@ -249,6 +253,7 @@ func TestCleanupProcessor_RetryNextCheckTime(t *testing.T) {
 }
 
 func TestCleanupProcessor_ScheduleInitialCleanup(t *testing.T) {
+	t.Parallel()
 	cfg := DefaultConfig()
 	p := NewCleanupProcessor(cfg)
 
@@ -262,6 +267,7 @@ func TestCleanupProcessor_ScheduleInitialCleanup(t *testing.T) {
 }
 
 func TestCleanupProcessor_CustomConfig(t *testing.T) {
+	t.Parallel()
 	cfg := Config{
 		StateTTL:      1 * time.Minute,
 		ResourceTTL:   24 * time.Hour, // Shorter TTL
@@ -296,6 +302,7 @@ func TestCleanupProcessor_CustomConfig(t *testing.T) {
 }
 
 func TestDefaultConfig(t *testing.T) {
+	t.Parallel()
 	cfg := DefaultConfig()
 
 	if cfg.StateTTL != 5*time.Minute {

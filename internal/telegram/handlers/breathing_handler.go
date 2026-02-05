@@ -150,7 +150,7 @@ func (h *BreathingHandler) runPhaseWithProgress(
 	m := h.localizer.Get(h.getLang(ctx, userID))
 
 	// Get localized phase name
-	phaseName := h.getLocalizedPhaseName(cycle.Name, m)
+	phaseName := h.getLocalizedPhaseName(cycle.Phase, m)
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
@@ -194,16 +194,16 @@ func (h *BreathingHandler) runPhaseWithProgress(
 }
 
 // getLocalizedPhaseName returns localized name for breathing phase.
-func (h *BreathingHandler) getLocalizedPhaseName(name string, m localization.Messages) string {
-	switch name {
-	case "Вдох":
+func (h *BreathingHandler) getLocalizedPhaseName(phaseID string, m localization.Messages) string {
+	switch phaseID {
+	case "inhale":
 		return m.BreathingInhale
-	case "Задержка":
+	case "hold":
 		return m.BreathingHold
-	case "Выдох":
+	case "exhale":
 		return m.BreathingExhale
 	default:
-		return name
+		return phaseID
 	}
 }
 

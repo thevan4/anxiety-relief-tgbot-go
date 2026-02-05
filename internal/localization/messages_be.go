@@ -1,6 +1,7 @@
 //nolint:dupl // Localization files have identical structure by design, only text values differ.
 package localization
 
+//nolint:gochecknoglobals // Localization bundle.
 var messagesBE = Messages{
 	// Buttons
 	Start:      "▶️ Пачаць",
@@ -106,7 +107,8 @@ var messagesBE = Messages{
 	GroundingStep1Title: "Крок 1: Зрок",
 	GroundingStep1Desc:  "Назавіце 5 рэчаў, якія вы бачыце вакол сябе.\n\nНапрыклад: стол, лямпа, кніга, акно, крэсла.",
 	GroundingStep2Title: "Крок 2: Дотык",
-	GroundingStep2Desc:  "Назавіце 4 рэчы, якія вы адчуваеце целам.\n\nНапрыклад: ногі на падлозе, спіна на крэсле, рукі на стале, адзенне на целе.",
+	GroundingStep2Desc: "Назавіце 4 рэчы, якія вы адчуваеце целам.\n\n" +
+		"Напрыклад: ногі на падлозе, спіна на крэсле, рукі на стале, адзенне на целе.",
 	GroundingStep3Title: "Крок 3: Слых",
 	GroundingStep3Desc:  "Назавіце 3 гукі, якія вы чуеце.\n\nНапрыклад: шум вуліцы, цікатанне гадзінніка, ваша дыханне.",
 	GroundingStep4Title: "Крок 4: Нюх",
@@ -133,6 +135,12 @@ var messagesBE = Messages{
 	PatternEnergizingDesc: "Энергія і яснасць розуму",
 	PatternQuickName:      "Хуткі скід 3-3-3",
 	PatternQuickDesc:      "Хуткае зняцце напружання",
+
+	// Guided breathing phases
+	GuidedInhale:  "Удых",
+	GuidedHoldIn:  "Затрымка",
+	GuidedExhale:  "Выдых",
+	GuidedHoldOut: "Паўза",
 
 	// PMR
 	PMRIntro: `💪 *Прагрэсіўная мышачная рэлаксацыя*
@@ -165,6 +173,47 @@ var messagesBE = Messages{
 
 Абярыце тэхніку з меню ніжэй.`,
 
+	// PMR muscle groups
+	PMRHandsName:  "Кісці рук",
+	PMRHandsTense: "Сцісніце кулакі як мага мацней. Адчуйце напружанне ў пальцах і далонях.",
+	PMRHandsRelax: "Разцісніце кулакі і расслабце рукі. Адчуйце цяпло і расслабленне.",
+
+	PMRForearmsName:  "Прадплеччы і біцэпсы",
+	PMRForearmsTense: "Сагніце рукі ў локцях і напружце біцэпсы. Трымайце напружанне.",
+	PMRForearmsRelax: "Апусціце рукі і цалкам расслабце іх. Рукі становяцца цяжкімі.",
+
+	PMRForeheadName:  "Лоб",
+	PMRForeheadTense: "Падніміце бровы як мага вышэй, наморшчыце лоб. Адчуйце напружанне.",
+	PMRForeheadRelax: "Расслабце лоб. Дазвольце бровам апусціцца. Лоб становіцца гладкім.",
+
+	PMREyesName:  "Вочы і нос",
+	PMREyesTense: "Моцна зажмурыце вочы і наморшчыце нос. Адчуйце напружанне вакол вачэй.",
+	PMREyesRelax: "Расслабце вочы і нос. Павекі становяцца лёгкімі і спакойнымі.",
+
+	PMRJawName:  "Сківіца",
+	PMRJawTense: "Сцісніце сківіцы і расцягніце вусны ў напружанай усмешцы.",
+	PMRJawRelax: "Расслабце сківіцу, крыху прыадкрыйце рот. Язык расслаблены.",
+
+	PMRNeckName:  "Шыя і плечы",
+	PMRNeckTense: "Падніміце плечы да вушэй і напружце шыю. Трымайце напружанне.",
+	PMRNeckRelax: "Апусціце плечы ўніз і расслабце шыю. Адчуйце палёгку.",
+
+	PMRChestName:  "Грудзі і спіна",
+	PMRChestTense: "Зрабіце глыбокі ўдых, затрымайце яго і напружце мышцы грудзей і спіны.",
+	PMRChestRelax: "Павольна выдыхніце і расслабце грудзі і спіну. Дыхайце спакойна.",
+
+	PMRStomachName:  "Жывот",
+	PMRStomachTense: "Уцягніце жывот і напружце прэс. Трымайце напружанне.",
+	PMRStomachRelax: "Расслабце жывот. Няхай ён свабодна рухаецца разам з дыханнем.",
+
+	PMRThighsName:  "Сцёгны і ягадзіцы",
+	PMRThighsTense: "Напружце ягадзіцы і сцёгны, прыцісніце іх да сядзення.",
+	PMRThighsRelax: "Расслабце ягадзіцы і сцёгны. Адчуйце цяжар у нагах.",
+
+	PMRCalvesName:  "Ікры і ступні",
+	PMRCalvesTense: "Пацягніце носкі на сябе, напружце ікры. Адчуйце расцяжэнне.",
+	PMRCalvesRelax: "Расслабце ступні і ікры. Ногі становяцца цёплымі і цяжкімі.",
+
 	// Thought labeling
 	ThoughtIntro: `🏷️ *Маркіроўка думак*
 
@@ -187,6 +236,51 @@ var messagesBE = Messages{
 Маркіроўка думак дапамагае распазнаваць кагнітыўныя скажэнні і зніжаць іх уплыў.
 
 Абярыце тэхніку з меню ніжэй.`,
+
+	// Thought labeling categories
+	ThoughtWorryName:    "Неспакой",
+	ThoughtWorryDesc:    "Трывога наконт будучых падзей або вынікаў",
+	ThoughtWorryReframe: "«А што калі я правалю сумоўе?»",
+
+	ThoughtCatastrophicName:    "Катастрофізацыя",
+	ThoughtCatastrophicDesc:    "Уяўленне найгоршага сцэнару",
+	ThoughtCatastrophicReframe: "«Калі я зраблю памылку, усё будзе жахліва!»",
+
+	ThoughtSelfDoubtName:    "Самасумнеў",
+	ThoughtSelfDoubtDesc:    "Сумневы ў сваіх здольнасцях",
+	ThoughtSelfDoubtReframe: "«Я недастаткова добры для гэтага»",
+
+	ThoughtPerfectionistName:    "Перфекцыянізм",
+	ThoughtPerfectionistDesc:    "Нерэалістычна высокія стандарты",
+	ThoughtPerfectionistReframe: "«Калі не ідэальна — значыць дрэнна»",
+
+	ThoughtComparisonName:    "Параўнанне",
+	ThoughtComparisonDesc:    "Параўнанне сябе з іншымі",
+	ThoughtComparisonReframe: "«Усе спраўляюцца лепш за мяне»",
+
+	ThoughtRuminationName:    "Румінацыя",
+	ThoughtRuminationDesc:    "Пастаяннае вяртанне да мінулых падзей",
+	ThoughtRuminationReframe: "«Чаму я тады так сказаў?»",
+
+	ThoughtControlName:    "Кантроль",
+	ThoughtControlDesc:    "Жаданне кантраляваць некантралюемае",
+	ThoughtControlReframe: "«Я павінен усё прадбачыць»",
+
+	ThoughtRejectionName:    "Страх адхілення",
+	ThoughtRejectionDesc:    "Боязь быць адхіленым",
+	ThoughtRejectionReframe: "«Яны падумаюць, што я дзіўны»",
+
+	ThoughtHealthName:    "Трывога за здароўе",
+	ThoughtHealthDesc:    "Празмерная трывога за здароўе",
+	ThoughtHealthReframe: "«Гэты сімптом — прыкмета хваробы?»",
+
+	ThoughtSocialName:    "Сацыяльная трывога",
+	ThoughtSocialDesc:    "Страх сацыяльных сітуацый",
+	ThoughtSocialReframe: "«Усе будуць глядзець на мяне»",
+
+	ThoughtFinancialName:    "Фінансавыя перажыванні",
+	ThoughtFinancialDesc:    "Стрэс з-за грошай",
+	ThoughtFinancialReframe: "«А што калі грошай не хопіць?»",
 
 	// Visualization
 	VisualizationIntro: `🌅 *Мірная візуалізацыя*

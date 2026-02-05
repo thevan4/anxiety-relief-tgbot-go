@@ -219,7 +219,7 @@ func (r *RedisStorage) GetCleanupRetry(ctx context.Context, userID int64) (*Clea
 	key := fmt.Sprintf("cleanup_retry:%d", userID)
 	result, err := r.client.Get(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
-		return nil, nil
+		return nil, ErrCleanupRetryNotFound
 	}
 	if err != nil {
 		return nil, err

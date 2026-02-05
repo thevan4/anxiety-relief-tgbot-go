@@ -2,11 +2,8 @@ package techniques
 
 // ThoughtCategory represents a category of anxious thoughts for labeling.
 type ThoughtCategory struct {
-	ID          string
-	Name        string
-	Emoji       string
-	Description string
-	Example     string
+	ID    string
+	Emoji string
 }
 
 // GetThoughtCategories returns the list of thought categories for labeling exercise.
@@ -19,59 +16,31 @@ func buildThoughtCategories() []ThoughtCategory {
 	result := make([]ThoughtCategory, len(data))
 	for i, d := range data {
 		result[i] = ThoughtCategory{
-			ID:          d.id,
-			Name:        d.name,
-			Emoji:       d.emoji,
-			Description: d.desc,
-			Example:     d.example,
+			ID:    d.id,
+			Emoji: d.emoji,
 		}
 	}
 	return result
 }
 
 type categoryData struct {
-	id      string
-	name    string
-	emoji   string
-	desc    string
-	example string
+	id    string
+	emoji string
 }
 
 func getThoughtCategoryData() []categoryData {
 	return []categoryData{
-		{"worry", "Беспокойство", "😰",
-			"Тревога о будущих событиях или исходах",
-			"«А что если я провалю собеседование?»"},
-		{"catastrophic", "Катастрофизация", "🌪️",
-			"Представление наихудшего сценария",
-			"«Если я ошибусь, всё будет ужасно!»"},
-		{"self_doubt", "Самосомнение", "🤔",
-			"Сомнения в своих способностях",
-			"«Я недостаточно хорош для этого»"},
-		{"perfectionist", "Перфекционизм", "🎯",
-			"Нереалистично высокие стандарты",
-			"«Если не идеально — значит плохо»"},
-		{"comparison", "Сравнение", "⚖️",
-			"Сравнение себя с другими",
-			"«Все справляются лучше меня»"},
-		{"rumination", "Руминация", "🔄",
-			"Постоянное возвращение к прошлым событиям",
-			"«Почему я тогда так сказал?»"},
-		{"control", "Контроль", "🎮",
-			"Желание контролировать неконтролируемое",
-			"«Я должен всё предусмотреть»"},
-		{"rejection", "Страх отвержения", "💔",
-			"Боязнь быть отвергнутым",
-			"«Они подумают, что я странный»"},
-		{"health", "Тревога о здоровье", "🏥",
-			"Чрезмерное беспокойство о здоровье",
-			"«Этот симптом — признак болезни?»"},
-		{"social", "Социальная тревога", "👥",
-			"Страх социальных ситуаций",
-			"«Все будут на меня смотреть»"},
-		{"financial", "Финансовые переживания", "💰",
-			"Стресс из-за денег",
-			"«Что если денег не хватит?»"},
+		{"worry", "😰"},
+		{"catastrophic", "🌪️"},
+		{"self_doubt", "🤔"},
+		{"perfectionist", "🎯"},
+		{"comparison", "⚖️"},
+		{"rumination", "🔄"},
+		{"control", "🎮"},
+		{"rejection", "💔"},
+		{"health", "🏥"},
+		{"social", "👥"},
+		{"financial", "💰"},
 	}
 }
 

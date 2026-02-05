@@ -18,6 +18,8 @@ const (
 	LangBE = "be"
 	// DefaultLang is the default language if user hasn't selected one.
 	DefaultLang = LangEN
+
+	langCodeMinLen = 2
 )
 
 // Messages contains all localized strings.
@@ -97,6 +99,12 @@ type Messages struct {
 	PatternQuickName      string
 	PatternQuickDesc      string
 
+	// Guided breathing phases
+	GuidedInhale  string
+	GuidedHoldIn  string
+	GuidedExhale  string
+	GuidedHoldOut string
+
 	// PMR
 	PMRIntro      string
 	PMRTense      string
@@ -105,6 +113,47 @@ type Messages struct {
 	PMRStopped    string
 	PMRThanks     string
 
+	// PMR muscle groups
+	PMRHandsName  string
+	PMRHandsTense string
+	PMRHandsRelax string
+
+	PMRForearmsName  string
+	PMRForearmsTense string
+	PMRForearmsRelax string
+
+	PMRForeheadName  string
+	PMRForeheadTense string
+	PMRForeheadRelax string
+
+	PMREyesName  string
+	PMREyesTense string
+	PMREyesRelax string
+
+	PMRJawName  string
+	PMRJawTense string
+	PMRJawRelax string
+
+	PMRNeckName  string
+	PMRNeckTense string
+	PMRNeckRelax string
+
+	PMRChestName  string
+	PMRChestTense string
+	PMRChestRelax string
+
+	PMRStomachName  string
+	PMRStomachTense string
+	PMRStomachRelax string
+
+	PMRThighsName  string
+	PMRThighsTense string
+	PMRThighsRelax string
+
+	PMRCalvesName  string
+	PMRCalvesTense string
+	PMRCalvesRelax string
+
 	// Thought labeling
 	ThoughtIntro      string
 	ThoughtPrompt     string
@@ -112,6 +161,51 @@ type Messages struct {
 	ThoughtResult     string
 	ThoughtCompletion string
 	ThoughtThanks     string
+
+	// Thought labeling categories
+	ThoughtWorryName    string
+	ThoughtWorryDesc    string
+	ThoughtWorryReframe string
+
+	ThoughtCatastrophicName    string
+	ThoughtCatastrophicDesc    string
+	ThoughtCatastrophicReframe string
+
+	ThoughtSelfDoubtName    string
+	ThoughtSelfDoubtDesc    string
+	ThoughtSelfDoubtReframe string
+
+	ThoughtPerfectionistName    string
+	ThoughtPerfectionistDesc    string
+	ThoughtPerfectionistReframe string
+
+	ThoughtComparisonName    string
+	ThoughtComparisonDesc    string
+	ThoughtComparisonReframe string
+
+	ThoughtRuminationName    string
+	ThoughtRuminationDesc    string
+	ThoughtRuminationReframe string
+
+	ThoughtControlName    string
+	ThoughtControlDesc    string
+	ThoughtControlReframe string
+
+	ThoughtRejectionName    string
+	ThoughtRejectionDesc    string
+	ThoughtRejectionReframe string
+
+	ThoughtHealthName    string
+	ThoughtHealthDesc    string
+	ThoughtHealthReframe string
+
+	ThoughtSocialName    string
+	ThoughtSocialDesc    string
+	ThoughtSocialReframe string
+
+	ThoughtFinancialName    string
+	ThoughtFinancialDesc    string
+	ThoughtFinancialReframe string
 
 	// Visualization
 	MenuVisualization       string
@@ -187,26 +281,71 @@ type Messages struct {
 }
 
 // FormatBreathingPhase returns formatted breathing phase text.
-func (m Messages) FormatBreathingPhase(cycleNum, totalCycles int, phaseName, emoji string, progress string) string {
-	return fmt.Sprintf("*%s %d/%d*\n%s %s\n%s", m.CycleWord, cycleNum, totalCycles, phaseName, emoji, progress)
+func (m Messages) FormatBreathingPhase(
+	cycleNum, totalCycles int,
+	phaseName, emoji, progress string,
+) string {
+	return fmt.Sprintf(
+		"*%s %d/%d*\n%s %s\n%s",
+		m.CycleWord,
+		cycleNum,
+		totalCycles,
+		phaseName,
+		emoji,
+		progress,
+	)
 }
 
 // FormatGuidedPhase returns formatted guided breathing phase text.
-func (m Messages) FormatGuidedPhase(patternEmoji, patternName string, cycleNum, totalCycles int, phaseEmoji, phaseName string, progress string) string {
-	return fmt.Sprintf("%s *%s*\n*%s %d/%d*\n%s %s\n%s",
-		patternEmoji, patternName, m.CycleWord, cycleNum, totalCycles, phaseName, phaseEmoji, progress)
+func (m Messages) FormatGuidedPhase(
+	patternEmoji, patternName string,
+	cycleNum, totalCycles int,
+	phaseEmoji, phaseName, progress string,
+) string {
+	return fmt.Sprintf(
+		"%s *%s*\n*%s %d/%d*\n%s %s\n%s",
+		patternEmoji,
+		patternName,
+		m.CycleWord,
+		cycleNum,
+		totalCycles,
+		phaseName,
+		phaseEmoji,
+		progress,
+	)
 }
 
 // FormatVisualizationSceneIntro returns formatted scene intro with timer.
-func (m Messages) FormatVisualizationSceneIntro(emoji, name, description, atmosphere, timer string) string {
-	return fmt.Sprintf("%s *%s*\n\n_%s_\n\n🌿 *%s:* %s\n\n%s\n\n%s",
-		emoji, name, description, m.VisualizationAtmosphere, atmosphere, m.VisualizationCloseEyes, timer)
+func (m Messages) FormatVisualizationSceneIntro(
+	emoji, name, description, atmosphere, timer string,
+) string {
+	return fmt.Sprintf(
+		"%s *%s*\n\n_%s_\n\n🌿 *%s:* %s\n\n%s\n\n%s",
+		emoji,
+		name,
+		description,
+		m.VisualizationAtmosphere,
+		atmosphere,
+		m.VisualizationCloseEyes,
+		timer,
+	)
 }
 
 // FormatVisualizationStep returns formatted visualization step with timer.
-func (m Messages) FormatVisualizationStep(emoji, name string, stepNum, totalSteps int, instruction, timer string) string {
-	return fmt.Sprintf("%s *%s*\n\n*"+m.VisualizationStepFmt+"*\n\n%s\n\n%s",
-		emoji, name, stepNum, totalSteps, instruction, timer)
+func (m Messages) FormatVisualizationStep(
+	emoji, name string,
+	stepNum, totalSteps int,
+	instruction, timer string,
+) string {
+	return fmt.Sprintf(
+		"%s *%s*\n\n*"+m.VisualizationStepFmt+"*\n\n%s\n\n%s",
+		emoji,
+		name,
+		stepNum,
+		totalSteps,
+		instruction,
+		timer,
+	)
 }
 
 // FormatVisualizationCompletion returns formatted completion message.
@@ -306,8 +445,8 @@ func NewLocalizer() *Localizer {
 
 // Get returns messages for the given language code.
 func (l *Localizer) Get(langCode string) Messages {
-	if len(langCode) >= 2 {
-		langCode = langCode[:2]
+	if len(langCode) >= langCodeMinLen {
+		langCode = langCode[:langCodeMinLen]
 	}
 	if msgs, ok := l.languages[langCode]; ok {
 		return msgs
@@ -317,8 +456,8 @@ func (l *Localizer) Get(langCode string) Messages {
 
 // SupportedLang checks if language is supported and returns normalized code.
 func (l *Localizer) SupportedLang(langCode string) string {
-	if len(langCode) >= 2 {
-		langCode = langCode[:2]
+	if len(langCode) >= langCodeMinLen {
+		langCode = langCode[:langCodeMinLen]
 	}
 	if _, ok := l.languages[langCode]; ok {
 		return langCode
@@ -374,11 +513,15 @@ func (l *Localizer) LangName(lang string) string {
 // DefaultLocalizer is a global instance for backward compatibility.
 //
 // Deprecated: Use NewLocalizer() instead.
+//
+//nolint:gochecknoglobals // Backward compatibility global.
 var DefaultLocalizer = NewLocalizer()
 
 // SupportedLanguages lists all supported languages in display order.
 //
 // Deprecated: Use localizer.SupportedLanguages() instead.
+//
+//nolint:gochecknoglobals // Backward compatibility global.
 var SupportedLanguages = []string{LangEN, LangRU, LangDE, LangFR, LangUK, LangBE}
 
 // Get returns messages for the given language code.

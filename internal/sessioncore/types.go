@@ -2,7 +2,10 @@
 // No external dependencies (Telegram, Redis, etc.) - pure Go stdlib.
 package sessioncore
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 // CleanupRetry stores retry information for cleanup decisions.
 type CleanupRetry struct {
@@ -20,6 +23,19 @@ const (
 	DecisionKeep
 	// DecisionRetry means we should check again later.
 	DecisionRetry
+)
+
+// ErrCleanupRetryNotFound indicates missing cleanup retry entry.
+//
+//nolint:gochecknoglobals // Sentinel error for storage.
+var ErrCleanupRetryNotFound = errors.New("cleanup retry not found")
+
+const (
+	defaultStateTTL      = 5 * time.Minute
+	defaultResourceTTL   = 48 * time.Hour
+	defaultCleanupDelay  = 47 * time.Hour
+	defaultRetryInterval = 5 * time.Minute
+	defaultMaxRetries    = 6
 )
 
 // CleanupResult contains the decision and optional retry info.
@@ -51,10 +67,10 @@ type Config struct {
 // DefaultConfig returns sensible defaults for Telegram-like platforms.
 func DefaultConfig() Config {
 	return Config{
-		StateTTL:      5 * time.Minute,
-		ResourceTTL:   48 * time.Hour,
-		CleanupDelay:  47 * time.Hour,
-		RetryInterval: 5 * time.Minute,
-		MaxRetries:    6,
+		StateTTL:      defaultStateTTL,
+		ResourceTTL:   defaultResourceTTL,
+		CleanupDelay:  defaultCleanupDelay,
+		RetryInterval: defaultRetryInterval,
+		MaxRetries:    defaultMaxRetries,
 	}
 }

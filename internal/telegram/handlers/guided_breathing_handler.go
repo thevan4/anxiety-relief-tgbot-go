@@ -128,37 +128,40 @@ func (h *GuidedBreathingHandler) processCallback(chatID, userID int64, messageID
 }
 
 // patternEmojis are fixed emojis for each breathing pattern.
+//
+//nolint:gochecknoglobals // Static UI data.
 var patternEmojis = []string{"📦", "😴", "⚡", "🚀"}
 
 // getLocalizedPattern returns localized name and description for pattern by index.
 func (h *GuidedBreathingHandler) getLocalizedPattern(idx int, m localization.Messages) (string, string) {
-	switch idx {
-	case 0:
-		return m.PatternBoxName, m.PatternBoxDesc
-	case 1:
-		return m.PatternRelaxingName, m.PatternRelaxingDesc
-	case 2:
-		return m.PatternEnergizingName, m.PatternEnergizingDesc
-	case 3:
-		return m.PatternQuickName, m.PatternQuickDesc
-	default:
+	patterns := []struct {
+		name string
+		desc string
+	}{
+		{m.PatternBoxName, m.PatternBoxDesc},
+		{m.PatternRelaxingName, m.PatternRelaxingDesc},
+		{m.PatternEnergizingName, m.PatternEnergizingDesc},
+		{m.PatternQuickName, m.PatternQuickDesc},
+	}
+	if idx < 0 || idx >= len(patterns) {
 		return "", ""
 	}
+	return patterns[idx].name, patterns[idx].desc
 }
 
 // getLocalizedPhaseName returns localized phase name.
-func (h *GuidedBreathingHandler) getLocalizedPhaseName(phaseName string, m localization.Messages) string {
-	switch phaseName {
-	case "Вдох через нос":
-		return m.BreathingInhale
-	case "Задержка":
-		return m.BreathingHold
-	case "Выдох через рот":
-		return m.BreathingExhale
-	case "Пауза":
-		return m.BreathingPause
+func (h *GuidedBreathingHandler) getLocalizedPhaseName(phaseID string, m localization.Messages) string {
+	switch phaseID {
+	case "inhale":
+		return m.GuidedInhale
+	case "hold_in":
+		return m.GuidedHoldIn
+	case "exhale":
+		return m.GuidedExhale
+	case "hold_out":
+		return m.GuidedHoldOut
 	default:
-		return phaseName
+		return phaseID
 	}
 }
 
@@ -256,7 +259,7 @@ func (h *GuidedBreathingHandler) runPhase(
 	}
 
 	patternName, _ := h.getLocalizedPattern(patternIdx, m)
-	phaseName := h.getLocalizedPhaseName(phase.Name, m)
+	phaseName := h.getLocalizedPhaseName(phase.Phase, m)
 	patternEmoji := patternEmojis[patternIdx]
 
 	for elapsed := 0; elapsed <= totalSeconds; elapsed++ {

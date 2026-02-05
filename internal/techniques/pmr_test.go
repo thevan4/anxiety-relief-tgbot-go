@@ -28,17 +28,11 @@ func TestGetMuscleGroups_ValidData(t *testing.T) {
 		if g.Number != i+1 {
 			t.Errorf("group %d: expected number %d, got %d", i, i+1, g.Number)
 		}
-		if g.Name == "" {
-			t.Errorf("group %d: name should not be empty", i)
+		if g.ID == "" {
+			t.Errorf("group %d: id should not be empty", i)
 		}
 		if g.Emoji == "" {
 			t.Errorf("group %d: emoji should not be empty", i)
-		}
-		if g.TenseInstruction == "" {
-			t.Errorf("group %d: tense instruction should not be empty", i)
-		}
-		if g.RelaxInstruction == "" {
-			t.Errorf("group %d: relax instruction should not be empty", i)
 		}
 		if g.TenseDuration <= 0 {
 			t.Errorf("group %d: tense duration should be positive", i)
@@ -54,13 +48,13 @@ func TestGetMuscleGroups_Order(t *testing.T) {
 
 	groups := GetMuscleGroups()
 
-	expectedFirst := "Кисти рук"
-	if groups[0].Name != expectedFirst {
-		t.Errorf("expected first group to be %q, got %q", expectedFirst, groups[0].Name)
+	expectedFirst := "hands"
+	if groups[0].ID != expectedFirst {
+		t.Errorf("expected first group to be %q, got %q", expectedFirst, groups[0].ID)
 	}
 
-	expectedLast := "Икры и стопы"
-	if groups[len(groups)-1].Name != expectedLast {
-		t.Errorf("expected last group to be %q, got %q", expectedLast, groups[len(groups)-1].Name)
+	expectedLast := "calves"
+	if groups[len(groups)-1].ID != expectedLast {
+		t.Errorf("expected last group to be %q, got %q", expectedLast, groups[len(groups)-1].ID)
 	}
 }

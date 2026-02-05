@@ -198,6 +198,30 @@ func (h *PMRHandler) checkPMRRunning(ctx context.Context, userID int64) bool {
 	return err == nil && state == session.StatePMRRunning
 }
 
+func (h *PMRHandler) getLocalizedMuscle(muscleID string, m localization.Messages) (name, tense, relax string) {
+	type muscleTexts struct {
+		name  string
+		tense string
+		relax string
+	}
+	texts := map[string]muscleTexts{
+		"hands":    {m.PMRHandsName, m.PMRHandsTense, m.PMRHandsRelax},
+		"forearms": {m.PMRForearmsName, m.PMRForearmsTense, m.PMRForearmsRelax},
+		"forehead": {m.PMRForeheadName, m.PMRForeheadTense, m.PMRForeheadRelax},
+		"eyes":     {m.PMREyesName, m.PMREyesTense, m.PMREyesRelax},
+		"jaw":      {m.PMRJawName, m.PMRJawTense, m.PMRJawRelax},
+		"neck":     {m.PMRNeckName, m.PMRNeckTense, m.PMRNeckRelax},
+		"chest":    {m.PMRChestName, m.PMRChestTense, m.PMRChestRelax},
+		"stomach":  {m.PMRStomachName, m.PMRStomachTense, m.PMRStomachRelax},
+		"thighs":   {m.PMRThighsName, m.PMRThighsTense, m.PMRThighsRelax},
+		"calves":   {m.PMRCalvesName, m.PMRCalvesTense, m.PMRCalvesRelax},
+	}
+	if text, ok := texts[muscleID]; ok {
+		return text.name, text.tense, text.relax
+	}
+	return muscleID, "", ""
+}
+
 func (h *PMRHandler) runPhaseWithProgress(
 	ctx context.Context, chatID, userID int64, messageID int,
 	muscle techniques.MuscleGroup, totalGroups int, isTense bool, duration time.Duration,
@@ -218,13 +242,14 @@ func (h *PMRHandler) runPhaseWithProgress(
 
 		progress := messages.TimerCountdown(elapsed, totalSeconds)
 		var phaseText string
+		name, tenseInstr, relaxInstr := h.getLocalizedMuscle(muscle.ID, m)
 		if isTense {
-			phaseText = fmt.Sprintf(m.PMRTense, muscle.TenseInstruction) + "\n\n" + progress
+			phaseText = fmt.Sprintf(m.PMRTense, tenseInstr) + "\n\n" + progress
 		} else {
-			phaseText = fmt.Sprintf(m.PMRRelax, muscle.RelaxInstruction) + "\n\n" + progress
+			phaseText = fmt.Sprintf(m.PMRRelax, relaxInstr) + "\n\n" + progress
 		}
 
-		text := fmt.Sprintf("%s *%s* (%d/%d)\n\n%s", muscle.Emoji, muscle.Name, muscle.Number, totalGroups, phaseText)
+		text := fmt.Sprintf("%s *%s* (%d/%d)\n\n%s", muscle.Emoji, name, muscle.Number, totalGroups, phaseText)
 
 		if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 			ChatID:      tu.ID(chatID),

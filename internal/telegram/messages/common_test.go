@@ -3,6 +3,7 @@ package messages
 import "testing"
 
 func TestTimerCountdown(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		elapsed  int
@@ -17,7 +18,9 @@ func TestTimerCountdown(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := TimerCountdown(tt.elapsed, tt.total)
 			if result != tt.expected {
 				t.Errorf("TimerCountdown(%d, %d) = %q, want %q",

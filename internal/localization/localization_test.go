@@ -6,6 +6,7 @@ import (
 )
 
 func TestLocalizerGet(t *testing.T) {
+	t.Parallel()
 	l := NewLocalizer()
 
 	tests := []struct {
@@ -25,7 +26,9 @@ func TestLocalizerGet(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			msgs := l.Get(tt.langCode)
 			// Check that we got non-empty messages
 			if msgs.MainMenuText == "" {
@@ -39,6 +42,7 @@ func TestLocalizerGet(t *testing.T) {
 }
 
 func TestLocalizerSupportedLang(t *testing.T) {
+	t.Parallel()
 	l := NewLocalizer()
 
 	tests := []struct {
@@ -59,7 +63,9 @@ func TestLocalizerSupportedLang(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got := l.SupportedLang(tt.langCode)
 			if got != tt.want {
 				t.Errorf("SupportedLang(%q) = %q, want %q", tt.langCode, got, tt.want)
@@ -69,6 +75,7 @@ func TestLocalizerSupportedLang(t *testing.T) {
 }
 
 func TestLocalizerSupportedLanguages(t *testing.T) {
+	t.Parallel()
 	l := NewLocalizer()
 	langs := l.SupportedLanguages()
 
@@ -85,6 +92,7 @@ func TestLocalizerSupportedLanguages(t *testing.T) {
 }
 
 func TestLocalizerLangFlag(t *testing.T) {
+	t.Parallel()
 	l := NewLocalizer()
 
 	tests := []struct {
@@ -101,7 +109,9 @@ func TestLocalizerLangFlag(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.lang, func(t *testing.T) {
+			t.Parallel()
 			got := l.LangFlag(tt.lang)
 			if got != tt.want {
 				t.Errorf("LangFlag(%q) = %q, want %q", tt.lang, got, tt.want)
@@ -111,6 +121,7 @@ func TestLocalizerLangFlag(t *testing.T) {
 }
 
 func TestLocalizerLangName(t *testing.T) {
+	t.Parallel()
 	l := NewLocalizer()
 
 	tests := []struct {
@@ -127,7 +138,9 @@ func TestLocalizerLangName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.lang, func(t *testing.T) {
+			t.Parallel()
 			got := l.LangName(tt.lang)
 			if got != tt.want {
 				t.Errorf("LangName(%q) = %q, want %q", tt.lang, got, tt.want)
@@ -137,99 +150,107 @@ func TestLocalizerLangName(t *testing.T) {
 }
 
 func TestMessagesNotEmpty(t *testing.T) {
+	t.Parallel()
 	l := NewLocalizer()
 
 	for _, lang := range l.SupportedLanguages() {
 		t.Run(lang, func(t *testing.T) {
+			t.Parallel()
 			msgs := l.Get(lang)
 
-			// Check all button texts are non-empty
-			if msgs.Start == "" {
-				t.Errorf("%s: Start is empty", lang)
+			fields := []struct {
+				name  string
+				value string
+			}{
+				{"Start", msgs.Start},
+				{"Back", msgs.Back},
+				{"Stop", msgs.Stop},
+				{"Next", msgs.Next},
+				{"Done", msgs.Done},
+				{"MainMenuText", msgs.MainMenuText},
+				{"MenuBreathing", msgs.MenuBreathing},
+				{"BreathingIntro", msgs.BreathingIntro},
+				{"BreathingInhale", msgs.BreathingInhale},
+				{"BreathingHold", msgs.BreathingHold},
+				{"BreathingExhale", msgs.BreathingExhale},
+				{"GroundingIntro", msgs.GroundingIntro},
 			}
-			if msgs.Back == "" {
-				t.Errorf("%s: Back is empty", lang)
-			}
-			if msgs.Stop == "" {
-				t.Errorf("%s: Stop is empty", lang)
-			}
-			if msgs.Next == "" {
-				t.Errorf("%s: Next is empty", lang)
-			}
-			if msgs.Done == "" {
-				t.Errorf("%s: Done is empty", lang)
-			}
-
-			// Check main menu
-			if msgs.MainMenuText == "" {
-				t.Errorf("%s: MainMenuText is empty", lang)
-			}
-			if msgs.MenuBreathing == "" {
-				t.Errorf("%s: MenuBreathing is empty", lang)
-			}
-
-			// Check breathing
-			if msgs.BreathingIntro == "" {
-				t.Errorf("%s: BreathingIntro is empty", lang)
-			}
-			if msgs.BreathingInhale == "" {
-				t.Errorf("%s: BreathingInhale is empty", lang)
-			}
-			if msgs.BreathingHold == "" {
-				t.Errorf("%s: BreathingHold is empty", lang)
-			}
-			if msgs.BreathingExhale == "" {
-				t.Errorf("%s: BreathingExhale is empty", lang)
-			}
-
-			// Check grounding
-			if msgs.GroundingIntro == "" {
-				t.Errorf("%s: GroundingIntro is empty", lang)
+			for _, field := range fields {
+				if field.value == "" {
+					t.Errorf("%s: %s is empty", lang, field.name)
+				}
 			}
 		})
 	}
 }
 
 func TestVisualizationMessagesNotEmpty(t *testing.T) {
+	t.Parallel()
 	l := NewLocalizer()
 
 	for _, lang := range l.SupportedLanguages() {
 		t.Run(lang, func(t *testing.T) {
+			t.Parallel()
 			msgs := l.Get(lang)
 
-			if msgs.MenuVisualization == "" {
-				t.Errorf("%s: MenuVisualization is empty", lang)
+			fields := []struct {
+				name  string
+				value string
+			}{
+				{"MenuVisualization", msgs.MenuVisualization},
+				{"VisualizationIntro", msgs.VisualizationIntro},
+				{"VisualizationStopped", msgs.VisualizationStopped},
+				{"VisualizationCompletion", msgs.VisualizationCompletion},
+				{"VisualizationThanks", msgs.VisualizationThanks},
+				{"VisualizationAtmosphere", msgs.VisualizationAtmosphere},
+				{"VisualizationCloseEyes", msgs.VisualizationCloseEyes},
+				{"VisualizationStepFmt", msgs.VisualizationStepFmt},
 			}
-			if msgs.VisualizationIntro == "" {
-				t.Errorf("%s: VisualizationIntro is empty", lang)
-			}
-			if msgs.VisualizationStopped == "" {
-				t.Errorf("%s: VisualizationStopped is empty", lang)
-			}
-			if msgs.VisualizationCompletion == "" {
-				t.Errorf("%s: VisualizationCompletion is empty", lang)
-			}
-			if msgs.VisualizationThanks == "" {
-				t.Errorf("%s: VisualizationThanks is empty", lang)
-			}
-			if msgs.VisualizationAtmosphere == "" {
-				t.Errorf("%s: VisualizationAtmosphere is empty", lang)
-			}
-			if msgs.VisualizationCloseEyes == "" {
-				t.Errorf("%s: VisualizationCloseEyes is empty", lang)
-			}
-			if msgs.VisualizationStepFmt == "" {
-				t.Errorf("%s: VisualizationStepFmt is empty", lang)
+			for _, field := range fields {
+				if field.value == "" {
+					t.Errorf("%s: %s is empty", lang, field.name)
+				}
 			}
 		})
 	}
 }
 
+func validateScene(t *testing.T, lang string, scene VisualizationScene, expectedID string) {
+	t.Helper()
+	if scene.ID != expectedID {
+		t.Errorf("%s: scene ID = %q, want %q", lang, scene.ID, expectedID)
+	}
+	sceneFields := []struct {
+		name  string
+		value string
+	}{
+		{"Name", scene.Name},
+		{"Description", scene.Description},
+		{"Atmosphere", scene.Atmosphere},
+	}
+	for _, field := range sceneFields {
+		if field.value == "" {
+			t.Errorf("%s: scene %s %s is empty", lang, scene.ID, field.name)
+		}
+	}
+	if len(scene.Steps) != 7 {
+		t.Errorf("%s: scene %s has %d steps, want 7", lang, scene.ID, len(scene.Steps))
+	}
+	for i, step := range scene.Steps {
+		if step.Instruction == "" {
+			t.Errorf("%s: scene %s step %d Instruction is empty", lang, scene.ID, i+1)
+		}
+	}
+}
+
 func TestGetVisualizationScenes(t *testing.T) {
+	t.Parallel()
 	l := NewLocalizer()
 
 	for _, lang := range l.SupportedLanguages() {
+		lang := lang
 		t.Run(lang, func(t *testing.T) {
+			t.Parallel()
 			m := l.Get(lang)
 			scenes := m.GetVisualizationScenes()
 
@@ -239,46 +260,31 @@ func TestGetVisualizationScenes(t *testing.T) {
 
 			expectedIDs := []string{"mountain", "forest", "beach", "garden", "starry"}
 			for i, scene := range scenes {
-				if scene.ID != expectedIDs[i] {
-					t.Errorf("%s: scene %d ID = %q, want %q", lang, i, scene.ID, expectedIDs[i])
-				}
-				if scene.Name == "" {
-					t.Errorf("%s: scene %s Name is empty", lang, scene.ID)
-				}
-				if scene.Description == "" {
-					t.Errorf("%s: scene %s Description is empty", lang, scene.ID)
-				}
-				if scene.Atmosphere == "" {
-					t.Errorf("%s: scene %s Atmosphere is empty", lang, scene.ID)
-				}
-				if len(scene.Steps) != 7 {
-					t.Errorf("%s: scene %s has %d steps, want 7", lang, scene.ID, len(scene.Steps))
-				}
-				for j, step := range scene.Steps {
-					if step.Instruction == "" {
-						t.Errorf("%s: scene %s step %d Instruction is empty", lang, scene.ID, j+1)
-					}
-				}
+				validateScene(t, lang, scene, expectedIDs[i])
 			}
 		})
 	}
 }
 
 func TestVisualizationFormatMethods(t *testing.T) {
+	t.Parallel()
 	l := NewLocalizer()
 	m := l.Get("en")
 
 	t.Run("FormatVisualizationSceneIntro", func(t *testing.T) {
+		t.Parallel()
 		result := m.FormatVisualizationSceneIntro("🏖️", "Beach", "Warm beach", "Sound of waves", "⏱️ 3")
 		assertContains(t, result, "🏖️", "Beach", "Warm beach")
 	})
 
 	t.Run("FormatVisualizationStep", func(t *testing.T) {
+		t.Parallel()
 		result := m.FormatVisualizationStep("🏖️", "Beach", 1, 5, "Close your eyes", "⏱️ 10")
 		assertContains(t, result, "🏖️", "Beach", "Close your eyes")
 	})
 
 	t.Run("FormatVisualizationCompletion", func(t *testing.T) {
+		t.Parallel()
 		result := m.FormatVisualizationCompletion("Beach Scene")
 		assertContains(t, result, "Beach Scene")
 	})
@@ -300,6 +306,7 @@ func assertContains(t *testing.T, result string, expected ...string) {
 
 // Test backward compatibility functions.
 func TestBackwardCompatibility(t *testing.T) {
+	t.Parallel()
 	// Test global Get function
 	msgs := Get("en")
 	if msgs.Start == "" {

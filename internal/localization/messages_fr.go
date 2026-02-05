@@ -1,6 +1,7 @@
 //nolint:dupl // Localization files have identical structure by design, only text values differ.
 package localization
 
+//nolint:gochecknoglobals // Localization bundle.
 var messagesFR = Messages{
 	// Buttons
 	Start:      "▶️ Commencer",
@@ -104,15 +105,19 @@ Choisissez une technique dans le menu ci-dessous.`,
 
 	// Grounding steps
 	GroundingStep1Title: "Étape 1 : Vue",
-	GroundingStep1Desc:  "Nommez 5 choses que vous voyez autour de vous.\n\nPar exemple : table, lampe, livre, fenêtre, chaise.",
+	GroundingStep1Desc: "Nommez 5 choses que vous voyez autour de vous.\n\n" +
+		"Par exemple : table, lampe, livre, fenêtre, chaise.",
 	GroundingStep2Title: "Étape 2 : Toucher",
-	GroundingStep2Desc:  "Nommez 4 choses que vous ressentez avec votre corps.\n\nPar exemple : pieds sur le sol, dos sur la chaise, mains sur la table, vêtements sur le corps.",
+	GroundingStep2Desc: "Nommez 4 choses que vous ressentez avec votre corps.\n\n" +
+		"Par exemple : pieds sur le sol, dos sur la chaise, mains sur la table, vêtements sur le corps.",
 	GroundingStep3Title: "Étape 3 : Ouïe",
-	GroundingStep3Desc:  "Nommez 3 sons que vous entendez.\n\nPar exemple : bruit de la rue, tic-tac de l'horloge, votre respiration.",
+	GroundingStep3Desc: "Nommez 3 sons que vous entendez.\n\n" +
+		"Par exemple : bruit de la rue, tic-tac de l'horloge, votre respiration.",
 	GroundingStep4Title: "Étape 4 : Odorat",
 	GroundingStep4Desc:  "Nommez 2 odeurs que vous sentez ou aimez.\n\nPar exemple : café, air frais, parfum de fleurs.",
 	GroundingStep5Title: "Étape 5 : Goût",
-	GroundingStep5Desc:  "Nommez 1 goût que vous ressentez dans votre bouche.\n\nSi rien — rappelez-vous votre goût préféré.",
+	GroundingStep5Desc: "Nommez 1 goût que vous ressentez dans votre bouche.\n\n" +
+		"Si rien — rappelez-vous votre goût préféré.",
 
 	// Guided breathing
 	GuidedIntro:      "🧘 *Respiration guidée*\n\nChoisissez une technique de respiration :\n\n",
@@ -133,6 +138,12 @@ Choisissez une technique dans le menu ci-dessous.`,
 	PatternEnergizingDesc: "Énergie et clarté mentale",
 	PatternQuickName:      "Reset rapide 3-3-3",
 	PatternQuickDesc:      "Soulagement rapide des tensions",
+
+	// Guided breathing phases
+	GuidedInhale:  "Inspirez",
+	GuidedHoldIn:  "Retenez",
+	GuidedExhale:  "Expirez",
+	GuidedHoldOut: "Pause",
 
 	// PMR
 	PMRIntro: `💪 *Relaxation musculaire progressive*
@@ -165,6 +176,47 @@ La relaxation musculaire progressive réduit la tension musculaire et le niveau 
 
 Choisissez une technique dans le menu ci-dessous.`,
 
+	// PMR muscle groups
+	PMRHandsName:  "Mains",
+	PMRHandsTense: "Serrez les poings aussi fort que possible. Sentez la tension dans vos doigts et vos paumes.",
+	PMRHandsRelax: "Relâchez les poings et détendez les mains. Sentez la chaleur et la détente.",
+
+	PMRForearmsName:  "Avant-bras et biceps",
+	PMRForearmsTense: "Pliez les bras aux coudes et contractez les biceps. Gardez la tension.",
+	PMRForearmsRelax: "Abaissez les bras et détendez-les complètement. Vos bras deviennent lourds.",
+
+	PMRForeheadName:  "Front",
+	PMRForeheadTense: "Levez les sourcils aussi haut que possible et plissez le front. Sentez la tension.",
+	PMRForeheadRelax: "Détendez le front. Laissez les sourcils retomber. Le front devient lisse.",
+
+	PMREyesName:  "Yeux et nez",
+	PMREyesTense: "Fermez fortement les yeux et froncez le nez. Sentez la tension autour des yeux.",
+	PMREyesRelax: "Détendez les yeux et le nez. Les paupières deviennent légères et calmes.",
+
+	PMRJawName:  "Mâchoire",
+	PMRJawTense: "Serrez la mâchoire et étirez les lèvres en un sourire tendu.",
+	PMRJawRelax: "Détendez la mâchoire, entrouvrez légèrement la bouche. La langue est détendue.",
+
+	PMRNeckName:  "Cou et épaules",
+	PMRNeckTense: "Haussez les épaules vers les oreilles et contractez le cou. Gardez la tension.",
+	PMRNeckRelax: "Abaissez les épaules et détendez le cou. Sentez le soulagement.",
+
+	PMRChestName:  "Poitrine et dos",
+	PMRChestTense: "Prenez une grande inspiration, retenez-la et contractez les muscles de la poitrine et du dos.",
+	PMRChestRelax: "Expirez lentement et détendez la poitrine et le dos. Respirez calmement.",
+
+	PMRStomachName:  "Ventre",
+	PMRStomachTense: "Rentrez le ventre et contractez les abdos. Gardez la tension.",
+	PMRStomachRelax: "Détendez le ventre. Laissez-le bouger librement avec la respiration.",
+
+	PMRThighsName:  "Cuisses et fessiers",
+	PMRThighsTense: "Contractez les fessiers et les cuisses, appuyez-les contre le siège.",
+	PMRThighsRelax: "Détendez les fessiers et les cuisses. Sentez la lourdeur dans les jambes.",
+
+	PMRCalvesName:  "Mollets et pieds",
+	PMRCalvesTense: "Ramenez les orteils vers vous, contractez les mollets. Sentez l'étirement.",
+	PMRCalvesRelax: "Détendez les pieds et les mollets. Vos jambes deviennent chaudes et lourdes.",
+
 	// Thought labeling
 	ThoughtIntro: `🏷️ *Étiquetage des pensées*
 
@@ -188,6 +240,51 @@ L'étiquetage des pensées aide à reconnaître les distorsions cognitives et à
 
 Choisissez une technique dans le menu ci-dessous.`,
 
+	// Thought labeling categories
+	ThoughtWorryName:    "Inquiétude",
+	ThoughtWorryDesc:    "Anxiété face à des événements futurs ou à leurs issues",
+	ThoughtWorryReframe: "\"Et si je ratais l’entretien ?\"",
+
+	ThoughtCatastrophicName:    "Catastrophisme",
+	ThoughtCatastrophicDesc:    "Imaginer le pire scénario",
+	ThoughtCatastrophicReframe: "\"Si je fais une erreur, tout sera terrible !\"",
+
+	ThoughtSelfDoubtName:    "Doute de soi",
+	ThoughtSelfDoubtDesc:    "Douter de ses propres capacités",
+	ThoughtSelfDoubtReframe: "\"Je ne suis pas assez bon pour ça\"",
+
+	ThoughtPerfectionistName:    "Perfectionnisme",
+	ThoughtPerfectionistDesc:    "Des standards irréalistes",
+	ThoughtPerfectionistReframe: "\"Si ce n’est pas parfait, c’est mauvais\"",
+
+	ThoughtComparisonName:    "Comparaison",
+	ThoughtComparisonDesc:    "Se comparer aux autres",
+	ThoughtComparisonReframe: "\"Tout le monde gère ça mieux que moi\"",
+
+	ThoughtRuminationName:    "Rumination",
+	ThoughtRuminationDesc:    "Revenir sans cesse aux événements passés",
+	ThoughtRuminationReframe: "\"Pourquoi ai-je dit ça alors ?\"",
+
+	ThoughtControlName:    "Contrôle",
+	ThoughtControlDesc:    "Vouloir contrôler l’incontrôlable",
+	ThoughtControlReframe: "\"Je dois tout anticiper\"",
+
+	ThoughtRejectionName:    "Peur du rejet",
+	ThoughtRejectionDesc:    "Peur d’être rejeté",
+	ThoughtRejectionReframe: "\"Ils vont penser que je suis bizarre\"",
+
+	ThoughtHealthName:    "Anxiété de santé",
+	ThoughtHealthDesc:    "Inquiétude excessive concernant la santé",
+	ThoughtHealthReframe: "\"Ce symptôme est-il un signe de maladie ?\"",
+
+	ThoughtSocialName:    "Anxiété sociale",
+	ThoughtSocialDesc:    "Peur des situations sociales",
+	ThoughtSocialReframe: "\"Tout le monde va me regarder\"",
+
+	ThoughtFinancialName:    "Inquiétudes financières",
+	ThoughtFinancialDesc:    "Stress lié à l’argent",
+	ThoughtFinancialReframe: "\"Et s’il n’y avait pas assez d’argent ?\"",
+
 	// Visualization
 	VisualizationIntro: `🌅 *Visualisation paisible*
 
@@ -210,7 +307,8 @@ Revenez lentement à la réalité. Bougez vos doigts, inspirez profondément et 
 Comment vous sentez-vous ?`,
 	VisualizationThanks: `✨ *Merci pour la pratique !*
 
-La visualisation est une technique puissante pour réduire le stress et l'anxiété. La pratique régulière renforce l'effet.
+La visualisation est une technique puissante pour réduire le stress et l'anxiété.
+La pratique régulière renforce l'effet.
 
 Choisissez une technique dans le menu ci-dessous.`,
 	VisualizationAtmosphere: "Atmosphère",

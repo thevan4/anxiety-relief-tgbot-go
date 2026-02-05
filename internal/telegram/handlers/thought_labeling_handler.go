@@ -145,7 +145,7 @@ func (h *ThoughtLabelingHandler) showIntro(ctx context.Context, chatID, userID i
 	}
 
 	// Save message ID for later editing when user sends thought
-	if err := h.sessionStorage.SetMessageID(ctx, userID, messageID); err != nil {
+	if err := h.sessionStorage.SetMenuMessageID(ctx, userID, messageID); err != nil {
 		log.Printf("ERROR: save message id: %v", err)
 	}
 }
@@ -174,7 +174,7 @@ func (h *ThoughtLabelingHandler) promptForThought(ctx context.Context, chatID, u
 	}
 
 	// Save message ID for later editing when user sends thought
-	if err := h.sessionStorage.SetMessageID(ctx, userID, messageID); err != nil {
+	if err := h.sessionStorage.SetMenuMessageID(ctx, userID, messageID); err != nil {
 		log.Printf("ERROR: save message id: %v", err)
 	}
 }
@@ -209,14 +209,45 @@ func (h *ThoughtLabelingHandler) showCategories(
 	}
 }
 
+func (h *ThoughtLabelingHandler) getLocalizedCategory(
+	categoryID string,
+	m localization.Messages,
+) (name, desc, reframe string) {
+	type categoryTexts struct {
+		name    string
+		desc    string
+		reframe string
+	}
+	texts := map[string]categoryTexts{
+		"worry":        {m.ThoughtWorryName, m.ThoughtWorryDesc, m.ThoughtWorryReframe},
+		"catastrophic": {m.ThoughtCatastrophicName, m.ThoughtCatastrophicDesc, m.ThoughtCatastrophicReframe},
+		"self_doubt":   {m.ThoughtSelfDoubtName, m.ThoughtSelfDoubtDesc, m.ThoughtSelfDoubtReframe},
+		"perfectionist": {
+			m.ThoughtPerfectionistName, m.ThoughtPerfectionistDesc, m.ThoughtPerfectionistReframe,
+		},
+		"comparison": {m.ThoughtComparisonName, m.ThoughtComparisonDesc, m.ThoughtComparisonReframe},
+		"rumination": {m.ThoughtRuminationName, m.ThoughtRuminationDesc, m.ThoughtRuminationReframe},
+		"control":    {m.ThoughtControlName, m.ThoughtControlDesc, m.ThoughtControlReframe},
+		"rejection":  {m.ThoughtRejectionName, m.ThoughtRejectionDesc, m.ThoughtRejectionReframe},
+		"health":     {m.ThoughtHealthName, m.ThoughtHealthDesc, m.ThoughtHealthReframe},
+		"social":     {m.ThoughtSocialName, m.ThoughtSocialDesc, m.ThoughtSocialReframe},
+		"financial":  {m.ThoughtFinancialName, m.ThoughtFinancialDesc, m.ThoughtFinancialReframe},
+	}
+	if text, ok := texts[categoryID]; ok {
+		return text.name, text.desc, text.reframe
+	}
+	return categoryID, "", ""
+}
+
 func (h *ThoughtLabelingHandler) buildCategoryButtons(
 	categories []techniques.ThoughtCategory, m localization.Messages,
 ) [][]telego.InlineKeyboardButton {
 	var buttons [][]telego.InlineKeyboardButton
 	row := []telego.InlineKeyboardButton{}
 	for i, cat := range categories {
+		name, _, _ := h.getLocalizedCategory(cat.ID, m)
 		row = append(row, telego.InlineKeyboardButton{
-			Text:         fmt.Sprintf("%s %s", cat.Emoji, cat.Name),
+			Text:         fmt.Sprintf("%s %s", cat.Emoji, name),
 			CallbackData: fmt.Sprintf("thought_cat_%s", cat.ID),
 		})
 		if len(row) == 2 || i == len(categories)-1 {
@@ -250,7 +281,8 @@ func (h *ThoughtLabelingHandler) showCategoryInfo(
 	}
 
 	m := h.localizer.Get(h.getLang(ctx, userID))
-	text := fmt.Sprintf(m.ThoughtResult, category.Emoji, category.Name, category.Description, category.Example) +
+	name, desc, reframe := h.getLocalizedCategory(category.ID, m)
+	text := fmt.Sprintf(m.ThoughtResult, category.Emoji, name, desc, reframe) +
 		"\n\n" + m.ThoughtCompletion
 
 	keyboard := &telego.InlineKeyboardMarkup{

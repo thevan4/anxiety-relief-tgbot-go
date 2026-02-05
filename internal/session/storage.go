@@ -2,8 +2,14 @@ package session
 
 import (
 	"context"
+	"errors"
 	"time"
 )
+
+// ErrCleanupRetryNotFound indicates missing cleanup retry entry.
+//
+//nolint:gochecknoglobals // Sentinel error for storage.
+var ErrCleanupRetryNotFound = errors.New("cleanup retry not found")
 
 // CleanupRetry stores retry information for cleanup queue.
 type CleanupRetry struct {
@@ -19,6 +25,7 @@ type Storage interface {
 	ClearState(ctx context.Context, userID int64) error
 
 	// Message IDs (legacy - kept for backward compatibility).
+	//
 	// Deprecated: Use SetHolderMessageID/SetMenuMessageID instead.
 	SetMessageID(ctx context.Context, userID int64, messageID int) error
 	GetMessageID(ctx context.Context, userID int64) (int, error)

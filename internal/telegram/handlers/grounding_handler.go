@@ -161,6 +161,8 @@ func getGroundingStepConfig() []struct {
 }
 
 // groundingStepEmojis are fixed emojis for each grounding step.
+//
+//nolint:gochecknoglobals // Static UI data.
 var groundingStepEmojis = []string{"👁️", "🤚", "👂", "👃", "👅"}
 
 func (h *GroundingHandler) showGroundingStep(
@@ -221,20 +223,20 @@ func (h *GroundingHandler) showGroundingStep(
 
 // getLocalizedStep returns localized title and description for grounding step.
 func (h *GroundingHandler) getLocalizedStep(idx int, m localization.Messages) (string, string) {
-	switch idx {
-	case 0:
-		return m.GroundingStep1Title, m.GroundingStep1Desc
-	case 1:
-		return m.GroundingStep2Title, m.GroundingStep2Desc
-	case 2:
-		return m.GroundingStep3Title, m.GroundingStep3Desc
-	case 3:
-		return m.GroundingStep4Title, m.GroundingStep4Desc
-	case 4:
-		return m.GroundingStep5Title, m.GroundingStep5Desc
-	default:
+	steps := []struct {
+		title string
+		desc  string
+	}{
+		{m.GroundingStep1Title, m.GroundingStep1Desc},
+		{m.GroundingStep2Title, m.GroundingStep2Desc},
+		{m.GroundingStep3Title, m.GroundingStep3Desc},
+		{m.GroundingStep4Title, m.GroundingStep4Desc},
+		{m.GroundingStep5Title, m.GroundingStep5Desc},
+	}
+	if idx < 0 || idx >= len(steps) {
 		return "", ""
 	}
+	return steps[idx].title, steps[idx].desc
 }
 
 func (h *GroundingHandler) completeGrounding(ctx context.Context, chatID, userID int64, messageID int) {

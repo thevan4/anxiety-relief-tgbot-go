@@ -8,6 +8,7 @@ import (
 )
 
 func TestManager_Start(t *testing.T) {
+	t.Parallel()
 	m := NewManager()
 	parentCtx := context.Background()
 
@@ -24,6 +25,7 @@ func TestManager_Start(t *testing.T) {
 }
 
 func TestManager_StartCancelsPrevious(t *testing.T) {
+	t.Parallel()
 	m := NewManager()
 	parentCtx := context.Background()
 
@@ -45,6 +47,7 @@ func TestManager_StartCancelsPrevious(t *testing.T) {
 }
 
 func TestManager_Cancel(t *testing.T) {
+	t.Parallel()
 	m := NewManager()
 	parentCtx := context.Background()
 
@@ -60,12 +63,14 @@ func TestManager_Cancel(t *testing.T) {
 }
 
 func TestManager_CancelNonExistent(t *testing.T) {
+	t.Parallel()
 	m := NewManager()
 	// Should not panic
 	m.Cancel(999)
 }
 
 func TestManager_MultipleUsers(t *testing.T) {
+	t.Parallel()
 	m := NewManager()
 	parentCtx := context.Background()
 
@@ -95,6 +100,7 @@ func TestManager_MultipleUsers(t *testing.T) {
 }
 
 func TestManager_CancelAll(t *testing.T) {
+	t.Parallel()
 	m := NewManager()
 	parentCtx := context.Background()
 
@@ -113,6 +119,7 @@ func TestManager_CancelAll(t *testing.T) {
 }
 
 func TestManager_ConcurrentAccess(t *testing.T) {
+	t.Parallel()
 	m := NewManager()
 	parentCtx := context.Background()
 
@@ -138,6 +145,7 @@ func TestManager_ConcurrentAccess(t *testing.T) {
 }
 
 func TestManager_ContextInheritsCancellation(t *testing.T) {
+	t.Parallel()
 	m := NewManager()
 	parentCtx, parentCancel := context.WithCancel(context.Background())
 
@@ -156,6 +164,7 @@ func TestManager_ContextInheritsCancellation(t *testing.T) {
 }
 
 func TestManager_Has(t *testing.T) {
+	t.Parallel()
 	m := NewManager()
 
 	if m.Has(123) {

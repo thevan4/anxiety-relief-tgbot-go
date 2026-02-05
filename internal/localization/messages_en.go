@@ -1,6 +1,7 @@
 //nolint:dupl // Localization files have identical structure by design, only text values differ.
 package localization
 
+//nolint:gochecknoglobals // Localization bundle.
 var messagesEN = Messages{
 	// Buttons
 	Start:      "▶️ Start",
@@ -106,7 +107,8 @@ Choose a technique from the menu below.`,
 	GroundingStep1Title: "Step 1: Sight",
 	GroundingStep1Desc:  "Name 5 things you can see around you.\n\nFor example: table, lamp, book, window, chair.",
 	GroundingStep2Title: "Step 2: Touch",
-	GroundingStep2Desc:  "Name 4 things you can feel with your body.\n\nFor example: feet on the floor, back on the chair, hands on the table, clothes on your body.",
+	GroundingStep2Desc: "Name 4 things you can feel with your body.\n\n" +
+		"For example: feet on the floor, back on the chair, hands on the table, clothes on your body.",
 	GroundingStep3Title: "Step 3: Hearing",
 	GroundingStep3Desc:  "Name 3 sounds you can hear.\n\nFor example: street noise, clock ticking, your breathing.",
 	GroundingStep4Title: "Step 4: Smell",
@@ -133,6 +135,12 @@ Choose a technique from the menu below.`,
 	PatternEnergizingDesc: "Energy and mental clarity",
 	PatternQuickName:      "Quick Reset 3-3-3",
 	PatternQuickDesc:      "Fast tension relief",
+
+	// Guided breathing phases
+	GuidedInhale:  "Inhale",
+	GuidedHoldIn:  "Hold",
+	GuidedExhale:  "Exhale",
+	GuidedHoldOut: "Pause",
 
 	// PMR
 	PMRIntro: `💪 *Progressive Muscle Relaxation*
@@ -165,6 +173,47 @@ Progressive muscle relaxation reduces muscle tension and stress levels.
 
 Choose a technique from the menu below.`,
 
+	// PMR muscle groups
+	PMRHandsName:  "Hands",
+	PMRHandsTense: "Clench your fists as hard as you can. Feel the tension in your fingers and palms.",
+	PMRHandsRelax: "Release your fists and relax your hands. Feel the warmth and relaxation.",
+
+	PMRForearmsName:  "Forearms and Biceps",
+	PMRForearmsTense: "Bend your arms at the elbows and tense your biceps. Hold the tension.",
+	PMRForearmsRelax: "Lower your arms and completely relax them. Your arms become heavy.",
+
+	PMRForeheadName:  "Forehead",
+	PMRForeheadTense: "Raise your eyebrows as high as possible, wrinkle your forehead. Feel the tension.",
+	PMRForeheadRelax: "Relax your forehead. Let your eyebrows drop. Your forehead becomes smooth.",
+
+	PMREyesName:  "Eyes and Nose",
+	PMREyesTense: "Squeeze your eyes shut tightly and wrinkle your nose. Feel the tension around your eyes.",
+	PMREyesRelax: "Relax your eyes and nose. Your eyelids become light and calm.",
+
+	PMRJawName:  "Jaw",
+	PMRJawTense: "Clench your jaw and stretch your lips in a tense smile.",
+	PMRJawRelax: "Relax your jaw, slightly open your mouth. Your tongue is relaxed.",
+
+	PMRNeckName:  "Neck and Shoulders",
+	PMRNeckTense: "Raise your shoulders to your ears and tense your neck. Hold the tension.",
+	PMRNeckRelax: "Lower your shoulders down and relax your neck. Feel the relief.",
+
+	PMRChestName:  "Chest and Back",
+	PMRChestTense: "Take a deep breath, hold it and tense your chest and back muscles.",
+	PMRChestRelax: "Slowly exhale and relax your chest and back. Breathe calmly.",
+
+	PMRStomachName:  "Stomach",
+	PMRStomachTense: "Pull in your stomach and tense your abs. Hold the tension.",
+	PMRStomachRelax: "Relax your stomach. Let it move freely with your breathing.",
+
+	PMRThighsName:  "Thighs and Glutes",
+	PMRThighsTense: "Tense your glutes and thighs, press them to the seat.",
+	PMRThighsRelax: "Relax your glutes and thighs. Feel the heaviness in your legs.",
+
+	PMRCalvesName:  "Calves and Feet",
+	PMRCalvesTense: "Pull your toes toward you, tense your calves. Feel the stretch.",
+	PMRCalvesRelax: "Relax your feet and calves. Your legs become warm and heavy.",
+
 	// Thought labeling
 	ThoughtIntro: `🏷️ *Thought Labeling*
 
@@ -187,6 +236,51 @@ Ready to begin?`,
 Thought labeling helps recognize cognitive distortions and reduce their impact.
 
 Choose a technique from the menu below.`,
+
+	// Thought labeling categories
+	ThoughtWorryName:    "Worry",
+	ThoughtWorryDesc:    "Anxiety about future events or outcomes",
+	ThoughtWorryReframe: "\"What if I fail the interview?\"",
+
+	ThoughtCatastrophicName:    "Catastrophizing",
+	ThoughtCatastrophicDesc:    "Imagining the worst-case scenario",
+	ThoughtCatastrophicReframe: "\"If I make a mistake, everything will be terrible!\"",
+
+	ThoughtSelfDoubtName:    "Self-Doubt",
+	ThoughtSelfDoubtDesc:    "Doubting your own abilities",
+	ThoughtSelfDoubtReframe: "\"I'm not good enough for this\"",
+
+	ThoughtPerfectionistName:    "Perfectionism",
+	ThoughtPerfectionistDesc:    "Unrealistically high standards",
+	ThoughtPerfectionistReframe: "\"If it's not perfect, it's bad\"",
+
+	ThoughtComparisonName:    "Comparison",
+	ThoughtComparisonDesc:    "Comparing yourself to others",
+	ThoughtComparisonReframe: "\"Everyone handles this better than me\"",
+
+	ThoughtRuminationName:    "Rumination",
+	ThoughtRuminationDesc:    "Constantly returning to past events",
+	ThoughtRuminationReframe: "\"Why did I say that then?\"",
+
+	ThoughtControlName:    "Control",
+	ThoughtControlDesc:    "Wanting to control the uncontrollable",
+	ThoughtControlReframe: "\"I must anticipate everything\"",
+
+	ThoughtRejectionName:    "Fear of Rejection",
+	ThoughtRejectionDesc:    "Fear of being rejected",
+	ThoughtRejectionReframe: "\"They'll think I'm weird\"",
+
+	ThoughtHealthName:    "Health Anxiety",
+	ThoughtHealthDesc:    "Excessive worry about health",
+	ThoughtHealthReframe: "\"Is this symptom a sign of illness?\"",
+
+	ThoughtSocialName:    "Social Anxiety",
+	ThoughtSocialDesc:    "Fear of social situations",
+	ThoughtSocialReframe: "\"Everyone will be looking at me\"",
+
+	ThoughtFinancialName:    "Financial Worries",
+	ThoughtFinancialDesc:    "Stress about money",
+	ThoughtFinancialReframe: "\"What if there's not enough money?\"",
 
 	// Visualization
 	VisualizationIntro: `🌅 *Peaceful Visualization*

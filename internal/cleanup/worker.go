@@ -3,6 +3,7 @@ package cleanup
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -93,7 +94,7 @@ func (w *Worker) processUser(userID int64, now time.Time) {
 		w.executeDecision(userID, sessioncore.CleanupResult{
 			Decision: sessioncore.DecisionDelete,
 			Reason:   "error getting resource creation time",
-		}, now)
+		})
 		return
 	}
 
@@ -106,9 +107,13 @@ func (w *Worker) processUser(userID int64, now time.Time) {
 
 	retry, err := w.coreStore.GetCleanupRetry(w.ctx, userID)
 	if err != nil {
-		log.Printf("ERROR: cleanup get retry: %v", err)
-		w.reschedule(userID, now, 1*time.Minute)
-		return
+		if errors.Is(err, sessioncore.ErrCleanupRetryNotFound) {
+			retry = nil
+		} else {
+			log.Printf("ERROR: cleanup get retry: %v", err)
+			w.reschedule(userID, now, 1*time.Minute)
+			return
+		}
 	}
 
 	// Use sessioncore to evaluate what to do
@@ -117,11 +122,11 @@ func (w *Worker) processUser(userID int64, now time.Time) {
 	log.Printf("DEBUG: user %d cleanup decision: %v (%s)", userID, result.Decision, result.Reason)
 
 	// Execute the decision
-	w.executeDecision(userID, result, now)
+	w.executeDecision(userID, result)
 }
 
 // executeDecision performs the action based on cleanup evaluation result.
-func (w *Worker) executeDecision(userID int64, result sessioncore.CleanupResult, now time.Time) {
+func (w *Worker) executeDecision(userID int64, result sessioncore.CleanupResult) {
 	switch result.Decision {
 	case sessioncore.DecisionDelete:
 		w.deleteMenuAndCleanup(userID)
