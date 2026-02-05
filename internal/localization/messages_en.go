@@ -49,7 +49,6 @@ Privacy: the bot doesn't store personal data.
 	MenuPMR:           "💪 Muscles",
 	MenuThought:       "🏷️ Thoughts",
 	MenuVisualization: "🌅 Visualization",
-	MenuInfo:          "ℹ️ Info",
 	MenuLang:          "🌐 Language",
 
 	// Breathing
@@ -277,24 +276,6 @@ Choose a technique from the menu below.`,
 	SceneStarryStep5: "Each star is a sun in a distant galaxy.",
 	SceneStarryStep6: "Feel your place in the universe. You are part of something vast.",
 	SceneStarryStep7: "Your worries dissolve in the infinity of space.",
-
-	// Info
-	InfoText: `ℹ️ *About the bot*
-
-This bot helps manage anxiety using evidence-based techniques.
-
-*Available techniques:*
-• 🌬️ 4-4-6 Breathing — quick calming
-• 🌿 5-4-3-2-1 Grounding — return to moment
-• 🧘 Guided breathing — various patterns
-• 💪 Muscle relaxation — release tension
-• 🏷️ Thought labeling — work with anxiety
-• 🌅 Visualization — relaxation through imagination
-
-*Privacy:*
-The bot doesn't store personal data. Sessions are automatically deleted.
-
-Source code: github.com/thevan4/anxiety-relief-tgbot-go`,
 
 	// Language selection
 	LangSelectTitle: "🌐 *Choose language:*",

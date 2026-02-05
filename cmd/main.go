@@ -12,13 +12,10 @@ import (
 
 	"github.com/mymmrac/telego"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/cleanup"
-	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram"
 )
-
-const defaultRateLimit = 10
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -45,12 +42,10 @@ func main() {
 	}
 
 	statisticsInMemory := statistic.NewStatistics(nil)
-	rateLimiter := rate_limiter.NewRateLimiter(time.Minute, defaultRateLimit)
 
 	botHandler := telegram.MustNewBotHandler(
 		ctx,
 		botToken,
-		rateLimiter,
 		statisticsInMemory,
 		sessionStorage,
 		telego.WithDefaultDebugLogger(),

@@ -49,7 +49,6 @@ Datenschutz: Der Bot speichert keine persönlichen Daten.
 	MenuPMR:           "💪 Muskeln",
 	MenuThought:       "🏷️ Gedanken",
 	MenuVisualization: "🌅 Visualisierung",
-	MenuInfo:          "ℹ️ Info",
 	MenuLang:          "🌐 Sprache",
 
 	// Breathing
@@ -277,24 +276,6 @@ Wählen Sie eine Technik aus dem Menü unten.`,
 	SceneStarryStep5: "Jeder Stern ist eine Sonne in einer fernen Galaxie.",
 	SceneStarryStep6: "Spüren Sie Ihren Platz im Universum. Sie sind Teil von etwas Großem.",
 	SceneStarryStep7: "Ihre Sorgen lösen sich in der Unendlichkeit des Weltraums auf.",
-
-	// Info
-	InfoText: `ℹ️ *Über den Bot*
-
-Dieser Bot hilft bei der Bewältigung von Angst mit evidenzbasierten Techniken.
-
-*Verfügbare Techniken:*
-• 🌬️ 4-4-6 Atmung — schnelle Beruhigung
-• 🌿 5-4-3-2-1 Erdung — Rückkehr in den Moment
-• 🧘 Geführte Atmung — verschiedene Muster
-• 💪 Muskelentspannung — Spannung lösen
-• 🏷️ Gedanken markieren — mit Angst arbeiten
-• 🌅 Visualisierung — Entspannung durch Vorstellung
-
-*Datenschutz:*
-Der Bot speichert keine persönlichen Daten. Sitzungen werden automatisch gelöscht.
-
-Quellcode: github.com/thevan4/anxiety-relief-tgbot-go`,
 
 	// Language selection
 	LangSelectTitle: "🌐 *Sprache wählen:*",

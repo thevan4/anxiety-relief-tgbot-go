@@ -11,7 +11,6 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/localization"
-	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/messages"
@@ -27,7 +26,6 @@ type VisualizationHandler struct {
 	ctx               context.Context
 	bot               *telego.Bot
 	localizer         *localization.Localizer
-	rateLimiter       rate_limiter.Limiter
 	statistics        statistic.Stats
 	sessionStorage    session.Storage
 	sessionManager    *session.SessionManager
@@ -39,7 +37,6 @@ func NewVisualizationHandler(
 	ctx context.Context,
 	bot *telego.Bot,
 	localizer *localization.Localizer,
-	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
 	sessionManager *session.SessionManager,
@@ -49,7 +46,6 @@ func NewVisualizationHandler(
 		ctx:               ctx,
 		bot:               bot,
 		localizer:         localizer,
-		rateLimiter:       rateLimiter,
 		statistics:        statistics,
 		sessionStorage:    sessionStorage,
 		sessionManager:    sessionManager,
@@ -80,7 +76,7 @@ func (h *VisualizationHandler) getMainMenuInline(m localization.Messages) *teleg
 			},
 			{
 				{Text: m.MenuThought, CallbackData: "menu_thought"},
-				{Text: m.MenuInfo, CallbackData: "menu_info"},
+				{Text: m.MenuVisualization, CallbackData: "menu_visual"},
 			},
 			{
 				{Text: m.MenuLang, CallbackData: "menu_lang"},
@@ -96,11 +92,6 @@ func (h *VisualizationHandler) HandleMenuSelect(_ *th.Context, cb telego.Callbac
 		return nil
 	}
 
-	h.rateLimiter.WaitAndGo(h.ctx, info.UserID)
-	if h.ctx.Err() != nil {
-		return h.ctx.Err()
-	}
-
 	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
 	h.showSceneSelection(h.ctx, info.ChatID, info.UserID, info.MessageID)
 	return nil
@@ -111,11 +102,6 @@ func (h *VisualizationHandler) HandleCallback(_ *th.Context, cb telego.CallbackQ
 	info := h.callbackProcessor.Extract(cb)
 	if info == nil {
 		return nil
-	}
-
-	h.rateLimiter.WaitAndGo(h.ctx, info.UserID)
-	if h.ctx.Err() != nil {
-		return h.ctx.Err()
 	}
 
 	h.processCallback(info.ChatID, info.UserID, info.MessageID, info.Data)

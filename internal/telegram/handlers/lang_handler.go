@@ -10,7 +10,6 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/localization"
-	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 )
@@ -20,7 +19,6 @@ type LangHandler struct {
 	ctx               context.Context
 	bot               *telego.Bot
 	localizer         *localization.Localizer
-	rateLimiter       rate_limiter.Limiter
 	statistics        statistic.Stats
 	sessionStorage    session.Storage
 	callbackProcessor *CallbackProcessor
@@ -31,7 +29,6 @@ func NewLangHandler(
 	ctx context.Context,
 	bot *telego.Bot,
 	localizer *localization.Localizer,
-	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
 	callbackProcessor *CallbackProcessor,
@@ -40,7 +37,6 @@ func NewLangHandler(
 		ctx:               ctx,
 		bot:               bot,
 		localizer:         localizer,
-		rateLimiter:       rateLimiter,
 		statistics:        statistics,
 		sessionStorage:    sessionStorage,
 		callbackProcessor: callbackProcessor,
@@ -70,7 +66,7 @@ func (h *LangHandler) getMainMenuInline(m localization.Messages) *telego.InlineK
 			},
 			{
 				{Text: m.MenuThought, CallbackData: "menu_thought"},
-				{Text: m.MenuInfo, CallbackData: "menu_info"},
+				{Text: m.MenuVisualization, CallbackData: "menu_visual"},
 			},
 			{
 				{Text: m.MenuLang, CallbackData: "menu_lang"},
@@ -86,11 +82,6 @@ func (h *LangHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) e
 		return nil
 	}
 
-	h.rateLimiter.WaitAndGo(h.ctx, info.UserID)
-	if h.ctx.Err() != nil {
-		return h.ctx.Err()
-	}
-
 	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
 	h.showLangSelection(h.ctx, info.ChatID, info.UserID, info.MessageID)
 	return nil
@@ -101,11 +92,6 @@ func (h *LangHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery) err
 	info := h.callbackProcessor.Extract(cb)
 	if info == nil {
 		return nil
-	}
-
-	h.rateLimiter.WaitAndGo(h.ctx, info.UserID)
-	if h.ctx.Err() != nil {
-		return h.ctx.Err()
 	}
 
 	h.processCallback(info.ChatID, info.UserID, info.MessageID, info.Data)

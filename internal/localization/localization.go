@@ -45,7 +45,6 @@ type Messages struct {
 	MenuGuided    string
 	MenuPMR       string
 	MenuThought   string
-	MenuInfo      string
 	MenuLang      string // "🌐 Language"
 
 	// Breathing
@@ -179,9 +178,6 @@ type Messages struct {
 	SceneStarryStep5 string
 	SceneStarryStep6 string
 	SceneStarryStep7 string
-
-	// Info
-	InfoText string
 
 	// Language selection
 	LangSelectTitle string

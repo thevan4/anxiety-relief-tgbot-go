@@ -10,7 +10,6 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/localization"
-	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/telegram/handlers"
@@ -23,7 +22,6 @@ type BotHandler struct {
 	bot               *telego.Bot
 	handler           *th.BotHandler
 	localizer         *localization.Localizer
-	rateLimiter       rate_limiter.Limiter
 	statistics        statistic.Stats
 	sessionStorage    session.Storage
 	sessionManager    *session.SessionManager
@@ -34,7 +32,6 @@ type BotHandler struct {
 func MustNewBotHandler(
 	ctx context.Context,
 	token string,
-	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
 	options ...telego.BotOption,
@@ -66,7 +63,6 @@ func MustNewBotHandler(
 		bot:            bot,
 		handler:        botHandler,
 		localizer:      localizer,
-		rateLimiter:    rateLimiter,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
 		sessionManager: session.NewSessionManager(),
@@ -168,11 +164,6 @@ func (bh *BotHandler) registerStartHandler() {
 		userID := message.From.ID
 		chatID := message.Chat.ID
 
-		bh.rateLimiter.WaitAndGo(bh.ctx, userID)
-		if bh.ctx.Err() != nil {
-			return bh.ctx.Err()
-		}
-
 		// 1. Cancel active exercise
 		bh.sessionManager.CancelSession(userID)
 
@@ -247,11 +238,6 @@ func (bh *BotHandler) validateCallback(cb telego.CallbackQuery) (
 		return 0, 0, 0, false
 	}
 
-	bh.rateLimiter.WaitAndGo(bh.ctx, info.UserID)
-	if bh.ctx.Err() != nil {
-		return 0, 0, 0, false
-	}
-
 	return info.ChatID, info.MessageID, info.UserID, true
 }
 
@@ -268,11 +254,6 @@ func (bh *BotHandler) handleHolderStart(cb telego.CallbackQuery) error {
 
 	if !handlers.AnswerCallbackOrDelete(bh.ctx, bh.bot, cb.ID, chatID, holderMessageID) {
 		return nil
-	}
-
-	bh.rateLimiter.WaitAndGo(bh.ctx, userID)
-	if bh.ctx.Err() != nil {
-		return bh.ctx.Err()
 	}
 
 	// If menu already exists, try to delete it and remove from queue
@@ -365,7 +346,7 @@ func (bh *BotHandler) registerTechniqueHandlers() {
 
 func (bh *BotHandler) registerBreathingHandler() {
 	breathingHandler := handlers.NewBreathingHandler(
-		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics,
+		bh.ctx, bh.bot, bh.localizer, bh.statistics,
 		bh.sessionStorage, bh.sessionManager, bh.callbackProcessor,
 	)
 	bh.handler.HandleCallbackQuery(breathingHandler.HandleCallback, th.CallbackDataPrefix("breathing_"))
@@ -374,7 +355,7 @@ func (bh *BotHandler) registerBreathingHandler() {
 
 func (bh *BotHandler) registerGroundingHandler() {
 	groundingHandler := handlers.NewGroundingHandler(
-		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics,
+		bh.ctx, bh.bot, bh.localizer, bh.statistics,
 		bh.sessionStorage, bh.sessionManager, bh.callbackProcessor,
 	)
 	bh.handler.HandleCallbackQuery(groundingHandler.HandleCallback, th.CallbackDataPrefix("grounding_"))
@@ -383,7 +364,7 @@ func (bh *BotHandler) registerGroundingHandler() {
 
 func (bh *BotHandler) registerGuidedBreathingHandler() {
 	guidedBreathingHandler := handlers.NewGuidedBreathingHandler(
-		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics,
+		bh.ctx, bh.bot, bh.localizer, bh.statistics,
 		bh.sessionStorage, bh.sessionManager, bh.callbackProcessor,
 	)
 	bh.handler.HandleCallbackQuery(guidedBreathingHandler.HandleCallback, th.CallbackDataPrefix("gbreath_"))
@@ -392,7 +373,7 @@ func (bh *BotHandler) registerGuidedBreathingHandler() {
 
 func (bh *BotHandler) registerPMRHandler() {
 	pmrHandler := handlers.NewPMRHandler(
-		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics,
+		bh.ctx, bh.bot, bh.localizer, bh.statistics,
 		bh.sessionStorage, bh.sessionManager, bh.callbackProcessor,
 	)
 	bh.handler.HandleCallbackQuery(pmrHandler.HandleCallback, th.CallbackDataPrefix("pmr_"))
@@ -401,7 +382,7 @@ func (bh *BotHandler) registerPMRHandler() {
 
 func (bh *BotHandler) registerThoughtLabelingHandler() {
 	thoughtLabelingHandler := handlers.NewThoughtLabelingHandler(
-		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics,
+		bh.ctx, bh.bot, bh.localizer, bh.statistics,
 		bh.sessionStorage, bh.sessionManager, bh.callbackProcessor,
 	)
 	bh.handler.HandleCallbackQuery(thoughtLabelingHandler.HandleCallback, th.CallbackDataPrefix("thought_"))
@@ -410,7 +391,7 @@ func (bh *BotHandler) registerThoughtLabelingHandler() {
 
 func (bh *BotHandler) registerVisualizationHandler() {
 	visualizationHandler := handlers.NewVisualizationHandler(
-		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics,
+		bh.ctx, bh.bot, bh.localizer, bh.statistics,
 		bh.sessionStorage, bh.sessionManager, bh.callbackProcessor,
 	)
 	bh.handler.HandleCallbackQuery(visualizationHandler.HandleCallback, th.CallbackDataPrefix("visual_"))
@@ -419,7 +400,7 @@ func (bh *BotHandler) registerVisualizationHandler() {
 
 func (bh *BotHandler) registerLangHandler() {
 	langHandler := handlers.NewLangHandler(
-		bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics,
+		bh.ctx, bh.bot, bh.localizer, bh.statistics,
 		bh.sessionStorage, bh.callbackProcessor,
 	)
 	bh.handler.HandleCallbackQuery(langHandler.HandleCallback, th.CallbackDataPrefix("lang_"))
@@ -446,7 +427,7 @@ func (bh *BotHandler) registerCatchAllHandler() {
 
 				// Process thought input
 				thoughtHandler := handlers.NewThoughtLabelingHandler(
-					bh.ctx, bh.bot, bh.localizer, bh.rateLimiter, bh.statistics,
+					bh.ctx, bh.bot, bh.localizer, bh.statistics,
 					bh.sessionStorage, bh.sessionManager, bh.callbackProcessor,
 				)
 				thoughtHandler.ProcessThoughtInput(chatID, userID, botMessageID, message.Text)

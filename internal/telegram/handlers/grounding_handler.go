@@ -10,7 +10,6 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/localization"
-	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 )
@@ -20,7 +19,6 @@ type GroundingHandler struct {
 	ctx               context.Context
 	bot               *telego.Bot
 	localizer         *localization.Localizer
-	rateLimiter       rate_limiter.Limiter
 	statistics        statistic.Stats
 	sessionStorage    session.Storage
 	sessionManager    *session.SessionManager
@@ -32,7 +30,6 @@ func NewGroundingHandler(
 	ctx context.Context,
 	bot *telego.Bot,
 	localizer *localization.Localizer,
-	rateLimiter rate_limiter.Limiter,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
 	sessionManager *session.SessionManager,
@@ -42,7 +39,6 @@ func NewGroundingHandler(
 		ctx:               ctx,
 		bot:               bot,
 		localizer:         localizer,
-		rateLimiter:       rateLimiter,
 		statistics:        statistics,
 		sessionStorage:    sessionStorage,
 		sessionManager:    sessionManager,
@@ -73,7 +69,7 @@ func (h *GroundingHandler) getMainMenuInline(m localization.Messages) *telego.In
 			},
 			{
 				{Text: m.MenuThought, CallbackData: "menu_thought"},
-				{Text: m.MenuInfo, CallbackData: "menu_info"},
+				{Text: m.MenuVisualization, CallbackData: "menu_visual"},
 			},
 			{
 				{Text: m.MenuLang, CallbackData: "menu_lang"},
@@ -89,11 +85,6 @@ func (h *GroundingHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQue
 		return nil
 	}
 
-	h.rateLimiter.WaitAndGo(h.ctx, info.UserID)
-	if h.ctx.Err() != nil {
-		return h.ctx.Err()
-	}
-
 	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
 	h.showGroundingIntro(h.ctx, info.ChatID, info.UserID, info.MessageID)
 	return nil
@@ -104,11 +95,6 @@ func (h *GroundingHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery
 	info := h.callbackProcessor.Extract(cb)
 	if info == nil {
 		return nil
-	}
-
-	h.rateLimiter.WaitAndGo(h.ctx, info.UserID)
-	if h.ctx.Err() != nil {
-		return h.ctx.Err()
 	}
 
 	h.applyGroundingCallbackAction(h.ctx, info.ChatID, info.UserID, info.MessageID, info.Data)
@@ -206,8 +192,8 @@ func (h *GroundingHandler) showGroundingStep(
 		keyboard = &telego.InlineKeyboardMarkup{
 			InlineKeyboard: [][]telego.InlineKeyboardButton{
 				{
-					{Text: m.Done, CallbackData: "grounding_complete"},
 					{Text: m.Back, CallbackData: "grounding_cancel"},
+					{Text: m.Done, CallbackData: "grounding_complete"},
 				},
 			},
 		}
@@ -215,8 +201,8 @@ func (h *GroundingHandler) showGroundingStep(
 		keyboard = &telego.InlineKeyboardMarkup{
 			InlineKeyboard: [][]telego.InlineKeyboardButton{
 				{
-					{Text: m.Next, CallbackData: "grounding_step_" + nextStep},
 					{Text: m.Back, CallbackData: "grounding_cancel"},
+					{Text: m.Next, CallbackData: "grounding_step_" + nextStep},
 				},
 			},
 		}
