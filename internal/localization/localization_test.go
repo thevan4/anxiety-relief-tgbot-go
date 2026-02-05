@@ -1,6 +1,7 @@
 package localization
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -269,46 +270,32 @@ func TestVisualizationFormatMethods(t *testing.T) {
 
 	t.Run("FormatVisualizationSceneIntro", func(t *testing.T) {
 		result := m.FormatVisualizationSceneIntro("🏖️", "Beach", "Warm beach", "Sound of waves", "⏱️ 3")
-		if result == "" {
-			t.Error("FormatVisualizationSceneIntro returned empty string")
-		}
-		if !contains(result, "🏖️") || !contains(result, "Beach") || !contains(result, "Warm beach") {
-			t.Errorf("FormatVisualizationSceneIntro missing expected content: %q", result)
-		}
+		assertContains(t, result, "🏖️", "Beach", "Warm beach")
 	})
 
 	t.Run("FormatVisualizationStep", func(t *testing.T) {
 		result := m.FormatVisualizationStep("🏖️", "Beach", 1, 5, "Close your eyes", "⏱️ 10")
-		if result == "" {
-			t.Error("FormatVisualizationStep returned empty string")
-		}
-		if !contains(result, "🏖️") || !contains(result, "Beach") || !contains(result, "Close your eyes") {
-			t.Errorf("FormatVisualizationStep missing expected content: %q", result)
-		}
+		assertContains(t, result, "🏖️", "Beach", "Close your eyes")
 	})
 
 	t.Run("FormatVisualizationCompletion", func(t *testing.T) {
 		result := m.FormatVisualizationCompletion("Beach Scene")
-		if result == "" {
-			t.Error("FormatVisualizationCompletion returned empty string")
-		}
-		if !contains(result, "Beach Scene") {
-			t.Errorf("FormatVisualizationCompletion missing scene name: %q", result)
-		}
+		assertContains(t, result, "Beach Scene")
 	})
 }
 
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
-}
-
-func containsHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
+// assertContains checks that result contains all expected substrings.
+func assertContains(t *testing.T, result string, expected ...string) {
+	t.Helper()
+	if result == "" {
+		t.Error("result is empty")
+		return
+	}
+	for _, exp := range expected {
+		if !strings.Contains(result, exp) {
+			t.Errorf("result missing %q: %q", exp, result)
 		}
 	}
-	return false
 }
 
 // Test backward compatibility functions.

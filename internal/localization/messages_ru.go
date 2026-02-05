@@ -1,3 +1,4 @@
+//nolint:dupl // Localization files have identical structure by design, only text values differ.
 package localization
 
 var messagesRU = Messages{
@@ -10,6 +11,25 @@ var messagesRU = Messages{
 	FeelBetter: "✅ Лучше",
 	Repeat:     "🔄 Повторить",
 	BackToMenu: "🏠 В меню",
+
+	// Welcome holder — static message with bot info
+	HolderText: `🌿 *Помощник при тревожности*
+
+Этот бот помогает справиться с тревожностью с помощью научно обоснованных техник:
+
+• 🌬️ Дыхание 4-4-6 — быстрое успокоение
+• 🌿 Заземление 5-4-3-2-1 — возврат в момент
+• 🧘 Управляемое дыхание — разные паттерны
+• 💪 Мышечная релаксация — снятие напряжения
+• 🏷️ Маркировка мыслей — работа с тревогой
+• 🌅 Визуализация — расслабление через воображение
+
+Приватность: бот не хранит персональные данные.
+
+👇 Нажмите кнопку ниже, чтобы начать`,
+
+	// Session expired
+	SessionExpired: "Сессия истекла. Нажмите /start",
 
 	// Main menu
 	MainMenuText: `Выберите технику для работы с тревожностью:

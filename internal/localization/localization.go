@@ -23,7 +23,7 @@ const (
 // Messages contains all localized strings.
 type Messages struct {
 	// Buttons
-	Start      string
+	Start      string // "Начать" — starts new session from holder
 	Back       string
 	Stop       string
 	Next       string
@@ -31,6 +31,12 @@ type Messages struct {
 	FeelBetter string
 	Repeat     string
 	BackToMenu string
+
+	// Welcome holder (after /start) — static message with bot info
+	HolderText string
+
+	// Session expired message
+	SessionExpired string
 
 	// Main menu
 	MainMenuText  string

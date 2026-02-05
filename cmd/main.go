@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/mymmrac/telego"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/cleanup"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/rate_limiter"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
@@ -54,6 +55,10 @@ func main() {
 		sessionStorage,
 		telego.WithDefaultDebugLogger(),
 	)
+
+	// Start cleanup worker for background message cleanup
+	cleanupWorker := cleanup.NewWorker(ctx, botHandler.GetBot(), sessionStorage)
+	go cleanupWorker.Start()
 
 	go botHandler.Start()
 

@@ -1,3 +1,4 @@
+//nolint:dupl // Localization files have identical structure by design, only text values differ.
 package localization
 
 var messagesDE = Messages{
@@ -10,6 +11,25 @@ var messagesDE = Messages{
 	FeelBetter: "✅ Besser",
 	Repeat:     "🔄 Wiederholen",
 	BackToMenu: "🏠 Menü",
+
+	// Welcome holder — static message with bot info
+	HolderText: `🌿 *Helfer bei Angst*
+
+Dieser Bot hilft bei der Bewältigung von Angst mit evidenzbasierten Techniken:
+
+• 🌬️ Atmung 4-4-6 — schnelle Beruhigung
+• 🌿 Erdung 5-4-3-2-1 — Rückkehr in den Moment
+• 🧘 Geführte Atmung — verschiedene Muster
+• 💪 Muskelentspannung — Spannung lösen
+• 🏷️ Gedanken markieren — mit Angst arbeiten
+• 🌅 Visualisierung — Entspannung durch Vorstellung
+
+Datenschutz: Der Bot speichert keine persönlichen Daten.
+
+👇 Drücken Sie die Taste unten, um zu beginnen`,
+
+	// Session expired
+	SessionExpired: "Sitzung abgelaufen. Drücken Sie /start",
 
 	// Main menu
 	MainMenuText: `Wählen Sie eine Technik zur Angstbewältigung:

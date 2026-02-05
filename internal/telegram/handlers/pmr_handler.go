@@ -21,13 +21,14 @@ import (
 
 // PMRHandler handles Progressive Muscle Relaxation exercise.
 type PMRHandler struct {
-	ctx            context.Context
-	bot            *telego.Bot
-	localizer      *localization.Localizer
-	rateLimiter    rate_limiter.Limiter
-	statistics     statistic.Stats
-	sessionStorage session.Storage
-	sessionManager *session.SessionManager
+	ctx               context.Context
+	bot               *telego.Bot
+	localizer         *localization.Localizer
+	rateLimiter       rate_limiter.Limiter
+	statistics        statistic.Stats
+	sessionStorage    session.Storage
+	sessionManager    *session.SessionManager
+	callbackProcessor *CallbackProcessor
 }
 
 // NewPMRHandler creates a new PMR exercise handler.
@@ -39,15 +40,17 @@ func NewPMRHandler(
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
 	sessionManager *session.SessionManager,
+	callbackProcessor *CallbackProcessor,
 ) *PMRHandler {
 	return &PMRHandler{
-		ctx:            ctx,
-		bot:            bot,
-		localizer:      localizer,
-		rateLimiter:    rateLimiter,
-		statistics:     statistics,
-		sessionStorage: sessionStorage,
-		sessionManager: sessionManager,
+		ctx:               ctx,
+		bot:               bot,
+		localizer:         localizer,
+		rateLimiter:       rateLimiter,
+		statistics:        statistics,
+		sessionStorage:    sessionStorage,
+		sessionManager:    sessionManager,
+		callbackProcessor: callbackProcessor,
 	}
 }
 
@@ -85,67 +88,34 @@ func (h *PMRHandler) getMainMenuInline(m localization.Messages) *telego.InlineKe
 
 // HandleMenuSelect handles selection from main menu.
 func (h *PMRHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) error {
-	msg, ok := cb.Message.(*telego.Message)
-	if !ok || msg == nil {
-		return nil
-	}
-	userID := cb.From.ID
-	chatID := msg.Chat.ID
-	messageID := msg.MessageID
-
-	// Answer callback FIRST; if too old - delete message and stop
-	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+	info := h.callbackProcessor.Extract(cb)
+	if info == nil {
 		return nil
 	}
 
-	// Check if this is the active message (ignore stale messages)
-	if !IsActiveMessage(h.ctx, h.bot, h.sessionStorage, userID, chatID, messageID, cb.ID) {
-		return nil
-	}
-
-	h.rateLimiter.WaitAndGo(h.ctx, userID)
+	h.rateLimiter.WaitAndGo(h.ctx, info.UserID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
 
-	h.statistics.IncreaseRequestsStatisticForUser(
-		userID,
-		cb.From.Username,
-		cb.From.IsPremium,
-		cb.From.IsBot,
-	)
-
-	h.showIntro(h.ctx, chatID, userID, messageID)
+	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
+	h.showIntro(h.ctx, info.ChatID, info.UserID, info.MessageID)
 	return nil
 }
 
 // HandleCallback handles PMR exercise callbacks.
 func (h *PMRHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery) error {
-	msg, ok := cb.Message.(*telego.Message)
-	if !ok || msg == nil {
-		log.Printf("ERROR: callback query message is inaccessible")
-		return nil
-	}
-	chatID := msg.Chat.ID
-	userID := cb.From.ID
-	messageID := msg.MessageID
-
-	// Answer callback FIRST; if too old - delete message and stop
-	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+	info := h.callbackProcessor.Extract(cb)
+	if info == nil {
 		return nil
 	}
 
-	// Check if this is the active message (ignore stale messages)
-	if !IsActiveMessage(h.ctx, h.bot, h.sessionStorage, userID, chatID, messageID, cb.ID) {
-		return nil
-	}
-
-	h.rateLimiter.WaitAndGo(h.ctx, userID)
+	h.rateLimiter.WaitAndGo(h.ctx, info.UserID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
 
-	h.processCallback(chatID, userID, messageID, cb.Data)
+	h.processCallback(info.ChatID, info.UserID, info.MessageID, info.Data)
 	return nil
 }
 

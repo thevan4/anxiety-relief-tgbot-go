@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/mymmrac/telego"
-	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 )
 
 // AnswerCallbackOrDelete answers callback query. If "too old" error occurs, deletes the message.
@@ -61,26 +60,4 @@ func DeleteMessage(ctx context.Context, bot *telego.Bot, chatID int64, messageID
 		ChatID:    telego.ChatID{ID: chatID},
 		MessageID: messageID,
 	})
-}
-
-// IsActiveMessage checks if the callback message is the active bot message.
-// If stored messageID exists and doesn't match, shows alert and tries to delete the old message.
-// Returns true if callback should be processed, false if it was from a stale message.
-func IsActiveMessage(ctx context.Context, bot *telego.Bot, storage session.Storage, userID int64, chatID int64, messageID int, callbackID string) bool {
-	storedMsgID, err := storage.GetMessageID(ctx, userID)
-	if err != nil || storedMsgID == 0 {
-		// No stored message ID - can't validate, allow processing
-		return true
-	}
-	if storedMsgID != messageID {
-		// This callback is from an old/stale message - show alert and delete
-		_ = bot.AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-			CallbackQueryID: callbackID,
-			Text:            "Нажмите /start для актуального меню",
-			ShowAlert:       true,
-		})
-		DeleteMessage(ctx, bot, chatID, messageID)
-		return false
-	}
-	return true
 }

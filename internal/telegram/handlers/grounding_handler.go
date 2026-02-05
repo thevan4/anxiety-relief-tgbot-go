@@ -17,13 +17,14 @@ import (
 
 // GroundingHandler handles the 5-4-3-2-1 grounding technique.
 type GroundingHandler struct {
-	ctx            context.Context
-	bot            *telego.Bot
-	localizer      *localization.Localizer
-	rateLimiter    rate_limiter.Limiter
-	statistics     statistic.Stats
-	sessionStorage session.Storage
-	sessionManager *session.SessionManager
+	ctx               context.Context
+	bot               *telego.Bot
+	localizer         *localization.Localizer
+	rateLimiter       rate_limiter.Limiter
+	statistics        statistic.Stats
+	sessionStorage    session.Storage
+	sessionManager    *session.SessionManager
+	callbackProcessor *CallbackProcessor
 }
 
 // NewGroundingHandler creates a new grounding exercise handler.
@@ -35,15 +36,17 @@ func NewGroundingHandler(
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
 	sessionManager *session.SessionManager,
+	callbackProcessor *CallbackProcessor,
 ) *GroundingHandler {
 	return &GroundingHandler{
-		ctx:            ctx,
-		bot:            bot,
-		localizer:      localizer,
-		rateLimiter:    rateLimiter,
-		statistics:     statistics,
-		sessionStorage: sessionStorage,
-		sessionManager: sessionManager,
+		ctx:               ctx,
+		bot:               bot,
+		localizer:         localizer,
+		rateLimiter:       rateLimiter,
+		statistics:        statistics,
+		sessionStorage:    sessionStorage,
+		sessionManager:    sessionManager,
+		callbackProcessor: callbackProcessor,
 	}
 }
 
@@ -81,67 +84,34 @@ func (h *GroundingHandler) getMainMenuInline(m localization.Messages) *telego.In
 
 // HandleMenuSelect handles selection from main menu.
 func (h *GroundingHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) error {
-	msg, ok := cb.Message.(*telego.Message)
-	if !ok || msg == nil {
-		return nil
-	}
-	userID := cb.From.ID
-	chatID := msg.Chat.ID
-	messageID := msg.MessageID
-
-	// Answer callback FIRST; if too old - delete message and stop
-	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+	info := h.callbackProcessor.Extract(cb)
+	if info == nil {
 		return nil
 	}
 
-	// Check if this is the active message (ignore stale messages)
-	if !IsActiveMessage(h.ctx, h.bot, h.sessionStorage, userID, chatID, messageID, cb.ID) {
-		return nil
-	}
-
-	h.rateLimiter.WaitAndGo(h.ctx, userID)
+	h.rateLimiter.WaitAndGo(h.ctx, info.UserID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
 
-	h.statistics.IncreaseRequestsStatisticForUser(
-		userID,
-		cb.From.Username,
-		cb.From.IsPremium,
-		cb.From.IsBot,
-	)
-
-	h.showGroundingIntro(h.ctx, chatID, userID, messageID)
+	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
+	h.showGroundingIntro(h.ctx, info.ChatID, info.UserID, info.MessageID)
 	return nil
 }
 
 // HandleCallback handles grounding exercise callbacks.
 func (h *GroundingHandler) HandleCallback(_ *th.Context, cb telego.CallbackQuery) error {
-	msg, ok := cb.Message.(*telego.Message)
-	if !ok || msg == nil {
-		log.Printf("ERROR: callback query message is inaccessible")
-		return nil
-	}
-	chatID := msg.Chat.ID
-	userID := cb.From.ID
-	messageID := msg.MessageID
-
-	// Answer callback FIRST; if too old - delete message and stop
-	if !AnswerCallbackOrDelete(h.ctx, h.bot, cb.ID, chatID, messageID) {
+	info := h.callbackProcessor.Extract(cb)
+	if info == nil {
 		return nil
 	}
 
-	// Check if this is the active message (ignore stale messages)
-	if !IsActiveMessage(h.ctx, h.bot, h.sessionStorage, userID, chatID, messageID, cb.ID) {
-		return nil
-	}
-
-	h.rateLimiter.WaitAndGo(h.ctx, userID)
+	h.rateLimiter.WaitAndGo(h.ctx, info.UserID)
 	if h.ctx.Err() != nil {
 		return h.ctx.Err()
 	}
 
-	h.applyGroundingCallbackAction(h.ctx, chatID, userID, messageID, cb.Data)
+	h.applyGroundingCallbackAction(h.ctx, info.ChatID, info.UserID, info.MessageID, info.Data)
 	return nil
 }
 

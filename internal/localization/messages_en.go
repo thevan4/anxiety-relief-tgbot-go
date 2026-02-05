@@ -1,3 +1,4 @@
+//nolint:dupl // Localization files have identical structure by design, only text values differ.
 package localization
 
 var messagesEN = Messages{
@@ -10,6 +11,25 @@ var messagesEN = Messages{
 	FeelBetter: "✅ Better",
 	Repeat:     "🔄 Repeat",
 	BackToMenu: "🏠 Menu",
+
+	// Welcome holder — static message with bot info
+	HolderText: `🌿 *Anxiety Relief Helper*
+
+This bot helps manage anxiety using evidence-based techniques:
+
+• 🌬️ Breathing 4-4-6 — quick calming
+• 🌿 Grounding 5-4-3-2-1 — return to moment
+• 🧘 Guided breathing — various patterns
+• 💪 Muscle relaxation — release tension
+• 🏷️ Thought labeling — work with anxiety
+• 🌅 Visualization — relaxation through imagination
+
+Privacy: the bot doesn't store personal data.
+
+👇 Press the button below to start`,
+
+	// Session expired
+	SessionExpired: "Session expired. Press /start",
 
 	// Main menu
 	MainMenuText: `Choose a technique to manage anxiety:
