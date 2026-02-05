@@ -93,7 +93,7 @@ func (h *VisualizationHandler) HandleMenuSelect(_ *th.Context, cb telego.Callbac
 	}
 
 	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
-	h.showSceneSelection(h.ctx, info.ChatID, info.UserID, info.MessageID)
+	h.showSceneSelectionRecreate(h.ctx, info.ChatID, info.UserID)
 	return nil
 }
 
@@ -133,6 +133,24 @@ func (h *VisualizationHandler) buildScenesInfo(scenes []localization.Visualizati
 		info += fmt.Sprintf("%s *%s*\n_%s_\n\n", scene.Emoji, scene.Name, scene.Description)
 	}
 	return info
+}
+
+func (h *VisualizationHandler) showSceneSelectionRecreate(ctx context.Context, chatID, userID int64) {
+	if err := h.sessionStorage.SetState(ctx, userID, session.StateVisualizationSelect); err != nil {
+		log.Printf("ERROR: set state visualization select: %v", err)
+	}
+
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	scenes := m.GetVisualizationScenes()
+	text := m.VisualizationIntro + h.buildScenesInfo(scenes)
+
+	buttons := h.buildSceneButtons(scenes, m)
+	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
+
+	// Recreate message to extend its lifetime
+	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, text, keyboard); err != nil {
+		log.Printf("ERROR: recreate visualization intro: %v", err)
+	}
 }
 
 func (h *VisualizationHandler) showSceneSelection(ctx context.Context, chatID, userID int64, messageID int) {

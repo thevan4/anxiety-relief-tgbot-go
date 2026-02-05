@@ -90,7 +90,7 @@ func (h *PMRHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) er
 	}
 
 	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
-	h.showIntro(h.ctx, info.ChatID, info.UserID, info.MessageID)
+	h.showIntroRecreate(h.ctx, info.ChatID, info.UserID)
 	return nil
 }
 
@@ -127,6 +127,30 @@ func (h *PMRHandler) processCallback(chatID, userID int64, messageID int, data s
 	case data == "pmr_cancel":
 		h.sessionManager.CancelSession(userID)
 		h.cancelExercise(h.ctx, chatID, userID, messageID)
+	}
+}
+
+func (h *PMRHandler) showIntroRecreate(ctx context.Context, chatID, userID int64) {
+	if err := h.sessionStorage.SetState(ctx, userID, session.StatePMRActive); err != nil {
+		log.Printf("ERROR: set state pmr active: %v", err)
+	}
+
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	muscleGroups := techniques.GetMuscleGroups()
+	text := fmt.Sprintf(m.PMRIntro, len(muscleGroups))
+
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: "pmr_cancel"},
+				{Text: m.Start, CallbackData: "pmr_start"},
+			},
+		},
+	}
+
+	// Recreate message to extend its lifetime
+	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, text, keyboard); err != nil {
+		log.Printf("ERROR: recreate pmr intro: %v", err)
 	}
 }
 

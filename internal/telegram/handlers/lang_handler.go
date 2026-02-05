@@ -83,7 +83,7 @@ func (h *LangHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQuery) e
 	}
 
 	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
-	h.showLangSelection(h.ctx, info.ChatID, info.UserID, info.MessageID)
+	h.showLangSelectionRecreate(h.ctx, info.ChatID, info.UserID)
 	return nil
 }
 
@@ -108,21 +108,16 @@ func (h *LangHandler) processCallback(chatID, userID int64, messageID int, data 
 	}
 }
 
-func (h *LangHandler) showLangSelection(ctx context.Context, chatID, userID int64, messageID int) {
+func (h *LangHandler) showLangSelectionRecreate(ctx context.Context, chatID, userID int64) {
 	m := h.localizer.Get(h.getLang(ctx, userID))
 	currentLang := h.getLang(ctx, userID)
 
 	buttons := h.buildLangButtons(currentLang, m)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
 
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.LangSelectTitle,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit lang selection: %v", err)
+	// Recreate message to extend its lifetime
+	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, m.LangSelectTitle, keyboard); err != nil {
+		log.Printf("ERROR: recreate lang selection: %v", err)
 	}
 }
 

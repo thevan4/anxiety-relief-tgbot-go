@@ -58,7 +58,7 @@ Confidentialité : le bot ne stocke pas de données personnelles.
 Un exercice simple pour calmer le système nerveux.
 
 *Instructions :*
-1️⃣ Asseyez-vous confortablement, fermez les yeux
+1️⃣ Asseyez-vous confortablement, détendez-vous
 2️⃣ Inspirez par le nez — 4 secondes
 3️⃣ Retenez votre souffle — 4 secondes
 4️⃣ Expirez par la bouche — 6 secondes
@@ -302,7 +302,7 @@ Exercice arrêté. Choisissez une autre scène :
 
 Vous avez terminé la visualisation "%s".
 
-Revenez lentement à la réalité. Bougez vos doigts, inspirez profondément et ouvrez les yeux.
+Revenez lentement à la réalité. Bougez vos doigts et inspirez profondément.
 
 Comment vous sentez-vous ?`,
 	VisualizationThanks: `✨ *Merci pour la pratique !*
@@ -312,14 +312,14 @@ La pratique régulière renforce l'effet.
 
 Choisissez une technique dans le menu ci-dessous.`,
 	VisualizationAtmosphere: "Atmosphère",
-	VisualizationCloseEyes:  "Fermez les yeux et plongez dans cette scène...",
+	VisualizationCloseEyes:  "Plongez dans cette scène...",
 	VisualizationStepFmt:    "Étape %d/%d",
 
 	// Scene: Mountain
 	SceneMountainName:  "Sommet de montagne",
 	SceneMountainDesc:  "Lever de soleil au sommet de la montagne",
 	SceneMountainAtmo:  "Air frais et pur de la montagne",
-	SceneMountainStep1: "Fermez les yeux et imaginez-vous debout sur un sommet de montagne tôt le matin.",
+	SceneMountainStep1: "Imaginez-vous debout sur un sommet de montagne tôt le matin.",
 	SceneMountainStep2: "Le silence vous entoure. Vous sentez l'air frais de la montagne sur votre peau.",
 	SceneMountainStep3: "Le soleil apparaît à l'horizon, peignant le ciel de teintes roses et orangées.",
 	SceneMountainStep4: "Les rayons chauds du soleil touchent doucement votre visage.",
@@ -359,7 +359,7 @@ Choisissez une technique dans le menu ci-dessous.`,
 	SceneGardenStep2: "Roses, lavande, jasmin — leurs parfums se mélangent dans l'air.",
 	SceneGardenStep3: "Une petite fontaine murmure au centre du jardin.",
 	SceneGardenStep4: "Des papillons voltigent entre les fleurs. Tout est plein de vie.",
-	SceneGardenStep5: "Vous vous asseyez sur un banc près de la fontaine et fermez les yeux.",
+	SceneGardenStep5: "Vous vous asseyez sur un banc près de la fontaine et profitez du moment.",
 	SceneGardenStep6: "Le son de l'eau qui coule apaise votre esprit.",
 	SceneGardenStep7: "Ce jardin est votre lieu sûr. Vous pouvez y revenir à tout moment.",
 

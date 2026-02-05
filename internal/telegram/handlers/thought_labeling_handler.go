@@ -87,7 +87,7 @@ func (h *ThoughtLabelingHandler) HandleMenuSelect(_ *th.Context, cb telego.Callb
 	}
 
 	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
-	h.showIntro(h.ctx, info.ChatID, info.UserID, info.MessageID)
+	h.showIntroRecreate(h.ctx, info.ChatID, info.UserID)
 	return nil
 }
 
@@ -118,7 +118,7 @@ func (h *ThoughtLabelingHandler) processCallback(chatID, userID int64, messageID
 	}
 }
 
-func (h *ThoughtLabelingHandler) showIntro(ctx context.Context, chatID, userID int64, messageID int) {
+func (h *ThoughtLabelingHandler) showIntroRecreate(ctx context.Context, chatID, userID int64) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateThoughtLabelingActive); err != nil {
 		log.Printf("ERROR: set state thought labeling active: %v", err)
 	}
@@ -134,19 +134,9 @@ func (h *ThoughtLabelingHandler) showIntro(ctx context.Context, chatID, userID i
 		},
 	}
 
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.ThoughtIntro,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit thought labeling intro: %v", err)
-	}
-
-	// Save message ID for later editing when user sends thought
-	if err := h.sessionStorage.SetMenuMessageID(ctx, userID, messageID); err != nil {
-		log.Printf("ERROR: save message id: %v", err)
+	// Recreate message to extend its lifetime
+	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, m.ThoughtIntro, keyboard); err != nil {
+		log.Printf("ERROR: recreate thought labeling intro: %v", err)
 	}
 }
 

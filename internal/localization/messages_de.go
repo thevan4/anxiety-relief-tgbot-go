@@ -58,7 +58,7 @@ Datenschutz: Der Bot speichert keine persönlichen Daten.
 Eine einfache Übung zur Beruhigung des Nervensystems.
 
 *Anleitung:*
-1️⃣ Setzen Sie sich bequem hin, schließen Sie die Augen
+1️⃣ Setzen Sie sich bequem hin, entspannen Sie sich
 2️⃣ Einatmen durch die Nase — 4 Sekunden
 3️⃣ Atem anhalten — 4 Sekunden
 4️⃣ Ausatmen durch den Mund — 6 Sekunden
@@ -304,7 +304,7 @@ Eine Entspannungstechnik durch Vorstellung friedlicher Orte.
 
 Sie haben die Visualisierung "%s" abgeschlossen.
 
-Kehren Sie langsam in die Realität zurück. Bewegen Sie Ihre Finger, atmen Sie tief ein und öffnen Sie die Augen.
+Kehren Sie langsam in die Realität zurück. Bewegen Sie Ihre Finger und atmen Sie tief ein.
 
 Wie fühlen Sie sich?`,
 	VisualizationThanks: `✨ *Danke für die Übung!*
@@ -314,15 +314,14 @@ Regelmäßige Übung verstärkt die Wirkung.
 
 Wählen Sie eine Technik aus dem Menü unten.`,
 	VisualizationAtmosphere: "Atmosphäre",
-	VisualizationCloseEyes:  "Schließen Sie die Augen und tauchen Sie in diese Szene ein...",
+	VisualizationCloseEyes:  "Tauchen Sie in diese Szene ein...",
 	VisualizationStepFmt:    "Schritt %d/%d",
 
 	// Scene: Mountain
-	SceneMountainName: "Berggipfel",
-	SceneMountainDesc: "Sonnenaufgang auf dem Berggipfel",
-	SceneMountainAtmo: "Kühle, frische Bergluft",
-	SceneMountainStep1: "Schließen Sie die Augen und stellen Sie sich vor, Sie stehen am frühen Morgen " +
-		"auf einem Berggipfel.",
+	SceneMountainName:  "Berggipfel",
+	SceneMountainDesc:  "Sonnenaufgang auf dem Berggipfel",
+	SceneMountainAtmo:  "Kühle, frische Bergluft",
+	SceneMountainStep1: "Stellen Sie sich vor, Sie stehen am frühen Morgen auf einem Berggipfel.",
 	SceneMountainStep2: "Stille umgibt Sie. Sie spüren die kühle Bergluft auf Ihrer Haut.",
 	SceneMountainStep3: "Die Sonne erscheint am Horizont und taucht den Himmel in Rosa- und Orangetöne.",
 	SceneMountainStep4: "Warme Sonnenstrahlen berühren sanft Ihr Gesicht.",
@@ -362,7 +361,7 @@ Wählen Sie eine Technik aus dem Menü unten.`,
 	SceneGardenStep2: "Rosen, Lavendel, Jasmin — ihre Düfte vermischen sich in der Luft.",
 	SceneGardenStep3: "Ein kleiner Brunnen plätschert in der Mitte des Gartens.",
 	SceneGardenStep4: "Schmetterlinge flattern zwischen den Blumen. Alles ist voller Leben.",
-	SceneGardenStep5: "Sie setzen sich auf eine Bank am Brunnen und schließen die Augen.",
+	SceneGardenStep5: "Sie setzen sich auf eine Bank am Brunnen und genießen den Moment.",
 	SceneGardenStep6: "Das Geräusch des plätschernden Wassers beruhigt Ihren Geist.",
 	SceneGardenStep7: "Dieser Garten ist Ihr sicherer Ort. Sie können jederzeit hierher zurückkehren.",
 

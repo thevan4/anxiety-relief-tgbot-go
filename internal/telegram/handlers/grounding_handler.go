@@ -86,7 +86,7 @@ func (h *GroundingHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQue
 	}
 
 	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
-	h.showGroundingIntro(h.ctx, info.ChatID, info.UserID, info.MessageID)
+	h.showGroundingIntro(h.ctx, info.ChatID, info.UserID)
 	return nil
 }
 
@@ -117,7 +117,7 @@ func (h *GroundingHandler) applyGroundingCallbackAction(
 	}
 }
 
-func (h *GroundingHandler) showGroundingIntro(ctx context.Context, chatID, userID int64, messageID int) {
+func (h *GroundingHandler) showGroundingIntro(ctx context.Context, chatID, userID int64) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateGroundingStep1); err != nil {
 		log.Printf("ERROR: set state grounding step1: %v", err)
 	}
@@ -133,14 +133,9 @@ func (h *GroundingHandler) showGroundingIntro(ctx context.Context, chatID, userI
 		},
 	}
 
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.GroundingIntro,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit grounding intro: %v", err)
+	// Recreate message to extend its lifetime
+	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, m.GroundingIntro, keyboard); err != nil {
+		log.Printf("ERROR: recreate grounding intro: %v", err)
 	}
 }
 

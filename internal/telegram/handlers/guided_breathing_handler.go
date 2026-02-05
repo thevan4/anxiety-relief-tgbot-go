@@ -90,7 +90,7 @@ func (h *GuidedBreathingHandler) HandleMenuSelect(_ *th.Context, cb telego.Callb
 	}
 
 	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
-	h.showPatternSelection(h.ctx, info.ChatID, info.UserID, info.MessageID)
+	h.showPatternSelectionRecreate(h.ctx, info.ChatID, info.UserID)
 	return nil
 }
 
@@ -172,6 +172,23 @@ func (h *GuidedBreathingHandler) buildPatternsInfo(m localization.Messages) stri
 		info += fmt.Sprintf("%s *%s*\n_%s_\n\n", patternEmojis[i], name, desc)
 	}
 	return info
+}
+
+func (h *GuidedBreathingHandler) showPatternSelectionRecreate(ctx context.Context, chatID, userID int64) {
+	if err := h.sessionStorage.SetState(ctx, userID, session.StateGuidedBreathingSelect); err != nil {
+		log.Printf("ERROR: set state guided breathing select: %v", err)
+	}
+
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	text := m.GuidedIntro + h.buildPatternsInfo(m)
+
+	buttons := h.buildPatternButtons(m)
+	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
+
+	// Recreate message to extend its lifetime
+	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, text, keyboard); err != nil {
+		log.Printf("ERROR: recreate guided breathing intro: %v", err)
+	}
 }
 
 func (h *GuidedBreathingHandler) showPatternSelection(ctx context.Context, chatID, userID int64, messageID int) {

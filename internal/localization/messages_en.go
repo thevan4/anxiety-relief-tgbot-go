@@ -58,7 +58,7 @@ Privacy: the bot doesn't store personal data.
 A simple exercise to calm your nervous system.
 
 *Instructions:*
-1️⃣ Sit comfortably, close your eyes
+1️⃣ Sit comfortably, relax
 2️⃣ Inhale through nose — 4 seconds
 3️⃣ Hold breath — 4 seconds
 4️⃣ Exhale through mouth — 6 seconds
@@ -299,7 +299,7 @@ Exercise stopped. Choose another scene:
 
 You've completed the visualization "%s".
 
-Slowly return to reality. Wiggle your fingers, take a deep breath and open your eyes.
+Slowly return to reality. Wiggle your fingers and take a deep breath.
 
 How do you feel?`,
 	VisualizationThanks: `✨ *Thank you for practicing!*
@@ -308,14 +308,14 @@ Visualization is a powerful technique for reducing stress and anxiety. Regular p
 
 Choose a technique from the menu below.`,
 	VisualizationAtmosphere: "Atmosphere",
-	VisualizationCloseEyes:  "Close your eyes and immerse yourself in this scene...",
+	VisualizationCloseEyes:  "Immerse yourself in this scene...",
 	VisualizationStepFmt:    "Step %d/%d",
 
 	// Scene: Mountain
 	SceneMountainName:  "Mountain Peak",
 	SceneMountainDesc:  "Sunrise at the mountain top",
 	SceneMountainAtmo:  "Cool, fresh mountain air",
-	SceneMountainStep1: "Close your eyes and imagine standing on a mountain peak early in the morning.",
+	SceneMountainStep1: "Imagine standing on a mountain peak early in the morning.",
 	SceneMountainStep2: "Silence surrounds you. You feel the cool mountain air on your skin.",
 	SceneMountainStep3: "The sun appears on the horizon, painting the sky in pink and orange hues.",
 	SceneMountainStep4: "Warm rays of sunlight gently touch your face.",
@@ -355,7 +355,7 @@ Choose a technique from the menu below.`,
 	SceneGardenStep2: "Roses, lavender, jasmine — their fragrances mix in the air.",
 	SceneGardenStep3: "A small fountain bubbles in the center of the garden.",
 	SceneGardenStep4: "Butterflies flutter between flowers. Everything is full of life.",
-	SceneGardenStep5: "You sit on a bench by the fountain and close your eyes.",
+	SceneGardenStep5: "You sit on a bench by the fountain and enjoy the moment.",
 	SceneGardenStep6: "The sound of bubbling water calms your mind.",
 	SceneGardenStep7: "This garden is your safe place. You can return here anytime.",
 

@@ -65,7 +65,7 @@ func (h *BreathingHandler) HandleMenuSelect(_ *th.Context, cb telego.CallbackQue
 	}
 
 	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
-	h.showBreathingIntro(h.ctx, info.ChatID, info.UserID, info.MessageID)
+	h.showBreathingIntro(h.ctx, info.ChatID, info.UserID)
 	return nil
 }
 
@@ -102,7 +102,7 @@ func (h *BreathingHandler) processCallback(chatID, userID int64, messageID int, 
 	}
 }
 
-func (h *BreathingHandler) showBreathingIntro(ctx context.Context, chatID, userID int64, messageID int) {
+func (h *BreathingHandler) showBreathingIntro(ctx context.Context, chatID, userID int64) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateBreathingActive); err != nil {
 		log.Printf("ERROR: set state breathing active: %v", err)
 	}
@@ -118,14 +118,9 @@ func (h *BreathingHandler) showBreathingIntro(ctx context.Context, chatID, userI
 		},
 	}
 
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.BreathingIntro,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit breathing intro: %v", err)
+	// Recreate message to extend its lifetime
+	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, m.BreathingIntro, keyboard); err != nil {
+		log.Printf("ERROR: recreate breathing intro: %v", err)
 	}
 }
 
@@ -238,7 +233,27 @@ func (h *BreathingHandler) stopBreathing(ctx context.Context, chatID, userID int
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateBreathingActive); err != nil {
 		log.Printf("ERROR: set state breathing active: %v", err)
 	}
-	h.showBreathingIntro(ctx, chatID, userID, messageID)
+
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: "breathing_cancel"},
+				{Text: m.Start, CallbackData: "breathing_start"},
+			},
+		},
+	}
+
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        m.BreathingIntro,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit breathing stop: %v", err)
+	}
 }
 
 func (h *BreathingHandler) completeBreathing(ctx context.Context, chatID, userID int64, messageID int) {
