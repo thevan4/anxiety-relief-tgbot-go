@@ -106,10 +106,6 @@ func (bh *BotHandler) getMainMenuInline(m localization.Messages) *telego.InlineK
 				{Text: m.MenuPMR, CallbackData: "menu_pmr"},
 			},
 			{
-				{Text: m.MenuThought, CallbackData: "menu_thought"},
-				{Text: m.MenuVisualization, CallbackData: "menu_visual"},
-			},
-			{
 				{Text: m.MenuLang, CallbackData: "menu_lang"},
 			},
 		},
@@ -339,8 +335,6 @@ func (bh *BotHandler) registerTechniqueHandlers() {
 	bh.registerGroundingHandler()
 	bh.registerGuidedBreathingHandler()
 	bh.registerPMRHandler()
-	bh.registerThoughtLabelingHandler()
-	bh.registerVisualizationHandler()
 	bh.registerLangHandler()
 }
 
@@ -380,24 +374,6 @@ func (bh *BotHandler) registerPMRHandler() {
 	bh.handler.HandleCallbackQuery(pmrHandler.HandleMenuSelect, th.CallbackDataEqual("menu_pmr"))
 }
 
-func (bh *BotHandler) registerThoughtLabelingHandler() {
-	thoughtLabelingHandler := handlers.NewThoughtLabelingHandler(
-		bh.ctx, bh.bot, bh.localizer, bh.statistics,
-		bh.sessionStorage, bh.sessionManager, bh.callbackProcessor,
-	)
-	bh.handler.HandleCallbackQuery(thoughtLabelingHandler.HandleCallback, th.CallbackDataPrefix("thought_"))
-	bh.handler.HandleCallbackQuery(thoughtLabelingHandler.HandleMenuSelect, th.CallbackDataEqual("menu_thought"))
-}
-
-func (bh *BotHandler) registerVisualizationHandler() {
-	visualizationHandler := handlers.NewVisualizationHandler(
-		bh.ctx, bh.bot, bh.localizer, bh.statistics,
-		bh.sessionStorage, bh.sessionManager, bh.callbackProcessor,
-	)
-	bh.handler.HandleCallbackQuery(visualizationHandler.HandleCallback, th.CallbackDataPrefix("visual_"))
-	bh.handler.HandleCallbackQuery(visualizationHandler.HandleMenuSelect, th.CallbackDataEqual("menu_visual"))
-}
-
 func (bh *BotHandler) registerLangHandler() {
 	langHandler := handlers.NewLangHandler(
 		bh.ctx, bh.bot, bh.localizer, bh.statistics,
@@ -413,27 +389,7 @@ func (bh *BotHandler) registerCatchAllHandler() {
 		if message.From == nil {
 			return nil
 		}
-		userID := message.From.ID
 		chatID := message.Chat.ID
-
-		// Check if user is in thought labeling input state
-		state, _ := bh.sessionStorage.GetState(bh.ctx, userID)
-		if state == session.StateThoughtLabelingInput {
-			// Get saved message ID to edit
-			botMessageID, err := bh.sessionStorage.GetMessageID(bh.ctx, userID)
-			if err == nil && botMessageID != 0 {
-				// Delete user's message
-				bh.deleteMessage(chatID, message.MessageID)
-
-				// Process thought input
-				thoughtHandler := handlers.NewThoughtLabelingHandler(
-					bh.ctx, bh.bot, bh.localizer, bh.statistics,
-					bh.sessionStorage, bh.sessionManager, bh.callbackProcessor,
-				)
-				thoughtHandler.ProcessThoughtInput(chatID, userID, botMessageID, message.Text)
-				return nil
-			}
-		}
 
 		// Delete any unrecognized message to keep chat clean
 		bh.deleteMessage(chatID, message.MessageID)

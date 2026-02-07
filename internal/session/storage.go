@@ -2,20 +2,8 @@ package session
 
 import (
 	"context"
-	"errors"
 	"time"
 )
-
-// ErrCleanupRetryNotFound indicates missing cleanup retry entry.
-//
-//nolint:gochecknoglobals // Sentinel error for storage.
-var ErrCleanupRetryNotFound = errors.New("cleanup retry not found")
-
-// CleanupRetry stores retry information for cleanup queue.
-type CleanupRetry struct {
-	State   string `json:"state"`
-	Attempt int    `json:"attempt"`
-}
 
 // Storage defines the interface for persisting user session data.
 type Storage interface {

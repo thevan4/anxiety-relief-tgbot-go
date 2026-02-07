@@ -18,6 +18,9 @@ coverage.*
 *.coverprofile
 profile.cov
 
+# Technical nuances and difficult things to implement - just notes and a plan
+tech.md
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
 

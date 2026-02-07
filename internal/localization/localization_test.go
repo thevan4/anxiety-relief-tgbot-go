@@ -184,112 +184,6 @@ func TestMessagesNotEmpty(t *testing.T) {
 	}
 }
 
-func TestVisualizationMessagesNotEmpty(t *testing.T) {
-	t.Parallel()
-	l := NewLocalizer()
-
-	for _, lang := range l.SupportedLanguages() {
-		t.Run(lang, func(t *testing.T) {
-			t.Parallel()
-			msgs := l.Get(lang)
-
-			fields := []struct {
-				name  string
-				value string
-			}{
-				{"MenuVisualization", msgs.MenuVisualization},
-				{"VisualizationIntro", msgs.VisualizationIntro},
-				{"VisualizationStopped", msgs.VisualizationStopped},
-				{"VisualizationCompletion", msgs.VisualizationCompletion},
-				{"VisualizationThanks", msgs.VisualizationThanks},
-				{"VisualizationAtmosphere", msgs.VisualizationAtmosphere},
-				{"VisualizationCloseEyes", msgs.VisualizationCloseEyes},
-				{"VisualizationStepFmt", msgs.VisualizationStepFmt},
-			}
-			for _, field := range fields {
-				if field.value == "" {
-					t.Errorf("%s: %s is empty", lang, field.name)
-				}
-			}
-		})
-	}
-}
-
-func validateScene(t *testing.T, lang string, scene VisualizationScene, expectedID string) {
-	t.Helper()
-	if scene.ID != expectedID {
-		t.Errorf("%s: scene ID = %q, want %q", lang, scene.ID, expectedID)
-	}
-	sceneFields := []struct {
-		name  string
-		value string
-	}{
-		{"Name", scene.Name},
-		{"Description", scene.Description},
-		{"Atmosphere", scene.Atmosphere},
-	}
-	for _, field := range sceneFields {
-		if field.value == "" {
-			t.Errorf("%s: scene %s %s is empty", lang, scene.ID, field.name)
-		}
-	}
-	if len(scene.Steps) != 7 {
-		t.Errorf("%s: scene %s has %d steps, want 7", lang, scene.ID, len(scene.Steps))
-	}
-	for i, step := range scene.Steps {
-		if step.Instruction == "" {
-			t.Errorf("%s: scene %s step %d Instruction is empty", lang, scene.ID, i+1)
-		}
-	}
-}
-
-func TestGetVisualizationScenes(t *testing.T) {
-	t.Parallel()
-	l := NewLocalizer()
-
-	for _, lang := range l.SupportedLanguages() {
-		lang := lang
-		t.Run(lang, func(t *testing.T) {
-			t.Parallel()
-			m := l.Get(lang)
-			scenes := m.GetVisualizationScenes()
-
-			if len(scenes) != 5 {
-				t.Errorf("%s: expected 5 scenes, got %d", lang, len(scenes))
-			}
-
-			expectedIDs := []string{"mountain", "forest", "beach", "garden", "starry"}
-			for i, scene := range scenes {
-				validateScene(t, lang, scene, expectedIDs[i])
-			}
-		})
-	}
-}
-
-func TestVisualizationFormatMethods(t *testing.T) {
-	t.Parallel()
-	l := NewLocalizer()
-	m := l.Get("en")
-
-	t.Run("FormatVisualizationSceneIntro", func(t *testing.T) {
-		t.Parallel()
-		result := m.FormatVisualizationSceneIntro("🏖️", "Beach", "Warm beach", "Sound of waves", "⏱️ 3")
-		assertContains(t, result, "🏖️", "Beach", "Warm beach")
-	})
-
-	t.Run("FormatVisualizationStep", func(t *testing.T) {
-		t.Parallel()
-		result := m.FormatVisualizationStep("🏖️", "Beach", 1, 5, "Close your eyes", "⏱️ 10")
-		assertContains(t, result, "🏖️", "Beach", "Close your eyes")
-	})
-
-	t.Run("FormatVisualizationCompletion", func(t *testing.T) {
-		t.Parallel()
-		result := m.FormatVisualizationCompletion("Beach Scene")
-		assertContains(t, result, "Beach Scene")
-	})
-}
-
 // assertContains checks that result contains all expected substrings.
 func assertContains(t *testing.T, result string, expected ...string) {
 	t.Helper()
@@ -331,5 +225,132 @@ func TestBackwardCompatibility(t *testing.T) {
 	// Test SupportedLanguages var
 	if len(SupportedLanguages) != 6 {
 		t.Errorf("SupportedLanguages has %d elements, want 6", len(SupportedLanguages))
+	}
+}
+
+func TestFormatBreathingPhase(t *testing.T) {
+	t.Parallel()
+	l := NewLocalizer()
+
+	for _, lang := range l.SupportedLanguages() {
+		lang := lang
+		t.Run(lang, func(t *testing.T) {
+			t.Parallel()
+			m := l.Get(lang)
+			result := m.FormatBreathingPhase(1, 8, "Inhale", "🫁", "████░░░░")
+
+			assertContains(t, result, "1", "8", "Inhale", "🫁", "████░░░░")
+			assertContains(t, result, m.CycleWord)
+		})
+	}
+}
+
+func TestFormatGuidedPhase(t *testing.T) {
+	t.Parallel()
+	l := NewLocalizer()
+
+	for _, lang := range l.SupportedLanguages() {
+		lang := lang
+		t.Run(lang, func(t *testing.T) {
+			t.Parallel()
+			m := l.Get(lang)
+			result := m.FormatGuidedPhase("📦", "Box Breathing", 2, 5, "🫁", "Inhale", "████░░░░")
+
+			assertContains(t, result, "📦", "Box Breathing", "2", "5", "🫁", "Inhale")
+			assertContains(t, result, m.CycleWord)
+		})
+	}
+}
+
+func TestPMRMessagesNotEmpty(t *testing.T) {
+	t.Parallel()
+	l := NewLocalizer()
+
+	for _, lang := range l.SupportedLanguages() {
+		lang := lang
+		t.Run(lang, func(t *testing.T) {
+			t.Parallel()
+			m := l.Get(lang)
+
+			fields := []struct {
+				name  string
+				value string
+			}{
+				{"PMRIntro", m.PMRIntro},
+				{"PMRTense", m.PMRTense},
+				{"PMRRelax", m.PMRRelax},
+				{"PMRCompletion", m.PMRCompletion},
+				{"PMRHandsName", m.PMRHandsName},
+				{"PMRHandsTense", m.PMRHandsTense},
+				{"PMRHandsRelax", m.PMRHandsRelax},
+			}
+			for _, f := range fields {
+				if f.value == "" {
+					t.Errorf("%s: %s is empty", lang, f.name)
+				}
+			}
+		})
+	}
+}
+
+func TestGuidedBreathingMessagesNotEmpty(t *testing.T) {
+	t.Parallel()
+	l := NewLocalizer()
+
+	for _, lang := range l.SupportedLanguages() {
+		lang := lang
+		t.Run(lang, func(t *testing.T) {
+			t.Parallel()
+			m := l.Get(lang)
+
+			fields := []struct {
+				name  string
+				value string
+			}{
+				{"GuidedIntro", m.GuidedIntro},
+				{"GuidedCompletion", m.GuidedCompletion},
+				{"PatternBoxName", m.PatternBoxName},
+				{"PatternBoxDesc", m.PatternBoxDesc},
+				{"PatternRelaxingName", m.PatternRelaxingName},
+				{"PatternQuickName", m.PatternQuickName},
+				{"GuidedInhale", m.GuidedInhale},
+				{"GuidedExhale", m.GuidedExhale},
+			}
+			for _, f := range fields {
+				if f.value == "" {
+					t.Errorf("%s: %s is empty", lang, f.name)
+				}
+			}
+		})
+	}
+}
+
+func TestGroundingMessagesNotEmpty(t *testing.T) {
+	t.Parallel()
+	l := NewLocalizer()
+
+	for _, lang := range l.SupportedLanguages() {
+		lang := lang
+		t.Run(lang, func(t *testing.T) {
+			t.Parallel()
+			m := l.Get(lang)
+
+			fields := []struct {
+				name  string
+				value string
+			}{
+				{"GroundingStep1Title", m.GroundingStep1Title},
+				{"GroundingStep1Desc", m.GroundingStep1Desc},
+				{"GroundingStep2Title", m.GroundingStep2Title},
+				{"GroundingStep3Title", m.GroundingStep3Title},
+				{"GroundingStep4Title", m.GroundingStep4Title},
+				{"GroundingStep5Title", m.GroundingStep5Title},
+			}
+			for _, f := range fields {
+				if f.value == "" {
+					t.Errorf("%s: %s is empty", lang, f.name)
+				}
+			}
+		})
 	}
 }

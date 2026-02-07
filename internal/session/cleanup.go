@@ -1,4 +1,4 @@
-package sessioncore
+package session
 
 import "time"
 

@@ -153,7 +153,7 @@ func (h *BreathingHandler) runPhaseWithProgress(
 		},
 	}
 
-	for elapsed := 0; elapsed <= totalSeconds; elapsed++ {
+	for elapsed := 0; elapsed < totalSeconds; elapsed++ {
 		if ctx.Err() != nil {
 			return false
 		}
@@ -175,14 +175,12 @@ func (h *BreathingHandler) runPhaseWithProgress(
 			log.Printf("ERROR: edit breathing message: %v", err)
 		}
 
-		if elapsed < totalSeconds {
-			timer := time.NewTimer(1 * time.Second)
-			select {
-			case <-ctx.Done():
-				timer.Stop()
-				return false
-			case <-timer.C:
-			}
+		timer := time.NewTimer(1 * time.Second)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return false
+		case <-timer.C:
 		}
 	}
 	return true
@@ -213,8 +211,8 @@ func (h *BreathingHandler) sendBreathingCompletion(ctx context.Context, chatID, 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: m.FeelBetter, CallbackData: "breathing_complete"},
 				{Text: m.Repeat, CallbackData: "breathing_start"},
+				{Text: m.FeelBetter, CallbackData: "breathing_complete"},
 			},
 		},
 	}
@@ -266,7 +264,7 @@ func (h *BreathingHandler) completeBreathing(ctx context.Context, chatID, userID
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        m.BreathingThanks,
+		Text:        m.MainMenuText,
 		ParseMode:   "Markdown",
 		ReplyMarkup: h.getMainMenuInline(m),
 	}); err != nil {
@@ -285,10 +283,6 @@ func (h *BreathingHandler) getMainMenuInline(m localization.Messages) *telego.In
 			{
 				{Text: m.MenuGuided, CallbackData: "menu_guided"},
 				{Text: m.MenuPMR, CallbackData: "menu_pmr"},
-			},
-			{
-				{Text: m.MenuThought, CallbackData: "menu_thought"},
-				{Text: m.MenuVisualization, CallbackData: "menu_visual"},
 			},
 			{
 				{Text: m.MenuLang, CallbackData: "menu_lang"},

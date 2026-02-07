@@ -1,4 +1,4 @@
-package sessioncore
+package session
 
 import (
 	"context"
@@ -74,4 +74,53 @@ func (m *Manager) CancelAll() {
 		cancel()
 		delete(m.cancels, userID)
 	}
+}
+
+// GetOrStart returns a context for the user, creating a new one if needed.
+// If an existing session exists, it will be replaced.
+func (m *Manager) GetOrStart(parentCtx context.Context, userID int64) context.Context {
+	m.mu.RLock()
+	_, exists := m.cancels[userID]
+	m.mu.RUnlock()
+
+	if !exists {
+		return m.Start(parentCtx, userID)
+	}
+
+	// Replace existing session
+	ctx, cancel := context.WithCancel(parentCtx)
+	m.mu.Lock()
+	m.cancels[userID] = cancel
+	m.mu.Unlock()
+	return ctx
+}
+
+// =============================================================================
+// SessionManager — alias for backward compatibility with handlers
+// =============================================================================
+
+// SessionManager is an alias for Manager (backward compatibility).
+type SessionManager = Manager
+
+// NewSessionManager creates a new session manager instance (backward compatibility).
+func NewSessionManager() *SessionManager {
+	return NewManager()
+}
+
+// StartSession creates a new context for user's session (backward compatibility).
+// Alias for Start().
+func (m *Manager) StartSession(parentCtx context.Context, userID int64) context.Context {
+	return m.Start(parentCtx, userID)
+}
+
+// CancelSession cancels the user's current session (backward compatibility).
+// Alias for Cancel().
+func (m *Manager) CancelSession(userID int64) {
+	m.Cancel(userID)
+}
+
+// GetSessionContext returns a context for the user (backward compatibility).
+// Alias for GetOrStart().
+func (m *Manager) GetSessionContext(parentCtx context.Context, userID int64) context.Context {
+	return m.GetOrStart(parentCtx, userID)
 }

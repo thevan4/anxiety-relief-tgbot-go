@@ -65,10 +65,6 @@ func (h *LangHandler) getMainMenuInline(m localization.Messages) *telego.InlineK
 				{Text: m.MenuPMR, CallbackData: "menu_pmr"},
 			},
 			{
-				{Text: m.MenuThought, CallbackData: "menu_thought"},
-				{Text: m.MenuVisualization, CallbackData: "menu_visual"},
-			},
-			{
 				{Text: m.MenuLang, CallbackData: "menu_lang"},
 			},
 		},

@@ -176,3 +176,150 @@ func TestConcurrentSessionOperations(t *testing.T) {
 		<-done
 	}
 }
+
+func TestNewManager(t *testing.T) {
+	t.Parallel()
+	m := NewManager()
+	if m == nil {
+		t.Fatal("NewManager returned nil")
+	}
+	if m.Count() != 0 {
+		t.Error("new manager should have 0 sessions")
+	}
+}
+
+func TestManagerHas(t *testing.T) {
+	t.Parallel()
+	m := NewManager()
+	parentCtx := context.Background()
+
+	if m.Has(123) {
+		t.Error("Has() should return false for non-existent user")
+	}
+
+	m.Start(parentCtx, 123)
+	if !m.Has(123) {
+		t.Error("Has() should return true after Start()")
+	}
+
+	m.Cancel(123)
+	if m.Has(123) {
+		t.Error("Has() should return false after Cancel()")
+	}
+}
+
+func TestManagerCount(t *testing.T) {
+	t.Parallel()
+	m := NewManager()
+	parentCtx := context.Background()
+
+	if m.Count() != 0 {
+		t.Errorf("Count() = %d, want 0", m.Count())
+	}
+
+	m.Start(parentCtx, 1)
+	m.Start(parentCtx, 2)
+	m.Start(parentCtx, 3)
+
+	if m.Count() != 3 {
+		t.Errorf("Count() = %d, want 3", m.Count())
+	}
+
+	m.Cancel(2)
+	if m.Count() != 2 {
+		t.Errorf("Count() = %d, want 2 after cancel", m.Count())
+	}
+}
+
+func TestManagerCancelAll(t *testing.T) {
+	t.Parallel()
+	m := NewManager()
+	parentCtx := context.Background()
+
+	ctx1 := m.Start(parentCtx, 1)
+	ctx2 := m.Start(parentCtx, 2)
+	ctx3 := m.Start(parentCtx, 3)
+
+	m.CancelAll()
+
+	// All contexts should be cancelled
+	for i, ctx := range []context.Context{ctx1, ctx2, ctx3} {
+		select {
+		case <-ctx.Done():
+			// expected
+		case <-time.After(100 * time.Millisecond):
+			t.Errorf("context %d was not cancelled by CancelAll()", i+1)
+		}
+	}
+
+	if m.Count() != 0 {
+		t.Errorf("Count() = %d after CancelAll(), want 0", m.Count())
+	}
+}
+
+func TestManagerGetOrStart(t *testing.T) {
+	t.Parallel()
+	m := NewManager()
+	parentCtx := context.Background()
+
+	// First call should create new session
+	ctx1 := m.GetOrStart(parentCtx, 123)
+	if ctx1 == nil {
+		t.Fatal("GetOrStart returned nil")
+	}
+	if !m.Has(123) {
+		t.Error("session should exist after GetOrStart")
+	}
+
+	// Second call should replace existing session
+	ctx2 := m.GetOrStart(parentCtx, 123)
+	if ctx2 == nil {
+		t.Fatal("second GetOrStart returned nil")
+	}
+
+	// Still only one session for this user
+	if m.Count() != 1 {
+		t.Errorf("Count() = %d, want 1", m.Count())
+	}
+}
+
+func TestManagerStart(t *testing.T) {
+	t.Parallel()
+	m := NewManager()
+	parentCtx := context.Background()
+
+	ctx := m.Start(parentCtx, 123)
+	if ctx == nil {
+		t.Fatal("Start returned nil")
+	}
+
+	// Context should be active
+	select {
+	case <-ctx.Done():
+		t.Error("context should not be cancelled initially")
+	default:
+	}
+}
+
+func TestManagerCancel(t *testing.T) {
+	t.Parallel()
+	m := NewManager()
+	parentCtx := context.Background()
+
+	ctx := m.Start(parentCtx, 123)
+	m.Cancel(123)
+
+	select {
+	case <-ctx.Done():
+		// expected
+	case <-time.After(100 * time.Millisecond):
+		t.Error("context was not cancelled")
+	}
+}
+
+func TestManagerCancelNonExistent(t *testing.T) {
+	t.Parallel()
+	m := NewManager()
+	// Should not panic
+	m.Cancel(999)
+}

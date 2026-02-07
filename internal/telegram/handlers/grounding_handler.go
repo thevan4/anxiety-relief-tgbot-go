@@ -68,10 +68,6 @@ func (h *GroundingHandler) getMainMenuInline(m localization.Messages) *telego.In
 				{Text: m.MenuPMR, CallbackData: "menu_pmr"},
 			},
 			{
-				{Text: m.MenuThought, CallbackData: "menu_thought"},
-				{Text: m.MenuVisualization, CallbackData: "menu_visual"},
-			},
-			{
 				{Text: m.MenuLang, CallbackData: "menu_lang"},
 			},
 		},
@@ -244,7 +240,7 @@ func (h *GroundingHandler) completeGrounding(ctx context.Context, chatID, userID
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        m.GroundingThanks,
+		Text:        m.MainMenuText,
 		ParseMode:   "Markdown",
 		ReplyMarkup: h.getMainMenuInline(m),
 	}); err != nil {

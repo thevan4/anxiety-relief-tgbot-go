@@ -11,7 +11,6 @@ var messagesDE = Messages{
 	Done:       "✅ Fertig",
 	FeelBetter: "✅ Besser",
 	Repeat:     "🔄 Wiederholen",
-	BackToMenu: "🏠 Menü",
 
 	// Welcome holder — static message with bot info
 	HolderText: `🌿 *Helfer bei Angst*
@@ -22,8 +21,6 @@ Dieser Bot hilft bei der Bewältigung von Angst mit evidenzbasierten Techniken:
 • 🌿 Erdung 5-4-3-2-1 — Rückkehr in den Moment
 • 🧘 Geführte Atmung — verschiedene Muster
 • 💪 Muskelentspannung — Spannung lösen
-• 🏷️ Gedanken markieren — mit Angst arbeiten
-• 🌅 Visualisierung — Entspannung durch Vorstellung
 
 Datenschutz: Der Bot speichert keine persönlichen Daten.
 
@@ -41,16 +38,12 @@ Datenschutz: Der Bot speichert keine persönlichen Daten.
 
 *Fortgeschritten (5-15 Min):*
 🧘 Geführte Atmung — verschiedene Muster
-💪 Muskelentspannung — Spannung lösen
-🏷️ Gedanken markieren — mit Angst arbeiten
-🌅 Visualisierung — Entspannung durch Vorstellung`,
-	MenuBreathing:     "🌬️ Atmung 2 Min",
-	MenuGrounding:     "🌿 Erdung",
-	MenuGuided:        "🧘 Geführt",
-	MenuPMR:           "💪 Muskeln",
-	MenuThought:       "🏷️ Gedanken",
-	MenuVisualization: "🌅 Visualisierung",
-	MenuLang:          "🌐 Sprache",
+💪 Muskelentspannung — Spannung lösen`,
+	MenuBreathing: "🌬️ Atmung 2 Min",
+	MenuGrounding: "🌿 Erdung",
+	MenuGuided:    "🧘 Geführt",
+	MenuPMR:       "💪 Muskeln",
+	MenuLang:      "🌐 Sprache",
 
 	// Breathing
 	BreathingIntro: `🌬️ *2-Minuten-Atmung*
@@ -69,16 +62,9 @@ Ich werde Sie durch jeden Schritt führen. Bereit zu beginnen?`,
 
 Sie haben die Atemübung abgeschlossen.
 Wie fühlen Sie sich?`,
-	BreathingThanks: `✨ *Danke für die Übung!*
-
-Regelmäßige Übungen helfen, das Angstniveau zu senken.
-
-Wählen Sie eine Technik aus dem Menü unten.`,
-	BreathingCycle:  "Zyklus %d/%d",
 	BreathingInhale: "Einatmen",
 	BreathingHold:   "Halten",
 	BreathingExhale: "Ausatmen",
-	BreathingPause:  "Pause",
 
 	// Grounding
 	GroundingIntro: `🌿 *5-4-3-2-1 Erdungstechnik*
@@ -89,19 +75,6 @@ Diese Technik hilft Ihnen, durch Ihre Sinne in den gegenwärtigen Moment zurück
 Sie werden Dinge um sich herum benennen, die Sie mit verschiedenen Sinnen wahrnehmen.
 
 Bereit zu beginnen?`,
-	GroundingStep:       "Nennen Sie *%d %s*, die Sie *%s*",
-	GroundingCompletion: "✅ *Sehr gut!*\n\nSie haben die Erdungstechnik abgeschlossen.\nWie fühlen Sie sich?",
-	GroundingThanks: `✨ *Danke für die Übung!*
-
-Die 5-4-3-2-1 Technik hilft, bei Angst schnell in den gegenwärtigen Moment zurückzukehren.
-
-Wählen Sie eine Technik aus dem Menü unten.`,
-	GroundingSee:        "sehen",
-	GroundingHear:       "hören",
-	GroundingFeel:       "fühlen",
-	GroundingThings:     "Dinge",
-	GroundingSounds:     "Geräusche",
-	GroundingSensations: "Empfindungen",
 
 	// Grounding steps
 	GroundingStep1Title: "Schritt 1: Sehen",
@@ -123,12 +96,7 @@ Wählen Sie eine Technik aus dem Menü unten.`,
 	// Guided breathing
 	GuidedIntro:      "🧘 *Geführte Atmung*\n\nWählen Sie eine Atemtechnik:\n\n",
 	GuidedCompletion: "✅ *Sehr gut!*\n\nSie haben die Übung \"%s\" abgeschlossen.\n\nWie fühlen Sie sich?",
-	GuidedThanks: `✨ *Danke für die Übung!*
-
-Regelmäßige Atemübungen helfen, Angst zu reduzieren und die Konzentration zu verbessern.
-
-Wählen Sie eine Technik aus dem Menü unten.`,
-	GuidedStopped: "🧘 *Geführte Atmung*\n\nÜbung gestoppt. Wählen Sie eine Technik:\n\n",
+	GuidedStopped:    "🧘 *Geführte Atmung*\n\nÜbung gestoppt. Wählen Sie eine Technik:\n\n",
 
 	// Breathing patterns
 	PatternBoxName:        "Box-Atmung 4-4-4-4",
@@ -166,16 +134,6 @@ Bereit zu beginnen?`,
 Sie haben die progressive Muskelentspannung abgeschlossen.
 
 Ihr Körper ist jetzt vollständig entspannt. Sitzen Sie noch eine Minute und genießen Sie diesen Zustand.`,
-	PMRStopped: `💪 *Progressive Muskelentspannung*
-
-Übung gestoppt.
-
-Möchten Sie von vorne beginnen?`,
-	PMRThanks: `✨ *Danke für die Übung!*
-
-Progressive Muskelentspannung reduziert Muskelverspannungen und Stressniveau.
-
-Wählen Sie eine Technik aus dem Menü unten.`,
 
 	// PMR muscle groups
 	PMRHandsName:  "Hände",
@@ -217,165 +175,6 @@ Wählen Sie eine Technik aus dem Menü unten.`,
 	PMRCalvesName:  "Waden und Füße",
 	PMRCalvesTense: "Ziehen Sie die Zehen zu sich heran und spannen Sie die Waden an. Spüren Sie die Dehnung.",
 	PMRCalvesRelax: "Entspannen Sie Füße und Waden. Ihre Beine werden warm und schwer.",
-
-	// Thought labeling
-	ThoughtIntro: `🏷️ *Gedanken markieren*
-
-Eine Achtsamkeitstechnik zur Arbeit mit ängstlichen Gedanken.
-
-*Wie es funktioniert:*
-1. Sie beschreiben einen ängstlichen Gedanken
-2. Wählen Sie eine Verzerrungskategorie
-3. Erhalten Sie einen Weg zur Neuformulierung
-
-Dies hilft, sich von Gedanken zu distanzieren und sie objektiv zu sehen.
-
-Bereit zu beginnen?`,
-	ThoughtPrompt: "📝 *Beschreiben Sie Ihren ängstlichen Gedanken*\n\n" +
-		"Schreiben Sie in einer Nachricht den Gedanken, der Sie beunruhigt.",
-	ThoughtCategories: "🏷️ *Kategorisierung des Gedankens*\n\n_\"%s\"_\n\nWählen Sie die Art der kognitiven Verzerrung:",
-	ThoughtResult:     "%s *%s*\n\n_%s_\n\n*Wie man umdenkt:*\n%s",
-	ThoughtCompletion: "Möchten Sie einen weiteren Gedanken bearbeiten?",
-	ThoughtThanks: `✨ *Danke für die Übung!*
-
-Gedanken markieren hilft, kognitive Verzerrungen zu erkennen und ihre Auswirkungen zu reduzieren.
-
-Wählen Sie eine Technik aus dem Menü unten.`,
-
-	// Thought labeling categories
-	ThoughtWorryName:    "Sorge",
-	ThoughtWorryDesc:    "Angst vor zukünftigen Ereignissen oder Ergebnissen",
-	ThoughtWorryReframe: "\"Was, wenn ich das Vorstellungsgespräch nicht bestehe?\"",
-
-	ThoughtCatastrophicName:    "Katastrophisieren",
-	ThoughtCatastrophicDesc:    "Sich das schlimmste Szenario ausmalen",
-	ThoughtCatastrophicReframe: "\"Wenn ich einen Fehler mache, wird alles schrecklich!\"",
-
-	ThoughtSelfDoubtName:    "Selbstzweifel",
-	ThoughtSelfDoubtDesc:    "An den eigenen Fähigkeiten zweifeln",
-	ThoughtSelfDoubtReframe: "\"Ich bin dafür nicht gut genug\"",
-
-	ThoughtPerfectionistName:    "Perfektionismus",
-	ThoughtPerfectionistDesc:    "Unrealistisch hohe Standards",
-	ThoughtPerfectionistReframe: "\"Wenn es nicht perfekt ist, ist es schlecht\"",
-
-	ThoughtComparisonName:    "Vergleich",
-	ThoughtComparisonDesc:    "Sich mit anderen vergleichen",
-	ThoughtComparisonReframe: "\"Alle kommen damit besser zurecht als ich\"",
-
-	ThoughtRuminationName:    "Grübeln",
-	ThoughtRuminationDesc:    "Ständiges Zurückkehren zu vergangenen Ereignissen",
-	ThoughtRuminationReframe: "\"Warum habe ich das damals gesagt?\"",
-
-	ThoughtControlName:    "Kontrolle",
-	ThoughtControlDesc:    "Den Wunsch, Unkontrollierbares zu kontrollieren",
-	ThoughtControlReframe: "\"Ich muss alles vorhersehen\"",
-
-	ThoughtRejectionName:    "Angst vor Zurückweisung",
-	ThoughtRejectionDesc:    "Angst, abgelehnt zu werden",
-	ThoughtRejectionReframe: "\"Sie werden denken, ich bin komisch\"",
-
-	ThoughtHealthName:    "Gesundheitsangst",
-	ThoughtHealthDesc:    "Übermäßige Sorge um die Gesundheit",
-	ThoughtHealthReframe: "\"Ist dieses Symptom ein Krankheitszeichen?\"",
-
-	ThoughtSocialName:    "Soziale Angst",
-	ThoughtSocialDesc:    "Angst vor sozialen Situationen",
-	ThoughtSocialReframe: "\"Alle werden mich ansehen\"",
-
-	ThoughtFinancialName:    "Finanzielle Sorgen",
-	ThoughtFinancialDesc:    "Stress wegen Geld",
-	ThoughtFinancialReframe: "\"Was, wenn das Geld nicht reicht?\"",
-
-	// Visualization
-	VisualizationIntro: `🌅 *Friedliche Visualisierung*
-
-Eine Entspannungstechnik durch Vorstellung friedlicher Orte.
-
-*Wählen Sie eine Szene:*
-
-`,
-	VisualizationStopped: `🌅 *Friedliche Visualisierung*
-
-Übung gestoppt. Wählen Sie eine andere Szene:
-
-`,
-	VisualizationCompletion: `✅ *Sehr gut!*
-
-Sie haben die Visualisierung "%s" abgeschlossen.
-
-Kehren Sie langsam in die Realität zurück. Bewegen Sie Ihre Finger und atmen Sie tief ein.
-
-Wie fühlen Sie sich?`,
-	VisualizationThanks: `✨ *Danke für die Übung!*
-
-Visualisierung ist eine kraftvolle Technik zur Reduzierung von Stress und Angst.
-Regelmäßige Übung verstärkt die Wirkung.
-
-Wählen Sie eine Technik aus dem Menü unten.`,
-	VisualizationAtmosphere: "Atmosphäre",
-	VisualizationCloseEyes:  "Tauchen Sie in diese Szene ein...",
-	VisualizationStepFmt:    "Schritt %d/%d",
-
-	// Scene: Mountain
-	SceneMountainName:  "Berggipfel",
-	SceneMountainDesc:  "Sonnenaufgang auf dem Berggipfel",
-	SceneMountainAtmo:  "Kühle, frische Bergluft",
-	SceneMountainStep1: "Stellen Sie sich vor, Sie stehen am frühen Morgen auf einem Berggipfel.",
-	SceneMountainStep2: "Stille umgibt Sie. Sie spüren die kühle Bergluft auf Ihrer Haut.",
-	SceneMountainStep3: "Die Sonne erscheint am Horizont und taucht den Himmel in Rosa- und Orangetöne.",
-	SceneMountainStep4: "Warme Sonnenstrahlen berühren sanft Ihr Gesicht.",
-	SceneMountainStep5: "Sie sehen endlose Weiten unter sich. Alles erscheint so klein und fern.",
-	SceneMountainStep6: "Atmen Sie tief die reine Bergluft ein. Spüren Sie die Ruhe.",
-	SceneMountainStep7: "Sie sind sicher. Dieser Moment gehört nur Ihnen.",
-
-	// Scene: Forest
-	SceneForestName:  "Waldlichtung",
-	SceneForestDesc:  "Eine ruhige Lichtung zwischen alten Bäumen",
-	SceneForestAtmo:  "Warmes Sonnenlicht, raschelnde Blätter",
-	SceneForestStep1: "Stellen Sie sich vor, Sie befinden sich auf einer gemütlichen Lichtung in einem alten Wald.",
-	SceneForestStep2: "Sonnenlicht filtert durch die Baumkronen und erzeugt Muster im Gras.",
-	SceneForestStep3: "Sie hören Vögel singen und Blätter im Wind rascheln.",
-	SceneForestStep4: "Weiches Moos unter Ihren Füßen. Sie fühlen sich mit der Erde verbunden.",
-	SceneForestStep5: "Der Duft von Kiefern und Blumen erfüllt die Luft.",
-	SceneForestStep6: "Setzen Sie sich auf das warme Gras. Spüren Sie, wie die Natur Sie umarmt.",
-	SceneForestStep7: "Hier gibt es keine Hektik. Nur Frieden und Harmonie mit der Natur.",
-
-	// Scene: Beach
-	SceneBeachName:  "Ozeanstrand",
-	SceneBeachDesc:  "Ein ruhiger Strand mit warmem Sand",
-	SceneBeachAtmo:  "Meeresbrise, Wellenrauschen",
-	SceneBeachStep1: "Sie gehen barfuß über warmen Sand am Meer entlang.",
-	SceneBeachStep2: "Wellen rollen sanft an den Strand und ziehen sich zurück.",
-	SceneBeachStep3: "Eine leichte Meeresbrise erfrischt Ihr Gesicht und spielt mit Ihrem Haar.",
-	SceneBeachStep4: "Sie spüren die Wärme des Sandes unter Ihren Füßen bei jedem Schritt.",
-	SceneBeachStep5: "Möwen fliegen in der Ferne. Ihre Rufe vermischen sich mit dem Wellenrauschen.",
-	SceneBeachStep6: "Bleiben Sie stehen und schauen Sie auf den endlosen Horizont.",
-	SceneBeachStep7: "Der Ozean ist unendlich, genau wie Ihre Möglichkeiten. Spüren Sie die Freiheit.",
-
-	// Scene: Garden
-	SceneGardenName:  "Blühender Garten",
-	SceneGardenDesc:  "Ein schöner Garten mit Blumen und Brunnen",
-	SceneGardenAtmo:  "Blumenduft, plätscherndes Wasser",
-	SceneGardenStep1: "Sie betreten einen wunderschönen Garten voller blühender Pflanzen.",
-	SceneGardenStep2: "Rosen, Lavendel, Jasmin — ihre Düfte vermischen sich in der Luft.",
-	SceneGardenStep3: "Ein kleiner Brunnen plätschert in der Mitte des Gartens.",
-	SceneGardenStep4: "Schmetterlinge flattern zwischen den Blumen. Alles ist voller Leben.",
-	SceneGardenStep5: "Sie setzen sich auf eine Bank am Brunnen und genießen den Moment.",
-	SceneGardenStep6: "Das Geräusch des plätschernden Wassers beruhigt Ihren Geist.",
-	SceneGardenStep7: "Dieser Garten ist Ihr sicherer Ort. Sie können jederzeit hierher zurückkehren.",
-
-	// Scene: Starry
-	SceneStarryName:  "Sternennacht",
-	SceneStarryDesc:  "Eine nächtliche Wiese unter dem Sternenhimmel",
-	SceneStarryAtmo:  "Kühle Nachtluft, Stille",
-	SceneStarryStep1: "Sie liegen auf weichem Gras in einer warmen Sommernacht.",
-	SceneStarryStep2: "Über Ihnen ist ein endloser Himmel, übersät mit Millionen von Sternen.",
-	SceneStarryStep3: "Die Milchstraße erstreckt sich über den Himmel — ein Fluss aus Licht.",
-	SceneStarryStep4: "Die Nachtluft ist angenehm kühl. Sie hören Grillen zirpen.",
-	SceneStarryStep5: "Jeder Stern ist eine Sonne in einer fernen Galaxie.",
-	SceneStarryStep6: "Spüren Sie Ihren Platz im Universum. Sie sind Teil von etwas Großem.",
-	SceneStarryStep7: "Ihre Sorgen lösen sich in der Unendlichkeit des Weltraums auf.",
 
 	// Language selection
 	LangSelectTitle: "🌐 *Sprache wählen:*",

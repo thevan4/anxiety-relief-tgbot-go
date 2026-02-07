@@ -20,12 +20,7 @@ func TestStateIsRunning(t *testing.T) {
 		{StateGuidedBreathingSelect, false},
 		{StateGuidedBreathingRunning, true},
 		{StatePMRActive, false},
-		{StatePMRTense, false},
-		{StatePMRRelax, false},
 		{StatePMRRunning, true},
-		{StateThoughtLabelingActive, false},
-		{StateThoughtLabelingInput, false},
-		{StateThoughtLabelingCategory, false},
 	}
 
 	for _, tt := range tests {
@@ -57,12 +52,7 @@ func TestStateIsActive(t *testing.T) {
 		{StateGuidedBreathingSelect, true},
 		{StateGuidedBreathingRunning, true},
 		{StatePMRActive, true},
-		{StatePMRTense, true},
-		{StatePMRRelax, true},
 		{StatePMRRunning, true},
-		{StateThoughtLabelingActive, true},
-		{StateThoughtLabelingInput, true},
-		{StateThoughtLabelingCategory, true},
 	}
 
 	for _, tt := range tests {
@@ -92,12 +82,7 @@ func TestStateConstants(t *testing.T) {
 		StateGuidedBreathingSelect,
 		StateGuidedBreathingRunning,
 		StatePMRActive,
-		StatePMRTense,
-		StatePMRRelax,
 		StatePMRRunning,
-		StateThoughtLabelingActive,
-		StateThoughtLabelingInput,
-		StateThoughtLabelingCategory,
 	}
 
 	seen := make(map[State]bool)
@@ -106,5 +91,76 @@ func TestStateConstants(t *testing.T) {
 			t.Errorf("duplicate state: %q", s)
 		}
 		seen[s] = true
+	}
+}
+
+func TestScreenString(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		screen Screen
+		want   string
+	}{
+		{ScreenUnknown, "Unknown"},
+		{ScreenHolder, "Holder"},
+		{ScreenMenu, "Menu"},
+		{ScreenExerciseIntro, "ExerciseIntro"},
+		{ScreenExerciseRunning, "ExerciseRunning"},
+		{ScreenExerciseComplete, "ExerciseComplete"},
+		{ScreenLanguageSelect, "LanguageSelect"},
+		{ScreenError, "Error"},
+		{Screen(999), "Unknown"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.want, func(t *testing.T) {
+			t.Parallel()
+			if got := tt.screen.String(); got != tt.want {
+				t.Errorf("Screen(%d).String() = %q, want %q", tt.screen, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTransitionOpString(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		op   TransitionOp
+		want string
+	}{
+		{OpEdit, "Edit"},
+		{OpRecreate, "Recreate"},
+		{OpSend, "Send"},
+		{TransitionOp(999), "Unknown"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.want, func(t *testing.T) {
+			t.Parallel()
+			if got := tt.op.String(); got != tt.want {
+				t.Errorf("TransitionOp(%d).String() = %q, want %q", tt.op, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCleanupDecisionString(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		decision CleanupDecision
+		want     string
+	}{
+		{DecisionDelete, "Delete"},
+		{DecisionKeep, "Keep"},
+		{DecisionRetry, "Retry"},
+		{CleanupDecision(999), "Unknown"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.want, func(t *testing.T) {
+			t.Parallel()
+			if got := tt.decision.String(); got != tt.want {
+				t.Errorf("CleanupDecision(%d).String() = %q, want %q", tt.decision, got, tt.want)
+			}
+		})
 	}
 }

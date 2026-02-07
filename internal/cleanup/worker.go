@@ -10,7 +10,6 @@ import (
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
-	"github.com/thevan4/anxiety-relief-tgbot-go/internal/sessioncore"
 )
 
 const (
@@ -23,23 +22,21 @@ const (
 
 // Worker performs background cleanup of old menu messages.
 type Worker struct {
-	ctx       context.Context
-	bot       *telego.Bot
-	storage   session.Storage
-	core      *sessioncore.CleanupProcessor
-	coreStore sessioncore.Storage
-	timeNow   func() time.Time
+	ctx     context.Context
+	bot     *telego.Bot
+	storage session.Storage
+	core    *session.CleanupProcessor
+	timeNow func() time.Time
 }
 
 // NewWorker creates a new cleanup worker.
 func NewWorker(ctx context.Context, bot *telego.Bot, storage session.Storage) *Worker {
 	return &Worker{
-		ctx:       ctx,
-		bot:       bot,
-		storage:   storage,
-		core:      sessioncore.NewCleanupProcessor(sessioncore.DefaultConfig()),
-		coreStore: session.NewCoreStorageAdapter(storage),
-		timeNow:   time.Now,
+		ctx:     ctx,
+		bot:     bot,
+		storage: storage,
+		core:    session.NewCleanupProcessor(session.DefaultConfig()),
+		timeNow: time.Now,
 	}
 }
 
@@ -65,7 +62,7 @@ func (w *Worker) Start() {
 func (w *Worker) processQueue() {
 	now := w.timeNow()
 
-	userIDs, err := w.coreStore.GetPendingCleanup(w.ctx, now, batchSize)
+	userIDs, err := w.storage.GetPendingCleanup(w.ctx, now, batchSize)
 	if err != nil {
 		log.Printf("ERROR: cleanup get pending: %v", err)
 		return
@@ -85,29 +82,30 @@ func (w *Worker) processQueue() {
 	}
 }
 
-// processUser handles cleanup for a single user using sessioncore logic.
+// processUser handles cleanup for a single user using session cleanup logic.
 func (w *Worker) processUser(userID int64, now time.Time) {
 	// Get data needed for evaluation
-	resourceCreatedAt, err := w.coreStore.GetResourceCreatedAt(w.ctx, userID, "menu")
+	resourceCreatedAt, err := w.storage.GetMenuCreatedAt(w.ctx, userID)
 	if err != nil {
 		log.Printf("ERROR: cleanup get menu created: %v", err)
-		w.executeDecision(userID, sessioncore.CleanupResult{
-			Decision: sessioncore.DecisionDelete,
+		w.executeDecision(userID, session.CleanupResult{
+			Decision: session.DecisionDelete,
 			Reason:   "error getting resource creation time",
 		})
 		return
 	}
 
-	currentState, err := w.coreStore.GetState(w.ctx, userID)
+	state, err := w.storage.GetState(w.ctx, userID)
 	if err != nil {
 		log.Printf("ERROR: cleanup get state: %v", err)
 		w.reschedule(userID, now, 1*time.Minute)
 		return
 	}
+	currentState := string(state)
 
-	retry, err := w.coreStore.GetCleanupRetry(w.ctx, userID)
+	retry, err := w.storage.GetCleanupRetry(w.ctx, userID)
 	if err != nil {
-		if errors.Is(err, sessioncore.ErrCleanupRetryNotFound) {
+		if errors.Is(err, session.ErrCleanupRetryNotFound) {
 			retry = nil
 		} else {
 			log.Printf("ERROR: cleanup get retry: %v", err)
@@ -116,7 +114,7 @@ func (w *Worker) processUser(userID int64, now time.Time) {
 		}
 	}
 
-	// Use sessioncore to evaluate what to do
+	// Use session cleanup processor to evaluate what to do
 	result := w.core.EvaluateCleanup(resourceCreatedAt, currentState, retry, now)
 
 	log.Printf("DEBUG: user %d cleanup decision: %v (%s)", userID, result.Decision, result.Reason)
@@ -126,22 +124,22 @@ func (w *Worker) processUser(userID int64, now time.Time) {
 }
 
 // executeDecision performs the action based on cleanup evaluation result.
-func (w *Worker) executeDecision(userID int64, result sessioncore.CleanupResult) {
+func (w *Worker) executeDecision(userID int64, result session.CleanupResult) {
 	switch result.Decision {
-	case sessioncore.DecisionDelete:
+	case session.DecisionDelete:
 		w.deleteMenuAndCleanup(userID)
 
-	case sessioncore.DecisionKeep:
+	case session.DecisionKeep:
 		// User finished activity, keep the menu but remove from queue
-		_ = w.coreStore.ClearCleanupRetry(w.ctx, userID)
-		_ = w.coreStore.RemoveFromCleanupQueue(w.ctx, userID)
+		_ = w.storage.ClearCleanupRetry(w.ctx, userID)
+		_ = w.storage.RemoveFromCleanupQueue(w.ctx, userID)
 
-	case sessioncore.DecisionRetry:
+	case session.DecisionRetry:
 		// Schedule retry check
 		if result.Retry != nil {
-			_ = w.coreStore.SetCleanupRetry(w.ctx, userID, *result.Retry)
+			_ = w.storage.SetCleanupRetry(w.ctx, userID, *result.Retry)
 		}
-		_ = w.coreStore.AddToCleanupQueue(w.ctx, userID, result.NextCheck)
+		_ = w.storage.AddToCleanupQueue(w.ctx, userID, result.NextCheck)
 	}
 }
 
@@ -165,16 +163,16 @@ func (w *Worker) deleteMenuAndCleanup(userID int64) {
 func (w *Worker) cleanupUser(userID int64, reason string) {
 	log.Printf("DEBUG: cleanup user %d: %s", userID, reason)
 
-	_ = w.coreStore.RemoveFromCleanupQueue(w.ctx, userID)
-	_ = w.coreStore.ClearCleanupRetry(w.ctx, userID)
-	_ = w.coreStore.ClearState(w.ctx, userID)
-	_ = w.coreStore.ClearResourceID(w.ctx, userID, "menu")
+	_ = w.storage.RemoveFromCleanupQueue(w.ctx, userID)
+	_ = w.storage.ClearCleanupRetry(w.ctx, userID)
+	_ = w.storage.ClearState(w.ctx, userID)
+	_ = w.storage.ClearMenuMessageID(w.ctx, userID)
 }
 
 // reschedule updates user's check time in the queue.
 func (w *Worker) reschedule(userID int64, now time.Time, delay time.Duration) {
 	nextCheck := now.Add(delay)
-	if err := w.coreStore.AddToCleanupQueue(w.ctx, userID, nextCheck); err != nil {
+	if err := w.storage.AddToCleanupQueue(w.ctx, userID, nextCheck); err != nil {
 		log.Printf("ERROR: cleanup reschedule user %d: %v", userID, err)
 	}
 }
