@@ -120,6 +120,40 @@ Soulagement rapide de la tension et du stress aigus.
 	GuidedCompletion: "✅ *Excellent !*\n\nVous avez terminé l'exercice \"%s\".\n\nComment vous sentez-vous ?",
 	GuidedStopped:    "🧘 *Respiration guidée*\n\nExercice arrêté. Choisissez une technique :\n\n",
 
+	// Guided breathing — pattern intros
+	PatternBoxIntro: `📦 *Respiration carrée 4-4-4-4*
+
+Rythme régulier : inspiration, rétention, expiration, pause — 4 secondes chacun.
+Utilisée par les militaires et les athlètes pour un focus rapide.
+
+*6 cycles, ~1.5 minutes*
+
+Prêt à commencer ?`,
+	PatternRelaxingIntro: `😴 *Relaxant 4-7-8*
+
+Inspiration 4 sec, rétention 7 sec, longue expiration 8 sec.
+La longue expiration active le parasympathique — relaxation profonde et préparation au sommeil.
+
+*4 cycles, ~1.5 minutes*
+
+Prêt à commencer ?`,
+	PatternEnergizingIntro: `⚡ *Énergisant 4-4-6*
+
+Inspiration 4 sec, rétention 4 sec, expiration 6 sec.
+Énergie et clarté mentale, soulagement rapide de la fatigue.
+
+*6 cycles, ~1.5 minutes*
+
+Prêt à commencer ?`,
+	PatternQuickIntro: `🚀 *Reset rapide 3-3-3*
+
+Inspiration 3 sec, rétention 3 sec, expiration 3 sec.
+Schéma minimal pour un soulagement rapide de la tension aiguë.
+
+*5 cycles, ~1 minute*
+
+Prêt à commencer ?`,
+
 	// Breathing patterns
 	PatternBoxName:        "Respiration carrée 4-4-4-4",
 	PatternBoxDesc:        "Focus et concentration",

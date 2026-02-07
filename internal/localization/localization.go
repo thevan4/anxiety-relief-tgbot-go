@@ -73,6 +73,12 @@ type Messages struct {
 	GuidedCompletion string
 	GuidedStopped    string
 
+	// Guided breathing — pattern intros
+	PatternBoxIntro        string
+	PatternRelaxingIntro   string
+	PatternEnergizingIntro string
+	PatternQuickIntro      string
+
 	// Breathing patterns
 	PatternBoxName        string
 	PatternBoxDesc        string

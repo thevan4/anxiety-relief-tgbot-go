@@ -86,7 +86,7 @@ func (h *GuidedBreathingHandler) HandleMenuSelect(_ *th.Context, cb telego.Callb
 	}
 
 	h.statistics.IncreaseRequestsStatisticForUser(info.UserID, cb.From.Username, cb.From.IsPremium, cb.From.IsBot)
-	h.showPatternSelectionRecreate(h.ctx, info.ChatID, info.UserID)
+	h.showPatternSelection(h.ctx, info.ChatID, info.UserID)
 	return nil
 }
 
@@ -107,6 +107,12 @@ func (h *GuidedBreathingHandler) processCallback(chatID, userID int64, messageID
 		patternIdx := strings.TrimPrefix(data, "gbreath_pattern_")
 		idx, err := strconv.Atoi(patternIdx)
 		if err == nil {
+			h.showPatternIntro(h.ctx, chatID, userID, messageID, idx)
+		}
+	case strings.HasPrefix(data, "gbreath_start_"):
+		patternIdx := strings.TrimPrefix(data, "gbreath_start_")
+		idx, err := strconv.Atoi(patternIdx)
+		if err == nil {
 			// Create new session context (cancels previous if any)
 			sessionCtx := h.sessionManager.StartSession(h.ctx, userID)
 			go h.startPattern(sessionCtx, chatID, userID, messageID, idx)
@@ -120,6 +126,8 @@ func (h *GuidedBreathingHandler) processCallback(chatID, userID int64, messageID
 	case data == "gbreath_cancel":
 		h.sessionManager.CancelSession(userID)
 		h.cancelBreathing(h.ctx, chatID, userID, messageID)
+	case data == "gbreath_back_select":
+		h.showPatternSelectionEdit(h.ctx, chatID, userID, messageID)
 	}
 }
 
@@ -161,29 +169,41 @@ func (h *GuidedBreathingHandler) getLocalizedPhaseName(phaseID string, m localiz
 	}
 }
 
-func (h *GuidedBreathingHandler) buildPatternsInfo(m localization.Messages) string {
-	var info string
-	for i := 0; i < len(patternEmojis); i++ {
-		name, desc := h.getLocalizedPattern(i, m)
-		info += fmt.Sprintf("%s *%s*\n_%s_\n\n", patternEmojis[i], name, desc)
-	}
-	return info
-}
-
-func (h *GuidedBreathingHandler) showPatternSelectionRecreate(ctx context.Context, chatID, userID int64) {
+// showPatternSelection shows pattern selection screen (from main menu, recreates message).
+func (h *GuidedBreathingHandler) showPatternSelection(ctx context.Context, chatID, userID int64) {
 	if err := h.sessionStorage.SetState(ctx, userID, session.StateGuidedBreathingSelect); err != nil {
 		log.Printf("ERROR: set state guided breathing select: %v", err)
 	}
 
 	m := h.localizer.Get(h.getLang(ctx, userID))
-	text := m.GuidedIntro + h.buildPatternsInfo(m)
 
 	buttons := h.buildPatternButtons(m)
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
 
-	// Recreate message to extend its lifetime
-	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, text, keyboard); err != nil {
-		log.Printf("ERROR: recreate guided breathing intro: %v", err)
+	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, m.GuidedIntro, keyboard); err != nil {
+		log.Printf("ERROR: recreate guided breathing pattern select: %v", err)
+	}
+}
+
+// showPatternSelectionEdit shows pattern selection screen (edit existing message).
+func (h *GuidedBreathingHandler) showPatternSelectionEdit(ctx context.Context, chatID, userID int64, messageID int) {
+	if err := h.sessionStorage.SetState(ctx, userID, session.StateGuidedBreathingSelect); err != nil {
+		log.Printf("ERROR: set state guided breathing select: %v", err)
+	}
+
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
+	buttons := h.buildPatternButtons(m)
+	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
+
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        m.GuidedIntro,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit guided breathing pattern select: %v", err)
 	}
 }
 
@@ -199,6 +219,54 @@ func (h *GuidedBreathingHandler) buildPatternButtons(m localization.Messages) []
 		{Text: m.Back, CallbackData: "gbreath_cancel"},
 	})
 	return buttons
+}
+
+// getLocalizedPatternIntro returns localized intro text for pattern by index.
+func (h *GuidedBreathingHandler) getLocalizedPatternIntro(idx int, m localization.Messages) string {
+	intros := []string{
+		m.PatternBoxIntro,
+		m.PatternRelaxingIntro,
+		m.PatternEnergizingIntro,
+		m.PatternQuickIntro,
+	}
+	if idx < 0 || idx >= len(intros) {
+		return ""
+	}
+	return intros[idx]
+}
+
+// showPatternIntro shows the detailed intro screen for a specific pattern.
+func (h *GuidedBreathingHandler) showPatternIntro(
+	ctx context.Context, chatID, userID int64, messageID int, patternIdx int,
+) {
+	if err := h.sessionStorage.SetState(ctx, userID, session.StateGuidedBreathingSelect); err != nil {
+		log.Printf("ERROR: set state guided breathing select: %v", err)
+	}
+
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	text := h.getLocalizedPatternIntro(patternIdx, m)
+	if text == "" {
+		return
+	}
+
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: "gbreath_back_select"},
+				{Text: m.Start, CallbackData: fmt.Sprintf("gbreath_start_%d", patternIdx)},
+			},
+		},
+	}
+
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        text,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit guided breathing pattern intro: %v", err)
+	}
 }
 
 func (h *GuidedBreathingHandler) startPattern(
@@ -321,25 +389,7 @@ func (h *GuidedBreathingHandler) sendCompletion(
 }
 
 func (h *GuidedBreathingHandler) stopBreathing(ctx context.Context, chatID, userID int64, messageID int) {
-	if err := h.sessionStorage.SetState(ctx, userID, session.StateGuidedBreathingSelect); err != nil {
-		log.Printf("ERROR: set state guided breathing select: %v", err)
-	}
-
-	m := h.localizer.Get(h.getLang(ctx, userID))
-	text := m.GuidedStopped + h.buildPatternsInfo(m)
-
-	buttons := h.buildPatternButtons(m)
-	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
-
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        text,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit guided breathing stop: %v", err)
-	}
+	h.showPatternSelectionEdit(ctx, chatID, userID, messageID)
 }
 
 func (h *GuidedBreathingHandler) completeBreathing(ctx context.Context, chatID, userID int64, messageID int) {

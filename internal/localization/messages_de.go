@@ -121,6 +121,40 @@ Schnelle Linderung von akuter Spannung und Stress.
 	GuidedCompletion: "✅ *Sehr gut!*\n\nSie haben die Übung \"%s\" abgeschlossen.\n\nWie fühlen Sie sich?",
 	GuidedStopped:    "🧘 *Geführte Atmung*\n\nÜbung gestoppt. Wählen Sie eine Technik:\n\n",
 
+	// Guided breathing — pattern intros
+	PatternBoxIntro: `📦 *Box-Atmung 4-4-4-4*
+
+Gleichmäßiger Rhythmus: Einatmen, Halten, Ausatmen, Pause — je 4 Sekunden.
+Wird vom Militär und Sportlern für schnellen Fokus verwendet.
+
+*6 Zyklen, ~1.5 Minuten*
+
+Bereit zu beginnen?`,
+	PatternRelaxingIntro: `😴 *Entspannend 4-7-8*
+
+Einatmen 4 Sek, Halten 7 Sek, langes Ausatmen 8 Sek.
+Das lange Ausatmen aktiviert den Parasympathikus — tiefe Entspannung und Schlafvorbereitung.
+
+*4 Zyklen, ~1.5 Minuten*
+
+Bereit zu beginnen?`,
+	PatternEnergizingIntro: `⚡ *Energetisierend 4-4-6*
+
+Einatmen 4 Sek, Halten 4 Sek, Ausatmen 6 Sek.
+Energie und geistige Klarheit, schnelle Linderung von Müdigkeit.
+
+*6 Zyklen, ~1.5 Minuten*
+
+Bereit zu beginnen?`,
+	PatternQuickIntro: `🚀 *Schneller Reset 3-3-3*
+
+Einatmen 3 Sek, Halten 3 Sek, Ausatmen 3 Sek.
+Minimales Muster zur schnellen Linderung akuter Spannung.
+
+*5 Zyklen, ~1 Minute*
+
+Bereit zu beginnen?`,
+
 	// Breathing patterns
 	PatternBoxName:        "Box-Atmung 4-4-4-4",
 	PatternBoxDesc:        "Fokus und Konzentration",

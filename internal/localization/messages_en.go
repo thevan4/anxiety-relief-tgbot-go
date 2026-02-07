@@ -117,6 +117,40 @@ Fast relief from acute tension and stress.
 	GuidedCompletion: "✅ *Great job!*\n\nYou've completed the \"%s\" exercise.\n\nHow do you feel?",
 	GuidedStopped:    "🧘 *Guided Breathing*\n\nExercise stopped. Choose a technique:\n\n",
 
+	// Guided breathing — pattern intros
+	PatternBoxIntro: `📦 *Box Breathing 4-4-4-4*
+
+Even rhythm: inhale, hold, exhale, pause — 4 seconds each.
+Used by military and athletes for quick focus.
+
+*6 cycles, ~1.5 minutes*
+
+Ready to begin?`,
+	PatternRelaxingIntro: `😴 *Relaxing 4-7-8*
+
+Inhale 4 sec, hold 7 sec, long exhale 8 sec.
+The long exhale activates the parasympathetic system — deep relaxation and sleep preparation.
+
+*4 cycles, ~1.5 minutes*
+
+Ready to begin?`,
+	PatternEnergizingIntro: `⚡ *Energizing 4-4-6*
+
+Inhale 4 sec, hold 4 sec, exhale 6 sec.
+Energy and mental clarity, quick relief from fatigue.
+
+*6 cycles, ~1.5 minutes*
+
+Ready to begin?`,
+	PatternQuickIntro: `🚀 *Quick Reset 3-3-3*
+
+Inhale 3 sec, hold 3 sec, exhale 3 sec.
+Minimal pattern for fast relief from acute tension.
+
+*5 cycles, ~1 minute*
+
+Ready to begin?`,
+
 	// Breathing patterns
 	PatternBoxName:        "Box Breathing 4-4-4-4",
 	PatternBoxDesc:        "Focus and concentration",
