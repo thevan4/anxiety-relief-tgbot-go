@@ -279,17 +279,11 @@ func (h *BreathingHandler) completeBreathing(ctx context.Context, chatID, userID
 func (h *BreathingHandler) getMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
 	return &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{
-				{Text: m.MenuBreathing, CallbackData: "menu_breathing"},
-				{Text: m.MenuGrounding, CallbackData: "menu_grounding"},
-			},
-			{
-				{Text: m.MenuGuided, CallbackData: "menu_guided"},
-				{Text: m.MenuPMR, CallbackData: "menu_pmr"},
-			},
-			{
-				{Text: m.MenuLang, CallbackData: "menu_lang"},
-			},
+			{{Text: m.MenuBreathing, CallbackData: "menu_breathing"}},
+			{{Text: m.MenuGrounding, CallbackData: "menu_grounding"}},
+			{{Text: m.MenuGuided, CallbackData: "menu_guided"}},
+			{{Text: m.MenuPMR, CallbackData: "menu_pmr"}},
+			{{Text: m.MenuLang, CallbackData: "menu_lang"}},
 		},
 	}
 }
