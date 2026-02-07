@@ -25,13 +25,12 @@ const (
 // Messages contains all localized strings.
 type Messages struct {
 	// Buttons
-	Start      string // "Начать" — starts new session from holder
-	Back       string
-	Stop       string
-	Next       string
-	Done       string
-	FeelBetter string
-	Repeat     string
+	Start  string // "Начать" — starts new session from holder
+	Back   string
+	Stop   string
+	Next   string
+	Done   string
+	Repeat string
 
 	// Welcome holder (after /start) — static message with bot info
 	HolderText string

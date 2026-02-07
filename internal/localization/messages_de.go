@@ -4,13 +4,12 @@ package localization
 //nolint:gochecknoglobals // Localization bundle.
 var messagesDE = Messages{
 	// Buttons
-	Start:      "▶️ Starten",
-	Back:       "◀️ Zurück",
-	Stop:       "🛑 Stopp",
-	Next:       "➡️ Weiter",
-	Done:       "✅ Fertig",
-	FeelBetter: "✅ Besser",
-	Repeat:     "🔄 Wiederholen",
+	Start:  "▶️ Starten",
+	Back:   "◀️ Zurück",
+	Stop:   "🛑 Stopp",
+	Next:   "➡️ Weiter",
+	Done:   "✨ Zum Menü",
+	Repeat: "🔄 Wiederholen",
 
 	// Welcome holder — static message with bot info
 	HolderText: `🌿 *Helfer bei Angst*
@@ -40,9 +39,9 @@ Datenschutz: Der Bot speichert keine persönlichen Daten.
 🧘 Geführte Atmung — verschiedene Muster
 💪 Muskelentspannung — Spannung lösen`,
 	MenuBreathing: "🌬️ Atmung 2 Min",
-	MenuGrounding: "🌿 Erdung",
-	MenuGuided:    "🧘 Geführt",
-	MenuPMR:       "💪 Muskeln",
+	MenuGrounding: "🌿 Erdung 3-5 Min",
+	MenuGuided:    "🧘 Geführt 1-2 Min",
+	MenuPMR:       "💪 Muskeln 4 Min",
 	MenuLang:      "🌐 Sprache",
 
 	// Breathing
@@ -69,10 +68,17 @@ Wie fühlen Sie sich?`,
 	// Grounding
 	GroundingIntro: `🌿 *5-4-3-2-1 Erdungstechnik*
 
-Diese Technik hilft Ihnen, durch Ihre Sinne in den gegenwärtigen Moment zurückzukehren.
+Bei Angst und Panik wandert die Aufmerksamkeit in den Kopf und zu negativen Gedanken. Diese Technik bringt Sie durch 5 Sinne in den gegenwärtigen Moment zurück.
 
 *Wie es funktioniert:*
-Sie werden Dinge um sich herum benennen, die Sie mit verschiedenen Sinnen wahrnehmen.
+5 Schritte mit abnehmenden Zahlen:
+• Schritt 1: Nennen Sie 5 Dinge (Sehen)
+• Schritt 2: Nennen Sie 4 Dinge (Fühlen)
+• Schritt 3: Nennen Sie 3 Geräusche (Hören)
+• Schritt 4: Nennen Sie 2 Gerüche (Riechen)
+• Schritt 5: Nennen Sie 1 Geschmack (Schmecken)
+
+*Zeit:* ~3-5 Minuten
 
 Bereit zu beginnen?`,
 
@@ -94,7 +100,24 @@ Bereit zu beginnen?`,
 		"Wenn nichts — erinnern Sie sich an Ihren Lieblingsgeschmack.",
 
 	// Guided breathing
-	GuidedIntro:      "🧘 *Geführte Atmung*\n\nWählen Sie eine Atemtechnik:\n\n",
+	GuidedIntro: `🧘 *Geführte Atmung*
+
+Verschiedene Atemmuster für verschiedene Ziele — von Fokus bis Entspannung.
+
+Wählen Sie eine Technik:
+
+📦 *Box-Atmung 4-4-4-4* (~1.5 Min)
+Gleichmäßiger Rhythmus für Fokus und Konzentration. Wird vom Militär und Sportlern verwendet.
+
+😴 *Entspannend 4-7-8* (~1.5 Min)
+Langer Ausatem für tiefe Entspannung und Schlafvorbereitung.
+
+⚡ *Energetisierend 4-4-6* (~1.5 Min)
+Energie und geistige Klarheit, Linderung von Müdigkeit.
+
+🚀 *Schneller Reset 3-3-3* (~1 Min)
+Schnelle Linderung von akuter Spannung und Stress.
+`,
 	GuidedCompletion: "✅ *Sehr gut!*\n\nSie haben die Übung \"%s\" abgeschlossen.\n\nWie fühlen Sie sich?",
 	GuidedStopped:    "🧘 *Geführte Atmung*\n\nÜbung gestoppt. Wählen Sie eine Technik:\n\n",
 
@@ -117,14 +140,15 @@ Bereit zu beginnen?`,
 	// PMR
 	PMRIntro: `💪 *Progressive Muskelentspannung*
 
-Eine Tiefenentspannungstechnik durch Anspannen und Entspannen der Muskeln.
+Tiefe Entspannung des gesamten Körpers durch bewusstes Anspannen und Entspannen der Muskeln. Hilft, körperliche Verspannungen durch Stress und Angst zu lösen.
 
 *Wie es funktioniert:*
 1. Spannen Sie eine Muskelgruppe für 7 Sekunden an
-2. Entspannen Sie für 15 Sekunden
+2. Entspannen Sie für 15 Sekunden — spüren Sie den Kontrast
 3. Gehen Sie zur nächsten Gruppe über
 
 *%d Muskelgruppen* — von den Händen bis zu den Füßen.
+*Zeit:* ~4 Minuten
 
 Bereit zu beginnen?`,
 	PMRTense: "🔴 *ANSPANNEN*\n\n%s",

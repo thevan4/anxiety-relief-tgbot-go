@@ -4,13 +4,12 @@ package localization
 //nolint:gochecknoglobals // Localization bundle.
 var messagesFR = Messages{
 	// Buttons
-	Start:      "▶️ Commencer",
-	Back:       "◀️ Retour",
-	Stop:       "🛑 Arrêter",
-	Next:       "➡️ Suivant",
-	Done:       "✅ Terminé",
-	FeelBetter: "✅ Mieux",
-	Repeat:     "🔄 Répéter",
+	Start:  "▶️ Commencer",
+	Back:   "◀️ Retour",
+	Stop:   "🛑 Arrêter",
+	Next:   "➡️ Suivant",
+	Done:   "✨ Au menu",
+	Repeat: "🔄 Répéter",
 
 	// Welcome holder — static message with bot info
 	HolderText: `🌿 *Aide contre l'anxiété*
@@ -40,9 +39,9 @@ Confidentialité : le bot ne stocke pas de données personnelles.
 🧘 Respiration guidée — différents schémas
 💪 Relaxation musculaire — relâcher la tension`,
 	MenuBreathing: "🌬️ Respiration 2 min",
-	MenuGrounding: "🌿 Ancrage",
-	MenuGuided:    "🧘 Guidée",
-	MenuPMR:       "💪 Muscles",
+	MenuGrounding: "🌿 Ancrage 3-5 min",
+	MenuGuided:    "🧘 Guidée 1-2 min",
+	MenuPMR:       "💪 Muscles 4 min",
 	MenuLang:      "🌐 Langue",
 
 	// Breathing
@@ -69,10 +68,17 @@ Comment vous sentez-vous ?`,
 	// Grounding
 	GroundingIntro: `🌿 *Technique d'ancrage 5-4-3-2-1*
 
-Cette technique vous aide à revenir au moment présent à travers vos sens.
+Lors de l'anxiété et de la panique, l'attention se déplace vers la tête et les pensées négatives. Cette technique vous ramène au moment présent à travers 5 sens.
 
 *Comment ça marche :*
-Vous nommerez des choses autour de vous que vous percevez avec différents sens.
+5 étapes avec nombres décroissants :
+• Étape 1 : Nommez 5 choses (vue)
+• Étape 2 : Nommez 4 choses (toucher)
+• Étape 3 : Nommez 3 sons (ouïe)
+• Étape 4 : Nommez 2 odeurs (odorat)
+• Étape 5 : Nommez 1 goût (goût)
+
+*Temps :* ~3-5 minutes
 
 Prêt à commencer ?`,
 
@@ -93,7 +99,24 @@ Prêt à commencer ?`,
 		"Si rien — rappelez-vous votre goût préféré.",
 
 	// Guided breathing
-	GuidedIntro:      "🧘 *Respiration guidée*\n\nChoisissez une technique de respiration :\n\n",
+	GuidedIntro: `🧘 *Respiration guidée*
+
+Différents schémas de respiration pour différents objectifs — de la concentration à la relaxation.
+
+Choisissez une technique :
+
+📦 *Respiration carrée 4-4-4-4* (~1.5 min)
+Rythme régulier pour la concentration. Utilisée par les militaires et les athlètes.
+
+😴 *Relaxant 4-7-8* (~1.5 min)
+Longue expiration pour relaxation profonde et préparation au sommeil.
+
+⚡ *Énergisant 4-4-6* (~1.5 min)
+Énergie et clarté mentale, soulagement de la fatigue.
+
+🚀 *Reset rapide 3-3-3* (~1 min)
+Soulagement rapide de la tension et du stress aigus.
+`,
 	GuidedCompletion: "✅ *Excellent !*\n\nVous avez terminé l'exercice \"%s\".\n\nComment vous sentez-vous ?",
 	GuidedStopped:    "🧘 *Respiration guidée*\n\nExercice arrêté. Choisissez une technique :\n\n",
 
@@ -116,14 +139,15 @@ Prêt à commencer ?`,
 	// PMR
 	PMRIntro: `💪 *Relaxation musculaire progressive*
 
-Une technique de relaxation profonde par la tension et le relâchement des muscles.
+Relaxation profonde de tout le corps par tension et relâchement conscients des muscles. Aide à relâcher les tensions physiques du stress et de l'anxiété.
 
 *Comment ça marche :*
 1. Contractez un groupe musculaire pendant 7 secondes
-2. Relâchez pendant 15 secondes
+2. Relâchez pendant 15 secondes — ressentez le contraste
 3. Passez au groupe suivant
 
 *%d groupes musculaires* — des mains aux pieds.
+*Temps :* ~4 minutes
 
 Prêt à commencer ?`,
 	PMRTense: "🔴 *CONTRACTEZ*\n\n%s",

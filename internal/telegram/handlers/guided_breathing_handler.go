@@ -304,7 +304,7 @@ func (h *GuidedBreathingHandler) sendCompletion(
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
 				{Text: m.Repeat, CallbackData: fmt.Sprintf("gbreath_pattern_%d", patternIdx)},
-				{Text: m.FeelBetter, CallbackData: "gbreath_complete"},
+				{Text: m.Done, CallbackData: "gbreath_complete"},
 			},
 		},
 	}

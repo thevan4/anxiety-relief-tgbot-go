@@ -266,7 +266,7 @@ func (h *PMRHandler) sendCompletion(ctx context.Context, chatID, userID int64, m
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
 				{Text: m.Repeat, CallbackData: "pmr_start"},
-				{Text: m.FeelBetter, CallbackData: "pmr_complete"},
+				{Text: m.Done, CallbackData: "pmr_complete"},
 			},
 		},
 	}

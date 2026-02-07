@@ -4,13 +4,12 @@ package localization
 //nolint:gochecknoglobals // Localization bundle.
 var messagesEN = Messages{
 	// Buttons
-	Start:      "▶️ Start",
-	Back:       "◀️ Back",
-	Stop:       "🛑 Stop",
-	Next:       "➡️ Next",
-	Done:       "✅ Done",
-	FeelBetter: "✅ Better",
-	Repeat:     "🔄 Repeat",
+	Start:  "▶️ Start",
+	Back:   "◀️ Back",
+	Stop:   "🛑 Stop",
+	Next:   "➡️ Next",
+	Done:   "✨ To Menu",
+	Repeat: "🔄 Repeat",
 
 	// Welcome holder — static message with bot info
 	HolderText: `🌿 *Anxiety Relief Helper*
@@ -40,9 +39,9 @@ Privacy: the bot doesn't store personal data.
 🧘 Guided breathing — various patterns
 💪 Muscle relaxation — release tension`,
 	MenuBreathing: "🌬️ Breathing 2 min",
-	MenuGrounding: "🌿 Grounding",
-	MenuGuided:    "🧘 Guided",
-	MenuPMR:       "💪 Muscles",
+	MenuGrounding: "🌿 Grounding 3-5 min",
+	MenuGuided:    "🧘 Guided 1-2 min",
+	MenuPMR:       "💪 Muscles 4 min",
 	MenuLang:      "🌐 Language",
 
 	// Breathing
@@ -69,10 +68,17 @@ How do you feel?`,
 	// Grounding
 	GroundingIntro: `🌿 *5-4-3-2-1 Grounding Technique*
 
-This technique helps you return to the present moment through your senses.
+During anxiety and panic, attention shifts to the mind and negative thoughts. This technique brings you back to the present moment through 5 senses.
 
 *How it works:*
-You'll name things around you that you perceive with different senses.
+5 steps with decreasing numbers:
+• Step 1: Name 5 things (sight)
+• Step 2: Name 4 things (touch)
+• Step 3: Name 3 sounds (hearing)
+• Step 4: Name 2 scents (smell)
+• Step 5: Name 1 taste (taste)
+
+*Time:* ~3-5 minutes
 
 Ready to begin?`,
 
@@ -90,7 +96,24 @@ Ready to begin?`,
 	GroundingStep5Desc:  "Name 1 taste you can sense in your mouth.\n\nIf nothing — recall your favorite taste.",
 
 	// Guided breathing
-	GuidedIntro:      "🧘 *Guided Breathing*\n\nChoose a breathing technique:\n\n",
+	GuidedIntro: `🧘 *Guided Breathing*
+
+Different breathing patterns for different goals — from focus to relaxation.
+
+Choose a technique:
+
+📦 *Box Breathing 4-4-4-4* (~1.5 min)
+Even rhythm for focus and concentration. Used by military and athletes.
+
+😴 *Relaxing 4-7-8* (~1.5 min)
+Long exhale for deep relaxation and sleep preparation.
+
+⚡ *Energizing 4-4-6* (~1.5 min)
+Energy and mental clarity, relief from fatigue.
+
+🚀 *Quick Reset 3-3-3* (~1 min)
+Fast relief from acute tension and stress.
+`,
 	GuidedCompletion: "✅ *Great job!*\n\nYou've completed the \"%s\" exercise.\n\nHow do you feel?",
 	GuidedStopped:    "🧘 *Guided Breathing*\n\nExercise stopped. Choose a technique:\n\n",
 
@@ -113,14 +136,15 @@ Ready to begin?`,
 	// PMR
 	PMRIntro: `💪 *Progressive Muscle Relaxation*
 
-A deep relaxation technique through tensing and relaxing muscles.
+Deep relaxation of the entire body through conscious tensing and relaxing of muscles. Helps release physical tension from stress and anxiety.
 
 *How it works:*
 1. Tense a muscle group for 7 seconds
-2. Relax for 15 seconds
+2. Relax for 15 seconds — feel the contrast
 3. Move to the next group
 
 *%d muscle groups* — from hands to feet.
+*Time:* ~4 minutes
 
 Ready to begin?`,
 	PMRTense: "🔴 *TENSE*\n\n%s",

@@ -212,7 +212,7 @@ func (h *BreathingHandler) sendBreathingCompletion(ctx context.Context, chatID, 
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
 				{Text: m.Repeat, CallbackData: "breathing_start"},
-				{Text: m.FeelBetter, CallbackData: "breathing_complete"},
+				{Text: m.Done, CallbackData: "breathing_complete"},
 			},
 		},
 	}
