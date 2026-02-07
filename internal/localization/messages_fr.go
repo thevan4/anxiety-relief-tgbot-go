@@ -38,9 +38,9 @@ Confidentialité : le bot ne stocke pas de données personnelles.
 *Avancées (5-15 min) :*
 🧘 Respiration guidée — différents schémas
 💪 Relaxation musculaire — relâcher la tension`,
-	MenuBreathing: "🌬️ Respiration 2 min",
+	MenuBreathing: "🌬️ Respiration simple 2 min",
 	MenuGrounding: "🌿 Ancrage 3-5 min",
-	MenuGuided:    "🧘 Guidée 1-2 min",
+	MenuGuided:    "🧘 Techniques respiratoires 1-2 min",
 	MenuPMR:       "💪 Muscles 4 min",
 	MenuLang:      "🌐 Langue",
 

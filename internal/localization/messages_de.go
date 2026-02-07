@@ -38,9 +38,9 @@ Datenschutz: Der Bot speichert keine persönlichen Daten.
 *Fortgeschritten (5-15 Min):*
 🧘 Geführte Atmung — verschiedene Muster
 💪 Muskelentspannung — Spannung lösen`,
-	MenuBreathing: "🌬️ Atmung 2 Min",
+	MenuBreathing: "🌬️ Einfache Atmung 2 Min",
 	MenuGrounding: "🌿 Erdung 3-5 Min",
-	MenuGuided:    "🧘 Geführt 1-2 Min",
+	MenuGuided:    "🧘 Atemmuster 1-2 Min",
 	MenuPMR:       "💪 Muskeln 4 Min",
 	MenuLang:      "🌐 Sprache",
 

@@ -38,9 +38,9 @@ Privacy: the bot doesn't store personal data.
 *Advanced (5-15 min):*
 🧘 Guided breathing — various patterns
 💪 Muscle relaxation — release tension`,
-	MenuBreathing: "🌬️ Breathing 2 min",
+	MenuBreathing: "🌬️ Simple breathing 2 min",
 	MenuGrounding: "🌿 Grounding 3-5 min",
-	MenuGuided:    "🧘 Guided 1-2 min",
+	MenuGuided:    "🧘 Breathing patterns 1-2 min",
 	MenuPMR:       "💪 Muscles 4 min",
 	MenuLang:      "🌐 Language",
 
