@@ -60,7 +60,8 @@ Je vous guiderai à chaque étape. Prêt à commencer ?`,
 	BreathingCompletion: `✅ *Excellent !*
 
 Vous avez terminé l'exercice de respiration.
-Comment vous sentez-vous ?`,
+
+Votre pouls a ralenti et votre système nerveux s'est apaisé. Prenez encore quelques respirations calmes.`,
 	BreathingInhale: "Inspirer",
 	BreathingHold:   "Retenir",
 	BreathingExhale: "Expirer",
@@ -81,6 +82,11 @@ Lors de l'anxiété et de la panique, l'attention se déplace vers la tête et l
 *Temps :* ~3-5 minutes
 
 Prêt à commencer ?`,
+	GroundingCompletion: `✅ *Excellent !*
+
+Vous avez terminé la technique d'ancrage 5-4-3-2-1.
+
+Vous êtes de retour dans l'ici et maintenant. Votre attention est revenue au moment présent.`,
 
 	// Grounding steps
 	GroundingStep1Title: "Étape 1 : Vue",
@@ -117,8 +123,7 @@ Longue expiration pour relaxation profonde et préparation au sommeil.
 🚀 *Reset rapide 3-3-3* (~1 min)
 Soulagement rapide de la tension et du stress aigus.
 `,
-	GuidedCompletion: "✅ *Excellent !*\n\nVous avez terminé l'exercice \"%s\".\n\nComment vous sentez-vous ?",
-	GuidedStopped:    "🧘 *Respiration guidée*\n\nExercice arrêté. Choisissez une technique :\n\n",
+	GuidedCompletion: "✅ *Excellent !*\n\nVous avez terminé l'exercice \"%s\".\n\nVotre respiration est devenue plus régulière. Restez dans cet état encore un instant.",
 
 	// Guided breathing — pattern intros
 	PatternBoxIntro: `📦 *Respiration carrée 4-4-4-4*

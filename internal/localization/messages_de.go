@@ -60,7 +60,8 @@ Ich werde Sie durch jeden Schritt führen. Bereit zu beginnen?`,
 	BreathingCompletion: `✅ *Sehr gut!*
 
 Sie haben die Atemübung abgeschlossen.
-Wie fühlen Sie sich?`,
+
+Ihr Puls hat sich verlangsamt und Ihr Nervensystem hat sich beruhigt. Machen Sie noch ein paar ruhige Atemzüge.`,
 	BreathingInhale: "Einatmen",
 	BreathingHold:   "Halten",
 	BreathingExhale: "Ausatmen",
@@ -81,6 +82,11 @@ Bei Angst und Panik wandert die Aufmerksamkeit in den Kopf und zu negativen Geda
 *Zeit:* ~3-5 Minuten
 
 Bereit zu beginnen?`,
+	GroundingCompletion: `✅ *Sehr gut!*
+
+Sie haben die 5-4-3-2-1-Erdungstechnik abgeschlossen.
+
+Sie sind wieder im Hier und Jetzt. Ihre Aufmerksamkeit ist in den gegenwärtigen Moment zurückgekehrt.`,
 
 	// Grounding steps
 	GroundingStep1Title: "Schritt 1: Sehen",
@@ -118,8 +124,7 @@ Energie und geistige Klarheit, Linderung von Müdigkeit.
 🚀 *Schneller Reset 3-3-3* (~1 Min)
 Schnelle Linderung von akuter Spannung und Stress.
 `,
-	GuidedCompletion: "✅ *Sehr gut!*\n\nSie haben die Übung \"%s\" abgeschlossen.\n\nWie fühlen Sie sich?",
-	GuidedStopped:    "🧘 *Geführte Atmung*\n\nÜbung gestoppt. Wählen Sie eine Technik:\n\n",
+	GuidedCompletion: "✅ *Sehr gut!*\n\nSie haben die Übung \"%s\" abgeschlossen.\n\nIhre Atmung ist gleichmäßiger geworden. Verweilen Sie noch einen Moment in diesem Zustand.",
 
 	// Guided breathing — pattern intros
 	PatternBoxIntro: `📦 *Box-Atmung 4-4-4-4*

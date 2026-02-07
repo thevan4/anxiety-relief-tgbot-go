@@ -60,7 +60,8 @@ I'll guide you through each step. Ready to begin?`,
 	BreathingCompletion: `✅ *Great job!*
 
 You've completed the breathing exercise.
-How do you feel?`,
+
+Your heart rate has slowed and your nervous system has calmed down. Take a few more gentle breaths.`,
 	BreathingInhale: "Inhale",
 	BreathingHold:   "Hold",
 	BreathingExhale: "Exhale",
@@ -81,6 +82,11 @@ During anxiety and panic, attention shifts to the mind and negative thoughts. Th
 *Time:* ~3-5 minutes
 
 Ready to begin?`,
+	GroundingCompletion: `✅ *Great job!*
+
+You've completed the 5-4-3-2-1 grounding technique.
+
+You're back in the here and now. Your attention has returned to the present moment.`,
 
 	// Grounding steps
 	GroundingStep1Title: "Step 1: Sight",
@@ -114,8 +120,7 @@ Energy and mental clarity, relief from fatigue.
 🚀 *Quick Reset 3-3-3* (~1 min)
 Fast relief from acute tension and stress.
 `,
-	GuidedCompletion: "✅ *Great job!*\n\nYou've completed the \"%s\" exercise.\n\nHow do you feel?",
-	GuidedStopped:    "🧘 *Guided Breathing*\n\nExercise stopped. Choose a technique:\n\n",
+	GuidedCompletion: "✅ *Great job!*\n\nYou've completed the \"%s\" exercise.\n\nYour breathing has become steadier. Stay with this feeling for a moment.",
 
 	// Guided breathing — pattern intros
 	PatternBoxIntro: `📦 *Box Breathing 4-4-4-4*

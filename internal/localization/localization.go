@@ -54,7 +54,8 @@ type Messages struct {
 	BreathingExhale     string
 
 	// Grounding
-	GroundingIntro string
+	GroundingIntro      string
+	GroundingCompletion string
 
 	// Grounding steps (5-4-3-2-1)
 	GroundingStep1Title string
@@ -71,7 +72,6 @@ type Messages struct {
 	// Guided breathing
 	GuidedIntro      string
 	GuidedCompletion string
-	GuidedStopped    string
 
 	// Guided breathing — pattern intros
 	PatternBoxIntro        string

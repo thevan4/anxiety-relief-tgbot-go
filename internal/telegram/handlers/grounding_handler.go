@@ -106,7 +106,13 @@ func (h *GroundingHandler) applyGroundingCallbackAction(
 		if stepNum == "1" || stepNum == "2" || stepNum == "3" || stepNum == "4" || stepNum == "5" {
 			h.showGroundingStep(ctx, chatID, userID, messageID, stepNum)
 		}
+	case data == "grounding_back_intro":
+		h.showGroundingIntroEdit(ctx, chatID, userID, messageID)
 	case data == "grounding_complete":
+		h.showGroundingCompletion(ctx, chatID, userID, messageID)
+	case data == "grounding_repeat":
+		h.showGroundingIntroEdit(ctx, chatID, userID, messageID)
+	case data == "grounding_done":
 		h.completeGrounding(ctx, chatID, userID, messageID)
 	case data == "grounding_cancel":
 		h.cancelGrounding(ctx, chatID, userID, messageID)
@@ -135,19 +141,48 @@ func (h *GroundingHandler) showGroundingIntro(ctx context.Context, chatID, userI
 	}
 }
 
+func (h *GroundingHandler) showGroundingIntroEdit(ctx context.Context, chatID, userID int64, messageID int) {
+	if err := h.sessionStorage.SetState(ctx, userID, session.StateGroundingStep1); err != nil {
+		log.Printf("ERROR: set state grounding step1: %v", err)
+	}
+
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: "grounding_cancel"},
+				{Text: m.Start, CallbackData: "grounding_step_1"},
+			},
+		},
+	}
+
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        m.GroundingIntro,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit grounding intro: %v", err)
+	}
+}
+
 func getGroundingStepConfig() []struct {
 	state    session.State
 	nextStep string
+	backCB   string
 } {
 	return []struct {
 		state    session.State
 		nextStep string
+		backCB   string
 	}{
-		{session.StateGroundingStep1, "2"},
-		{session.StateGroundingStep2, "3"},
-		{session.StateGroundingStep3, "4"},
-		{session.StateGroundingStep4, "5"},
-		{session.StateGroundingStep5, "complete"},
+		{session.StateGroundingStep1, "2", "grounding_back_intro"},
+		{session.StateGroundingStep2, "3", "grounding_step_1"},
+		{session.StateGroundingStep3, "4", "grounding_step_2"},
+		{session.StateGroundingStep4, "5", "grounding_step_3"},
+		{session.StateGroundingStep5, "complete", "grounding_step_4"},
 	}
 }
 
@@ -174,6 +209,7 @@ func (h *GroundingHandler) showGroundingStep(
 
 	m := h.localizer.Get(h.getLang(ctx, userID))
 	nextStep := stepCfg.nextStep
+	backCB := stepCfg.backCB
 
 	// Get localized step title and description
 	title, desc := h.getLocalizedStep(idx, m)
@@ -185,7 +221,7 @@ func (h *GroundingHandler) showGroundingStep(
 		keyboard = &telego.InlineKeyboardMarkup{
 			InlineKeyboard: [][]telego.InlineKeyboardButton{
 				{
-					{Text: m.Back, CallbackData: "grounding_cancel"},
+					{Text: m.Back, CallbackData: backCB},
 					{Text: m.Done, CallbackData: "grounding_complete"},
 				},
 			},
@@ -194,7 +230,7 @@ func (h *GroundingHandler) showGroundingStep(
 		keyboard = &telego.InlineKeyboardMarkup{
 			InlineKeyboard: [][]telego.InlineKeyboardButton{
 				{
-					{Text: m.Back, CallbackData: "grounding_cancel"},
+					{Text: m.Back, CallbackData: backCB},
 					{Text: m.Next, CallbackData: "grounding_step_" + nextStep},
 				},
 			},
@@ -228,6 +264,29 @@ func (h *GroundingHandler) getLocalizedStep(idx int, m localization.Messages) (s
 		return "", ""
 	}
 	return steps[idx].title, steps[idx].desc
+}
+
+func (h *GroundingHandler) showGroundingCompletion(ctx context.Context, chatID, userID int64, messageID int) {
+	m := h.localizer.Get(h.getLang(ctx, userID))
+
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Repeat, CallbackData: "grounding_repeat"},
+				{Text: m.Done, CallbackData: "grounding_done"},
+			},
+		},
+	}
+
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        m.GroundingCompletion,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil {
+		log.Printf("ERROR: edit grounding completion: %v", err)
+	}
 }
 
 func (h *GroundingHandler) completeGrounding(ctx context.Context, chatID, userID int64, messageID int) {

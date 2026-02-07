@@ -91,6 +91,9 @@ func (h *BreathingHandler) processCallback(chatID, userID int64, messageID int, 
 	case "breathing_stop":
 		h.sessionManager.CancelSession(userID)
 		h.stopBreathing(h.ctx, chatID, userID, messageID)
+	case "breathing_repeat":
+		h.sessionManager.CancelSession(userID)
+		h.stopBreathing(h.ctx, chatID, userID, messageID)
 	case "breathing_start":
 		// Create new session context (cancels previous if any)
 		sessionCtx := h.sessionManager.StartSession(h.ctx, userID)
@@ -211,7 +214,7 @@ func (h *BreathingHandler) sendBreathingCompletion(ctx context.Context, chatID, 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
 			{
-				{Text: m.Repeat, CallbackData: "breathing_start"},
+				{Text: m.Repeat, CallbackData: "breathing_repeat"},
 				{Text: m.Done, CallbackData: "breathing_complete"},
 			},
 		},

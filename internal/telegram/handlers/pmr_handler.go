@@ -283,18 +283,29 @@ func (h *PMRHandler) sendCompletion(ctx context.Context, chatID, userID int64, m
 }
 
 func (h *PMRHandler) stopExercise(ctx context.Context, chatID, userID int64, messageID int) {
-	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
-		log.Printf("ERROR: clear state: %v", err)
+	if err := h.sessionStorage.SetState(ctx, userID, session.StatePMRActive); err != nil {
+		log.Printf("ERROR: set state pmr active: %v", err)
 	}
 
 	m := h.localizer.Get(h.getLang(ctx, userID))
+	muscleGroups := techniques.GetMuscleGroups()
+	text := fmt.Sprintf(m.PMRIntro, len(muscleGroups))
+
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: "pmr_cancel"},
+				{Text: m.Start, CallbackData: "pmr_start"},
+			},
+		},
+	}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
 		ChatID:      tu.ID(chatID),
 		MessageID:   messageID,
-		Text:        m.MainMenuText,
+		Text:        text,
 		ParseMode:   "Markdown",
-		ReplyMarkup: h.getMainMenuInline(m),
+		ReplyMarkup: keyboard,
 	}); err != nil {
 		log.Printf("ERROR: edit pmr stop: %v", err)
 	}
