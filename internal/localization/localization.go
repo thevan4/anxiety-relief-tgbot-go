@@ -31,6 +31,11 @@ type Messages struct {
 	Next   string
 	Done   string
 	Repeat string
+	Pause  string // "⏸ Pause" — pauses running exercise
+	Resume string // "▶️ Continue" — resumes paused exercise
+
+	// Pause screen
+	PauseText string
 
 	// Welcome holder (after /start) — static message with bot info
 	HolderText string

@@ -211,24 +211,19 @@ func (h *GroundingHandler) showGroundingStep(
 	text := fmt.Sprintf("%s *%s*\n\n%s", emoji, title, desc)
 
 	var keyboard *telego.InlineKeyboardMarkup
+	var nextCB string
 	if nextStep == "complete" {
-		keyboard = &telego.InlineKeyboardMarkup{
-			InlineKeyboard: [][]telego.InlineKeyboardButton{
-				{
-					{Text: m.Back, CallbackData: backCB},
-					{Text: m.Done, CallbackData: "grounding_complete"},
-				},
-			},
-		}
+		nextCB = "grounding_complete"
 	} else {
-		keyboard = &telego.InlineKeyboardMarkup{
-			InlineKeyboard: [][]telego.InlineKeyboardButton{
-				{
-					{Text: m.Back, CallbackData: backCB},
-					{Text: m.Next, CallbackData: "grounding_step_" + nextStep},
-				},
+		nextCB = "grounding_step_" + nextStep
+	}
+	keyboard = &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: backCB},
+				{Text: m.Next, CallbackData: nextCB},
 			},
-		}
+		},
 	}
 
 	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{

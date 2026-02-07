@@ -9,6 +9,8 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 )
 
+const pausePollInterval = 500 * time.Millisecond
+
 // AnswerCallbackOrDelete answers callback query. If "too old" error occurs, deletes the message.
 // Returns true if callback was answered successfully, false if message was deleted (stop processing).
 func AnswerCallbackOrDelete(ctx context.Context, bot *telego.Bot, callbackID string, chatID int64, messageID int) bool {
@@ -62,6 +64,33 @@ func DeleteMessage(ctx context.Context, bot *telego.Bot, chatID int64, messageID
 		ChatID:    telego.ChatID{ID: chatID},
 		MessageID: messageID,
 	})
+}
+
+// WaitForResume polls storage until exercise state changes from paused.
+// Returns true if resumed (runningState), false otherwise.
+func WaitForResume(
+	ctx context.Context, storage session.Storage, userID int64,
+	runningState, pausedState session.State,
+) bool {
+	for {
+		timer := time.NewTimer(pausePollInterval)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return false
+		case <-timer.C:
+		}
+		state, err := storage.GetState(ctx, userID)
+		if err != nil {
+			return false
+		}
+		if state == runningState {
+			return true
+		}
+		if state != pausedState {
+			return false
+		}
+	}
 }
 
 // RecreateMenuMessage deletes old message and sends a new one.

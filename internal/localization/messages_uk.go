@@ -10,6 +10,10 @@ var messagesUK = Messages{
 	Next:   "➡️ Далі",
 	Done:   "✨ В меню",
 	Repeat: "🔄 Повторити",
+	Pause:  "⏸ Пауза",
+	Resume: "▶️ Продовжити",
+
+	PauseText: "⏸ *Пауза*\n\nНе поспішайте. Продовжуйте, коли будете готові.",
 
 	// Welcome holder — static message with bot info
 	HolderText: `🌿 *Помічник при тривожності*

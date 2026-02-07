@@ -88,12 +88,17 @@ func (h *BreathingHandler) processCallback(chatID, userID int64, messageID int, 
 	case "breathing_cancel":
 		h.sessionManager.CancelSession(userID)
 		h.cancelBreathing(h.ctx, chatID, userID, messageID)
-	case "breathing_stop":
+	case "breathing_stop", "breathing_repeat":
 		h.sessionManager.CancelSession(userID)
 		h.stopBreathing(h.ctx, chatID, userID, messageID)
-	case "breathing_repeat":
-		h.sessionManager.CancelSession(userID)
-		h.stopBreathing(h.ctx, chatID, userID, messageID)
+	case "breathing_pause":
+		if err := h.sessionStorage.SetState(h.ctx, userID, session.StateBreathingPaused); err != nil {
+			log.Printf("ERROR: set state breathing paused: %v", err)
+		}
+	case "breathing_resume":
+		if err := h.sessionStorage.SetState(h.ctx, userID, session.StateBreathingRunning); err != nil {
+			log.Printf("ERROR: set state breathing running: %v", err)
+		}
 	case "breathing_start":
 		// Create new session context (cancels previous if any)
 		sessionCtx := h.sessionManager.StartSession(h.ctx, userID)
@@ -152,16 +157,12 @@ func (h *BreathingHandler) runPhaseWithProgress(
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: m.Stop, CallbackData: "breathing_stop"}},
+			{{Text: m.Pause, CallbackData: "breathing_pause"}},
 		},
 	}
 
 	for elapsed := 0; elapsed < totalSeconds; elapsed++ {
-		if ctx.Err() != nil {
-			return false
-		}
-		state, err := h.sessionStorage.GetState(ctx, userID)
-		if err != nil || state != session.StateBreathingRunning {
+		if !h.checkRunningOrPause(ctx, chatID, messageID, userID) {
 			return false
 		}
 
@@ -187,6 +188,47 @@ func (h *BreathingHandler) runPhaseWithProgress(
 		}
 	}
 	return true
+}
+
+func (h *BreathingHandler) checkRunningOrPause(
+	ctx context.Context, chatID int64, messageID int, userID int64,
+) bool {
+	if ctx.Err() != nil {
+		return false
+	}
+	state, err := h.sessionStorage.GetState(ctx, userID)
+	if err != nil {
+		return false
+	}
+	if state == session.StateBreathingPaused {
+		h.showPauseScreen(ctx, chatID, messageID, userID)
+		return WaitForResume(
+			ctx, h.sessionStorage, userID,
+			session.StateBreathingRunning, session.StateBreathingPaused,
+		)
+	}
+	return state == session.StateBreathingRunning
+}
+
+func (h *BreathingHandler) showPauseScreen(ctx context.Context, chatID int64, messageID int, userID int64) {
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: "breathing_stop"},
+				{Text: m.Resume, CallbackData: "breathing_resume"},
+			},
+		},
+	}
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        m.PauseText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil && !IsMessageNotModifiedError(err) {
+		log.Printf("ERROR: edit breathing pause screen: %v", err)
+	}
 }
 
 // getLocalizedPhaseName returns localized name for breathing phase.

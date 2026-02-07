@@ -10,6 +10,10 @@ var messagesFR = Messages{
 	Next:   "➡️ Suivant",
 	Done:   "✨ Au menu",
 	Repeat: "🔄 Répéter",
+	Pause:  "⏸ Pause",
+	Resume: "▶️ Continuer",
+
+	PauseText: "⏸ *Pause*\n\nPrenez votre temps. Continuez quand vous êtes prêt.",
 
 	// Welcome holder — static message with bot info
 	HolderText: `🌿 *Aide contre l'anxiété*

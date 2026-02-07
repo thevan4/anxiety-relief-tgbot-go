@@ -99,6 +99,14 @@ func (h *PMRHandler) processCallback(chatID, userID int64, messageID int, data s
 		// Create new session context (cancels previous if any)
 		sessionCtx := h.sessionManager.StartSession(h.ctx, userID)
 		go h.startExercise(sessionCtx, chatID, userID, messageID)
+	case "pmr_pause":
+		if err := h.sessionStorage.SetState(h.ctx, userID, session.StatePMRPaused); err != nil {
+			log.Printf("ERROR: set state pmr paused: %v", err)
+		}
+	case "pmr_resume":
+		if err := h.sessionStorage.SetState(h.ctx, userID, session.StatePMRRunning); err != nil {
+			log.Printf("ERROR: set state pmr running: %v", err)
+		}
 	case "pmr_stop":
 		h.sessionManager.CancelSession(userID)
 		h.stopExercise(h.ctx, chatID, userID, messageID)
@@ -166,14 +174,6 @@ func (h *PMRHandler) runMuscleGroup(ctx context.Context, chatID, userID int64, m
 	h.runMuscleGroup(ctx, chatID, userID, messageID, muscleIdx+1)
 }
 
-func (h *PMRHandler) checkPMRRunning(ctx context.Context, userID int64) bool {
-	if ctx.Err() != nil {
-		return false
-	}
-	state, err := h.sessionStorage.GetState(ctx, userID)
-	return err == nil && state == session.StatePMRRunning
-}
-
 func (h *PMRHandler) getLocalizedMuscle(muscleID string, m localization.Messages) (name, tense, relax string) {
 	type muscleTexts struct {
 		name  string
@@ -207,12 +207,12 @@ func (h *PMRHandler) runPhaseWithProgress(
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: m.Stop, CallbackData: "pmr_stop"}},
+			{{Text: m.Pause, CallbackData: "pmr_pause"}},
 		},
 	}
 
 	for elapsed := 0; elapsed < totalSeconds; elapsed++ {
-		if !h.checkPMRRunning(ctx, userID) {
+		if !h.checkRunningOrPause(ctx, chatID, messageID, userID) {
 			return false
 		}
 
@@ -246,6 +246,47 @@ func (h *PMRHandler) runPhaseWithProgress(
 		}
 	}
 	return true
+}
+
+func (h *PMRHandler) checkRunningOrPause(
+	ctx context.Context, chatID int64, messageID int, userID int64,
+) bool {
+	if ctx.Err() != nil {
+		return false
+	}
+	state, err := h.sessionStorage.GetState(ctx, userID)
+	if err != nil {
+		return false
+	}
+	if state == session.StatePMRPaused {
+		h.showPauseScreen(ctx, chatID, messageID, userID)
+		return WaitForResume(
+			ctx, h.sessionStorage, userID,
+			session.StatePMRRunning, session.StatePMRPaused,
+		)
+	}
+	return state == session.StatePMRRunning
+}
+
+func (h *PMRHandler) showPauseScreen(ctx context.Context, chatID int64, messageID int, userID int64) {
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: "pmr_stop"},
+				{Text: m.Resume, CallbackData: "pmr_resume"},
+			},
+		},
+	}
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        m.PauseText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil && !IsMessageNotModifiedError(err) {
+		log.Printf("ERROR: edit pmr pause screen: %v", err)
+	}
 }
 
 func (h *PMRHandler) sendCompletion(ctx context.Context, chatID, userID int64, messageID int) {

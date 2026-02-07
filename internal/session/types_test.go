@@ -12,6 +12,7 @@ func TestStateIsRunning(t *testing.T) {
 		{StateIdle, false},
 		{StateBreathingActive, false},
 		{StateBreathingRunning, true},
+		{StateBreathingPaused, false},
 		{StateGroundingStep1, false},
 		{StateGroundingStep2, false},
 		{StateGroundingStep3, false},
@@ -19,8 +20,10 @@ func TestStateIsRunning(t *testing.T) {
 		{StateGroundingStep5, false},
 		{StateGuidedBreathingSelect, false},
 		{StateGuidedBreathingRunning, true},
+		{StateGuidedBreathingPaused, false},
 		{StatePMRActive, false},
 		{StatePMRRunning, true},
+		{StatePMRPaused, false},
 	}
 
 	for _, tt := range tests {
@@ -29,6 +32,37 @@ func TestStateIsRunning(t *testing.T) {
 			t.Parallel()
 			if got := tt.state.IsRunning(); got != tt.want {
 				t.Errorf("State(%q).IsRunning() = %v, want %v", tt.state, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStateIsPaused(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		state State
+		want  bool
+	}{
+		{StateUnknown, false},
+		{StateIdle, false},
+		{StateBreathingActive, false},
+		{StateBreathingRunning, false},
+		{StateBreathingPaused, true},
+		{StateGroundingStep1, false},
+		{StateGuidedBreathingSelect, false},
+		{StateGuidedBreathingRunning, false},
+		{StateGuidedBreathingPaused, true},
+		{StatePMRActive, false},
+		{StatePMRRunning, false},
+		{StatePMRPaused, true},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(string(tt.state), func(t *testing.T) {
+			t.Parallel()
+			if got := tt.state.IsPaused(); got != tt.want {
+				t.Errorf("State(%q).IsPaused() = %v, want %v", tt.state, got, tt.want)
 			}
 		})
 	}
@@ -44,6 +78,7 @@ func TestStateIsActive(t *testing.T) {
 		{StateIdle, false},
 		{StateBreathingActive, true},
 		{StateBreathingRunning, true},
+		{StateBreathingPaused, true},
 		{StateGroundingStep1, true},
 		{StateGroundingStep2, true},
 		{StateGroundingStep3, true},
@@ -51,8 +86,10 @@ func TestStateIsActive(t *testing.T) {
 		{StateGroundingStep5, true},
 		{StateGuidedBreathingSelect, true},
 		{StateGuidedBreathingRunning, true},
+		{StateGuidedBreathingPaused, true},
 		{StatePMRActive, true},
 		{StatePMRRunning, true},
+		{StatePMRPaused, true},
 	}
 
 	for _, tt := range tests {
@@ -74,6 +111,7 @@ func TestStateConstants(t *testing.T) {
 		StateIdle,
 		StateBreathingActive,
 		StateBreathingRunning,
+		StateBreathingPaused,
 		StateGroundingStep1,
 		StateGroundingStep2,
 		StateGroundingStep3,
@@ -81,8 +119,10 @@ func TestStateConstants(t *testing.T) {
 		StateGroundingStep5,
 		StateGuidedBreathingSelect,
 		StateGuidedBreathingRunning,
+		StateGuidedBreathingPaused,
 		StatePMRActive,
 		StatePMRRunning,
+		StatePMRPaused,
 	}
 
 	seen := make(map[State]bool)

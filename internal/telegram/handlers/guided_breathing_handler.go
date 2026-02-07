@@ -97,20 +97,10 @@ func (h *GuidedBreathingHandler) HandleCallback(_ *th.Context, cb telego.Callbac
 
 func (h *GuidedBreathingHandler) processCallback(chatID, userID int64, messageID int, data string) {
 	switch {
-	case strings.HasPrefix(data, "gbreath_pattern_"):
-		patternIdx := strings.TrimPrefix(data, "gbreath_pattern_")
-		idx, err := strconv.Atoi(patternIdx)
-		if err == nil {
-			h.showPatternIntro(h.ctx, chatID, userID, messageID, idx)
-		}
-	case strings.HasPrefix(data, "gbreath_start_"):
-		patternIdx := strings.TrimPrefix(data, "gbreath_start_")
-		idx, err := strconv.Atoi(patternIdx)
-		if err == nil {
-			// Create new session context (cancels previous if any)
-			sessionCtx := h.sessionManager.StartSession(h.ctx, userID)
-			go h.startPattern(sessionCtx, chatID, userID, messageID, idx)
-		}
+	case strings.HasPrefix(data, "gbreath_pattern_") || strings.HasPrefix(data, "gbreath_start_"):
+		h.handlePatternAction(chatID, userID, messageID, data)
+	case data == "gbreath_pause" || data == "gbreath_resume":
+		h.handlePauseResume(userID, data)
 	case data == "gbreath_stop":
 		h.sessionManager.CancelSession(userID)
 		h.stopBreathing(h.ctx, chatID, userID, messageID)
@@ -122,6 +112,31 @@ func (h *GuidedBreathingHandler) processCallback(chatID, userID int64, messageID
 		h.cancelBreathing(h.ctx, chatID, userID, messageID)
 	case data == "gbreath_back_select":
 		h.showPatternSelectionEdit(h.ctx, chatID, userID, messageID)
+	}
+}
+
+func (h *GuidedBreathingHandler) handlePatternAction(chatID, userID int64, messageID int, data string) {
+	if strings.HasPrefix(data, "gbreath_pattern_") {
+		idx, err := strconv.Atoi(strings.TrimPrefix(data, "gbreath_pattern_"))
+		if err == nil {
+			h.showPatternIntro(h.ctx, chatID, userID, messageID, idx)
+		}
+		return
+	}
+	idx, err := strconv.Atoi(strings.TrimPrefix(data, "gbreath_start_"))
+	if err == nil {
+		sessionCtx := h.sessionManager.StartSession(h.ctx, userID)
+		go h.startPattern(sessionCtx, chatID, userID, messageID, idx)
+	}
+}
+
+func (h *GuidedBreathingHandler) handlePauseResume(userID int64, data string) {
+	state := session.StateGuidedBreathingPaused
+	if data == "gbreath_resume" {
+		state = session.StateGuidedBreathingRunning
+	}
+	if err := h.sessionStorage.SetState(h.ctx, userID, state); err != nil {
+		log.Printf("ERROR: set guided breathing state %s: %v", state, err)
 	}
 }
 
@@ -307,7 +322,7 @@ func (h *GuidedBreathingHandler) runPhase(
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: m.Stop, CallbackData: "gbreath_stop"}},
+			{{Text: m.Pause, CallbackData: "gbreath_pause"}},
 		},
 	}
 
@@ -316,12 +331,7 @@ func (h *GuidedBreathingHandler) runPhase(
 	patternEmoji := patternEmojis[patternIdx]
 
 	for elapsed := 0; elapsed < totalSeconds; elapsed++ {
-		if ctx.Err() != nil {
-			return false
-		}
-
-		state, err := h.sessionStorage.GetState(ctx, userID)
-		if err != nil || state != session.StateGuidedBreathingRunning {
+		if !h.checkRunningOrPause(ctx, chatID, messageID, userID) {
 			return false
 		}
 
@@ -347,6 +357,48 @@ func (h *GuidedBreathingHandler) runPhase(
 		}
 	}
 	return true
+}
+
+func (h *GuidedBreathingHandler) checkRunningOrPause(
+	ctx context.Context, chatID int64, messageID int, userID int64,
+) bool {
+	if ctx.Err() != nil {
+		return false
+	}
+	state, err := h.sessionStorage.GetState(ctx, userID)
+	if err != nil {
+		return false
+	}
+	if state == session.StateGuidedBreathingPaused {
+		h.showPauseScreen(ctx, chatID, messageID, userID)
+		return WaitForResume(
+			ctx, h.sessionStorage, userID,
+			session.StateGuidedBreathingRunning,
+			session.StateGuidedBreathingPaused,
+		)
+	}
+	return state == session.StateGuidedBreathingRunning
+}
+
+func (h *GuidedBreathingHandler) showPauseScreen(ctx context.Context, chatID int64, messageID int, userID int64) {
+	m := h.localizer.Get(h.getLang(ctx, userID))
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: "gbreath_stop"},
+				{Text: m.Resume, CallbackData: "gbreath_resume"},
+			},
+		},
+	}
+	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        m.PauseText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); err != nil && !IsMessageNotModifiedError(err) {
+		log.Printf("ERROR: edit guided breathing pause screen: %v", err)
+	}
 }
 
 func (h *GuidedBreathingHandler) sendCompletion(

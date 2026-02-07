@@ -22,6 +22,8 @@ const (
 	StateBreathingActive State = "breathing_active"
 	// StateBreathingRunning represents breathing exercise is currently running.
 	StateBreathingRunning State = "breathing_running"
+	// StateBreathingPaused represents breathing exercise is paused by user.
+	StateBreathingPaused State = "breathing_paused"
 	// StateGroundingStep1 represents grounding step 1 (see 5 things).
 	StateGroundingStep1 State = "grounding_step_1"
 	// StateGroundingStep2 represents grounding step 2 (touch 4 things).
@@ -37,11 +39,15 @@ const (
 	StateGuidedBreathingSelect State = "guided_breathing_select"
 	// StateGuidedBreathingRunning represents guided breathing exercise is running.
 	StateGuidedBreathingRunning State = "guided_breathing_running"
+	// StateGuidedBreathingPaused represents guided breathing exercise is paused by user.
+	StateGuidedBreathingPaused State = "guided_breathing_paused"
 
 	// StatePMRActive indicates PMR technique menu is active.
 	StatePMRActive State = "pmr_active"
 	// StatePMRRunning represents PMR exercise is running.
 	StatePMRRunning State = "pmr_running"
+	// StatePMRPaused represents PMR exercise is paused by user.
+	StatePMRPaused State = "pmr_paused"
 )
 
 // IsRunning returns true if user is in an active exercise that should not be interrupted.
@@ -50,6 +56,17 @@ func (s State) IsRunning() bool {
 	case StateBreathingRunning,
 		StateGuidedBreathingRunning,
 		StatePMRRunning:
+		return true
+	}
+	return false
+}
+
+// IsPaused returns true if user has paused an exercise.
+func (s State) IsPaused() bool {
+	switch s {
+	case StateBreathingPaused,
+		StateGuidedBreathingPaused,
+		StatePMRPaused:
 		return true
 	}
 	return false
