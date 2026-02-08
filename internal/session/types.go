@@ -121,7 +121,7 @@ func (s Screen) String() string {
 	case ScreenError:
 		return "Error"
 	default:
-		return "Unknown"
+		return unknownStr
 	}
 }
 
@@ -151,7 +151,7 @@ func (op TransitionOp) String() string {
 	case OpSend:
 		return "Send"
 	default:
-		return "Unknown"
+		return unknownStr
 	}
 }
 
@@ -187,7 +187,7 @@ func (d CleanupDecision) String() string {
 	case DecisionRetry:
 		return "Retry"
 	default:
-		return "Unknown"
+		return unknownStr
 	}
 }
 
@@ -203,6 +203,8 @@ type CleanupResult struct {
 //
 //nolint:gochecknoglobals // Sentinel error for storage.
 var ErrCleanupRetryNotFound = errors.New("cleanup retry not found")
+
+const unknownStr = "Unknown"
 
 // =============================================================================
 // Config — конфигурация тайминга

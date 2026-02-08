@@ -2,10 +2,13 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"strings"
 	"time"
 
 	"github.com/mymmrac/telego"
+	tu "github.com/mymmrac/telego/telegoutil"
+	"github.com/thevan4/anxiety-relief-tgbot-go/internal/localization"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 )
 
@@ -126,14 +129,220 @@ func RecreateMenuMessage(
 	newMessageID := msg.MessageID
 
 	// Update storage with new message ID
-	if err := storage.SetMenuMessageID(ctx, userID, newMessageID); err != nil {
-		return 0, err
+	if setErr := storage.SetMenuMessageID(ctx, userID, newMessageID); setErr != nil {
+		return 0, setErr
 	}
 
 	// Update menu_created for correct cleanup timing
-	if err := storage.SetMenuCreatedAt(ctx, userID, time.Now()); err != nil {
-		return 0, err
+	if setErr := storage.SetMenuCreatedAt(ctx, userID, time.Now()); setErr != nil {
+		return 0, setErr
 	}
 
 	return newMessageID, nil
+}
+
+// GetLang returns user's language from session or default.
+func GetLang(ctx context.Context, storage session.Storage, userID int64) string {
+	lang, err := storage.GetLang(ctx, userID)
+	if err != nil || lang == "" {
+		return localization.DefaultLang
+	}
+	return lang
+}
+
+// GetMainMenuInline returns localized main menu keyboard.
+func GetMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
+	return &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{{Text: m.MenuBreathing, CallbackData: "menu_breathing"}},
+			{{Text: m.MenuGrounding, CallbackData: "menu_grounding"}},
+			{{Text: m.MenuGuided, CallbackData: "menu_guided"}},
+			{{Text: m.MenuPMR, CallbackData: "menu_pmr"}},
+			{{Text: m.MenuLang, CallbackData: "menu_lang"}},
+		},
+	}
+}
+
+// ClearAndShowMainMenu clears user state and edits message to main menu.
+func ClearAndShowMainMenu(
+	ctx context.Context, bot *telego.Bot, storage session.Storage,
+	localizer *localization.Localizer, lang string,
+	chatID, userID int64, messageID int, errLog string,
+) {
+	if clearErr := storage.ClearState(ctx, userID); clearErr != nil {
+		log.Printf("ERROR: clear state: %v", clearErr)
+	}
+	m := localizer.Get(lang)
+	if _, editErr := bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        m.MainMenuText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(m),
+	}); editErr != nil {
+		log.Printf("ERROR: %s: %v", errLog, editErr)
+	}
+}
+
+// CancelAndShowMainMenu clears user state and edits message to main menu with error handling.
+func CancelAndShowMainMenu(
+	ctx context.Context, bot *telego.Bot, storage session.Storage,
+	localizer *localization.Localizer, lang string,
+	chatID, userID int64, messageID int, errLog string,
+) {
+	if clearErr := storage.ClearState(ctx, userID); clearErr != nil {
+		log.Printf("ERROR: clear state: %v", clearErr)
+	}
+	m := localizer.Get(lang)
+	if _, editErr := bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        m.MainMenuText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: GetMainMenuInline(m),
+	}); editErr != nil {
+		if !HandleEditError(ctx, bot, editErr, chatID, messageID) {
+			log.Printf("ERROR: %s: %v", errLog, editErr)
+		}
+	}
+}
+
+// ShowPauseScreen shows a pause screen with back and resume buttons.
+func ShowPauseScreen(
+	ctx context.Context, bot *telego.Bot,
+	localizer *localization.Localizer, lang string,
+	chatID int64, messageID int,
+	stopCB, resumeCB string,
+) {
+	m := localizer.Get(lang)
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: stopCB},
+				{Text: m.Resume, CallbackData: resumeCB},
+			},
+		},
+	}
+	if _, editErr := bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        m.PauseText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); editErr != nil && !IsMessageNotModifiedError(editErr) {
+		log.Printf("ERROR: edit pause screen: %v", editErr)
+	}
+}
+
+// ShowIntroRecreate sets state, builds intro with back/start buttons, and recreates the menu message.
+func ShowIntroRecreate(
+	ctx context.Context, bot *telego.Bot, storage session.Storage,
+	localizer *localization.Localizer, lang string,
+	chatID, userID int64,
+	state session.State, introText string,
+	cancelCB, startCB, errLog string,
+) {
+	if setErr := storage.SetState(ctx, userID, state); setErr != nil {
+		log.Printf("ERROR: %s set state: %v", errLog, setErr)
+	}
+	m := localizer.Get(lang)
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: cancelCB},
+				{Text: m.Start, CallbackData: startCB},
+			},
+		},
+	}
+	if _, recreateErr := RecreateMenuMessage(ctx, bot, storage, chatID, userID, introText, keyboard); recreateErr != nil {
+		log.Printf("ERROR: %s recreate: %v", errLog, recreateErr)
+	}
+}
+
+// SetStateAndEditIntro sets state and edits message to show intro with back/start buttons.
+func SetStateAndEditIntro(
+	ctx context.Context, bot *telego.Bot, storage session.Storage,
+	chatID, userID int64, messageID int,
+	state session.State, introText string,
+	backCB, startCB string,
+	m localization.Messages, errLog string,
+) {
+	if setErr := storage.SetState(ctx, userID, state); setErr != nil {
+		log.Printf("ERROR: %s set state: %v", errLog, setErr)
+	}
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Back, CallbackData: backCB},
+				{Text: m.Start, CallbackData: startCB},
+			},
+		},
+	}
+	if _, editErr := bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        introText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); editErr != nil {
+		log.Printf("ERROR: %s edit: %v", errLog, editErr)
+	}
+}
+
+// SendCompletionScreen checks running state and shows repeat/done buttons.
+func SendCompletionScreen(
+	ctx context.Context, bot *telego.Bot, storage session.Storage,
+	chatID, userID int64, messageID int,
+	runningState session.State, completionText string,
+	repeatCB, doneCB string,
+	m localization.Messages, errLog string,
+) {
+	state, stateErr := storage.GetState(ctx, userID)
+	if stateErr != nil || state != runningState {
+		return
+	}
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Repeat, CallbackData: repeatCB},
+				{Text: m.Done, CallbackData: doneCB},
+			},
+		},
+	}
+	if _, editErr := bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        completionText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); editErr != nil {
+		log.Printf("ERROR: %s: %v", errLog, editErr)
+	}
+}
+
+// EditCompletionScreen shows repeat/done buttons without state check.
+func EditCompletionScreen(
+	ctx context.Context, bot *telego.Bot,
+	chatID int64, messageID int,
+	completionText string,
+	repeatCB, doneCB string,
+	m localization.Messages, errLog string,
+) {
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{
+				{Text: m.Repeat, CallbackData: repeatCB},
+				{Text: m.Done, CallbackData: doneCB},
+			},
+		},
+	}
+	if _, editErr := bot.EditMessageText(ctx, &telego.EditMessageTextParams{
+		ChatID:      tu.ID(chatID),
+		MessageID:   messageID,
+		Text:        completionText,
+		ParseMode:   "Markdown",
+		ReplyMarkup: keyboard,
+	}); editErr != nil {
+		log.Printf("ERROR: %s: %v", errLog, editErr)
+	}
 }

@@ -23,7 +23,7 @@ type PMRHandler struct {
 	localizer         *localization.Localizer
 	statistics        statistic.Stats
 	sessionStorage    session.Storage
-	sessionManager    *session.SessionManager
+	sessionManager    *session.Manager
 	callbackProcessor *CallbackProcessor
 }
 
@@ -34,7 +34,7 @@ func NewPMRHandler(
 	localizer *localization.Localizer,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
-	sessionManager *session.SessionManager,
+	sessionManager *session.Manager,
 	callbackProcessor *CallbackProcessor,
 ) *PMRHandler {
 	return &PMRHandler{
@@ -50,24 +50,7 @@ func NewPMRHandler(
 
 // getLang returns user's language from session or default.
 func (h *PMRHandler) getLang(ctx context.Context, userID int64) string {
-	lang, err := h.sessionStorage.GetLang(ctx, userID)
-	if err != nil || lang == "" {
-		return localization.DefaultLang
-	}
-	return lang
-}
-
-// getMainMenuInline returns localized main menu keyboard.
-func (h *PMRHandler) getMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
-	return &telego.InlineKeyboardMarkup{
-		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: m.MenuBreathing, CallbackData: "menu_breathing"}},
-			{{Text: m.MenuGrounding, CallbackData: "menu_grounding"}},
-			{{Text: m.MenuGuided, CallbackData: "menu_guided"}},
-			{{Text: m.MenuPMR, CallbackData: "menu_pmr"}},
-			{{Text: m.MenuLang, CallbackData: "menu_lang"}},
-		},
-	}
+	return GetLang(ctx, h.sessionStorage, userID)
 }
 
 // HandleMenuSelect handles selection from main menu.
@@ -120,27 +103,15 @@ func (h *PMRHandler) processCallback(chatID, userID int64, messageID int, data s
 }
 
 func (h *PMRHandler) showIntroRecreate(ctx context.Context, chatID, userID int64) {
-	if err := h.sessionStorage.SetState(ctx, userID, session.StatePMRActive); err != nil {
-		log.Printf("ERROR: set state pmr active: %v", err)
-	}
-
-	m := h.localizer.Get(h.getLang(ctx, userID))
+	lang := h.getLang(ctx, userID)
+	m := h.localizer.Get(lang)
 	muscleGroups := techniques.GetMuscleGroups()
 	text := fmt.Sprintf(m.PMRIntro, len(muscleGroups))
-
-	keyboard := &telego.InlineKeyboardMarkup{
-		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{
-				{Text: m.Back, CallbackData: "pmr_cancel"},
-				{Text: m.Start, CallbackData: "pmr_start"},
-			},
-		},
-	}
-
-	// Recreate message to extend its lifetime
-	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, text, keyboard); err != nil {
-		log.Printf("ERROR: recreate pmr intro: %v", err)
-	}
+	ShowIntroRecreate(
+		ctx, h.bot, h.sessionStorage, h.localizer, lang,
+		chatID, userID, session.StatePMRActive, text,
+		"pmr_cancel", "pmr_start", "pmr intro",
+	)
 }
 
 func (h *PMRHandler) startExercise(ctx context.Context, chatID, userID int64, messageID int) {
@@ -269,117 +240,39 @@ func (h *PMRHandler) checkRunningOrPause(
 }
 
 func (h *PMRHandler) showPauseScreen(ctx context.Context, chatID int64, messageID int, userID int64) {
-	m := h.localizer.Get(h.getLang(ctx, userID))
-	keyboard := &telego.InlineKeyboardMarkup{
-		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{
-				{Text: m.Back, CallbackData: "pmr_stop"},
-				{Text: m.Resume, CallbackData: "pmr_resume"},
-			},
-		},
-	}
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.PauseText,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil && !IsMessageNotModifiedError(err) {
-		log.Printf("ERROR: edit pmr pause screen: %v", err)
-	}
+	ShowPauseScreen(ctx, h.bot, h.localizer, h.getLang(ctx, userID), chatID, messageID, "pmr_stop", "pmr_resume")
 }
 
 func (h *PMRHandler) sendCompletion(ctx context.Context, chatID, userID int64, messageID int) {
-	state, err := h.sessionStorage.GetState(ctx, userID)
-	if err != nil || state != session.StatePMRRunning {
-		return
-	}
-
 	m := h.localizer.Get(h.getLang(ctx, userID))
-
-	keyboard := &telego.InlineKeyboardMarkup{
-		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{
-				{Text: m.Repeat, CallbackData: "pmr_start"},
-				{Text: m.Done, CallbackData: "pmr_complete"},
-			},
-		},
-	}
-
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.PMRCompletion,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: send pmr completion: %v", err)
-	}
+	SendCompletionScreen(
+		ctx, h.bot, h.sessionStorage, chatID, userID, messageID,
+		session.StatePMRRunning, m.PMRCompletion,
+		"pmr_start", "pmr_complete", m, "send pmr completion",
+	)
 }
 
 func (h *PMRHandler) stopExercise(ctx context.Context, chatID, userID int64, messageID int) {
-	if err := h.sessionStorage.SetState(ctx, userID, session.StatePMRActive); err != nil {
-		log.Printf("ERROR: set state pmr active: %v", err)
-	}
-
 	m := h.localizer.Get(h.getLang(ctx, userID))
 	muscleGroups := techniques.GetMuscleGroups()
 	text := fmt.Sprintf(m.PMRIntro, len(muscleGroups))
-
-	keyboard := &telego.InlineKeyboardMarkup{
-		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{
-				{Text: m.Back, CallbackData: "pmr_cancel"},
-				{Text: m.Start, CallbackData: "pmr_start"},
-			},
-		},
-	}
-
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        text,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit pmr stop: %v", err)
-	}
+	SetStateAndEditIntro(
+		ctx, h.bot, h.sessionStorage, chatID, userID, messageID,
+		session.StatePMRActive, text,
+		"pmr_cancel", "pmr_start", m, "pmr stop",
+	)
 }
 
 func (h *PMRHandler) completeExercise(ctx context.Context, chatID, userID int64, messageID int) {
-	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
-		log.Printf("ERROR: clear state: %v", err)
-	}
-
-	m := h.localizer.Get(h.getLang(ctx, userID))
-
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.MainMenuText,
-		ParseMode:   "Markdown",
-		ReplyMarkup: h.getMainMenuInline(m),
-	}); err != nil {
-		log.Printf("ERROR: edit pmr complete: %v", err)
-	}
+	ClearAndShowMainMenu(
+		ctx, h.bot, h.sessionStorage, h.localizer, h.getLang(ctx, userID),
+		chatID, userID, messageID, "edit pmr complete",
+	)
 }
 
 func (h *PMRHandler) cancelExercise(ctx context.Context, chatID, userID int64, messageID int) {
-	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
-		log.Printf("ERROR: clear state: %v", err)
-	}
-
-	m := h.localizer.Get(h.getLang(ctx, userID))
-
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.MainMenuText,
-		ParseMode:   "Markdown",
-		ReplyMarkup: h.getMainMenuInline(m),
-	}); err != nil {
-		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
-			log.Printf("ERROR: edit pmr cancel: %v", err)
-		}
-	}
+	CancelAndShowMainMenu(
+		ctx, h.bot, h.sessionStorage, h.localizer, h.getLang(ctx, userID),
+		chatID, userID, messageID, "edit pmr cancel",
+	)
 }

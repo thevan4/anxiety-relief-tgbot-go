@@ -8,9 +8,9 @@ import (
 
 func TestNewSessionManager(t *testing.T) {
 	t.Parallel()
-	sm := NewSessionManager()
+	sm := NewManager()
 	if sm == nil {
-		t.Fatal("NewSessionManager returned nil")
+		t.Fatal("NewManager returned nil")
 	}
 	if sm.cancels == nil {
 		t.Error("cancels map is nil")
@@ -19,7 +19,7 @@ func TestNewSessionManager(t *testing.T) {
 
 func TestStartSession(t *testing.T) {
 	t.Parallel()
-	sm := NewSessionManager()
+	sm := NewManager()
 	parentCtx := context.Background()
 
 	ctx := sm.StartSession(parentCtx, 123)
@@ -37,7 +37,7 @@ func TestStartSession(t *testing.T) {
 
 func TestStartSessionCancelsPrevious(t *testing.T) {
 	t.Parallel()
-	sm := NewSessionManager()
+	sm := NewManager()
 	parentCtx := context.Background()
 
 	ctx1 := sm.StartSession(parentCtx, 123)
@@ -61,7 +61,7 @@ func TestStartSessionCancelsPrevious(t *testing.T) {
 
 func TestCancelSession(t *testing.T) {
 	t.Parallel()
-	sm := NewSessionManager()
+	sm := NewManager()
 	parentCtx := context.Background()
 
 	ctx := sm.StartSession(parentCtx, 123)
@@ -78,7 +78,7 @@ func TestCancelSession(t *testing.T) {
 
 func TestCancelSessionNonExistent(t *testing.T) {
 	t.Parallel()
-	sm := NewSessionManager()
+	sm := NewManager()
 
 	// Should not panic
 	sm.CancelSession(999)
@@ -86,7 +86,7 @@ func TestCancelSessionNonExistent(t *testing.T) {
 
 func TestGetSessionContext(t *testing.T) {
 	t.Parallel()
-	sm := NewSessionManager()
+	sm := NewManager()
 	parentCtx := context.Background()
 
 	// First call creates new session
@@ -104,7 +104,7 @@ func TestGetSessionContext(t *testing.T) {
 
 func TestMultipleUsers(t *testing.T) {
 	t.Parallel()
-	sm := NewSessionManager()
+	sm := NewManager()
 	parentCtx := context.Background()
 
 	ctx1 := sm.StartSession(parentCtx, 111)
@@ -138,7 +138,7 @@ func TestMultipleUsers(t *testing.T) {
 
 func TestParentContextCancellation(t *testing.T) {
 	t.Parallel()
-	sm := NewSessionManager()
+	sm := NewManager()
 	parentCtx, cancel := context.WithCancel(context.Background())
 
 	ctx := sm.StartSession(parentCtx, 123)
@@ -157,7 +157,7 @@ func TestParentContextCancellation(t *testing.T) {
 
 func TestConcurrentSessionOperations(t *testing.T) {
 	t.Parallel()
-	sm := NewSessionManager()
+	sm := NewManager()
 	parentCtx := context.Background()
 	done := make(chan bool)
 

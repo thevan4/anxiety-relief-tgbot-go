@@ -24,7 +24,7 @@ type BotHandler struct {
 	localizer         *localization.Localizer
 	statistics        statistic.Stats
 	sessionStorage    session.Storage
-	sessionManager    *session.SessionManager
+	sessionManager    *session.Manager
 	callbackProcessor *handlers.CallbackProcessor
 }
 
@@ -65,7 +65,7 @@ func MustNewBotHandler(
 		localizer:      localizer,
 		statistics:     statistics,
 		sessionStorage: sessionStorage,
-		sessionManager: session.NewSessionManager(),
+		sessionManager: session.NewManager(),
 	}
 
 	bh.callbackProcessor = handlers.NewCallbackProcessor(
@@ -119,25 +119,25 @@ type deleteOldMessagesResult struct {
 func (bh *BotHandler) tryDeleteOldMessages(chatID, userID int64) deleteOldMessagesResult {
 	result := deleteOldMessagesResult{}
 
-	if oldHolderID, err := bh.sessionStorage.GetHolderMessageID(bh.ctx, userID); err == nil && oldHolderID != 0 {
+	if oldHolderID, getErr := bh.sessionStorage.GetHolderMessageID(bh.ctx, userID); getErr == nil && oldHolderID != 0 {
 		result.holderExisted = true
-		if err := bh.bot.DeleteMessage(bh.ctx, &telego.DeleteMessageParams{
+		if delErr := bh.bot.DeleteMessage(bh.ctx, &telego.DeleteMessageParams{
 			ChatID:    tu.ID(chatID),
 			MessageID: oldHolderID,
-		}); err != nil {
-			log.Printf("DEBUG: could not delete old holder %d: %v", oldHolderID, err)
+		}); delErr != nil {
+			log.Printf("DEBUG: could not delete old holder %d: %v", oldHolderID, delErr)
 		} else {
 			result.holderDeleted = true
 		}
 	}
 
-	if oldMenuID, err := bh.sessionStorage.GetMenuMessageID(bh.ctx, userID); err == nil && oldMenuID != 0 {
+	if oldMenuID, getErr := bh.sessionStorage.GetMenuMessageID(bh.ctx, userID); getErr == nil && oldMenuID != 0 {
 		result.menuExisted = true
-		if err := bh.bot.DeleteMessage(bh.ctx, &telego.DeleteMessageParams{
+		if delErr := bh.bot.DeleteMessage(bh.ctx, &telego.DeleteMessageParams{
 			ChatID:    tu.ID(chatID),
 			MessageID: oldMenuID,
-		}); err != nil {
-			log.Printf("DEBUG: could not delete old menu %d: %v", oldMenuID, err)
+		}); delErr != nil {
+			log.Printf("DEBUG: could not delete old menu %d: %v", oldMenuID, delErr)
 		} else {
 			result.menuDeleted = true
 		}
@@ -213,8 +213,8 @@ func (bh *BotHandler) sendHolderMessage(ctx *th.Context, chatID, userID int64) e
 		return err
 	}
 
-	if err := bh.sessionStorage.SetHolderMessageID(bh.ctx, userID, sentMsg.MessageID); err != nil {
-		log.Printf("ERROR: save holder message id: %v", err)
+	if setErr := bh.sessionStorage.SetHolderMessageID(bh.ctx, userID, sentMsg.MessageID); setErr != nil {
+		log.Printf("ERROR: save holder message id: %v", setErr)
 	}
 
 	return nil
@@ -273,19 +273,19 @@ func (bh *BotHandler) sendMenuMessage(chatID, userID int64) error {
 	now := time.Now()
 
 	// Save menu message ID
-	if err := bh.sessionStorage.SetMenuMessageID(bh.ctx, userID, sentMsg.MessageID); err != nil {
-		log.Printf("ERROR: save menu message id: %v", err)
+	if setErr := bh.sessionStorage.SetMenuMessageID(bh.ctx, userID, sentMsg.MessageID); setErr != nil {
+		log.Printf("ERROR: save menu message id: %v", setErr)
 	}
 
 	// Save menu creation time
-	if err := bh.sessionStorage.SetMenuCreatedAt(bh.ctx, userID, now); err != nil {
-		log.Printf("ERROR: save menu created at: %v", err)
+	if setErr := bh.sessionStorage.SetMenuCreatedAt(bh.ctx, userID, now); setErr != nil {
+		log.Printf("ERROR: save menu created at: %v", setErr)
 	}
 
 	// Schedule cleanup in 47 hours
 	checkAt := now.Add(session.CleanupDelay)
-	if err := bh.sessionStorage.AddToCleanupQueue(bh.ctx, userID, checkAt); err != nil {
-		log.Printf("ERROR: add to cleanup queue: %v", err)
+	if addErr := bh.sessionStorage.AddToCleanupQueue(bh.ctx, userID, checkAt); addErr != nil {
+		log.Printf("ERROR: add to cleanup queue: %v", addErr)
 	}
 
 	return nil

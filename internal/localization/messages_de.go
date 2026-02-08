@@ -11,7 +11,7 @@ var messagesDE = Messages{
 	Done:   "✨ Zum Menü",
 	Repeat: "🔄 Wiederholen",
 	Pause:  "⏸ Pause",
-	Resume: "▶️ Weiter",
+	Resume: "▶️ Fortsetzen",
 
 	PauseText: "⏸ *Pause*\n\nNehmen Sie sich Zeit. Fahren Sie fort, wenn Sie bereit sind.",
 
@@ -73,7 +73,8 @@ Ihr Puls hat sich verlangsamt und Ihr Nervensystem hat sich beruhigt. Machen Sie
 	// Grounding
 	GroundingIntro: `🌿 *5-4-3-2-1 Erdungstechnik*
 
-Bei Angst und Panik wandert die Aufmerksamkeit in den Kopf und zu negativen Gedanken. Diese Technik bringt Sie durch 5 Sinne in den gegenwärtigen Moment zurück.
+Bei Angst und Panik wandert die Aufmerksamkeit in den Kopf und zu negativen Gedanken.
+Diese Technik bringt Sie durch 5 Sinne in den gegenwärtigen Moment zurück.
 
 *Wie es funktioniert:*
 5 Schritte mit abnehmenden Zahlen:
@@ -128,7 +129,8 @@ Energie und geistige Klarheit, Linderung von Müdigkeit.
 🚀 *Schneller Reset 3-3-3* (~1 Min)
 Schnelle Linderung von akuter Spannung und Stress.
 `,
-	GuidedCompletion: "✅ *Sehr gut!*\n\nSie haben die Übung \"%s\" abgeschlossen.\n\nIhre Atmung ist gleichmäßiger geworden. Verweilen Sie noch einen Moment in diesem Zustand.",
+	GuidedCompletion: "✅ *Sehr gut!*\n\nSie haben die Übung \"%s\" abgeschlossen.\n\n" +
+		"Ihre Atmung ist gleichmäßiger geworden. Verweilen Sie noch einen Moment in diesem Zustand.",
 
 	// Guided breathing — pattern intros
 	PatternBoxIntro: `📦 *Box-Atmung 4-4-4-4*
@@ -183,7 +185,8 @@ Bereit zu beginnen?`,
 	// PMR
 	PMRIntro: `💪 *Progressive Muskelentspannung*
 
-Tiefe Entspannung des gesamten Körpers durch bewusstes Anspannen und Entspannen der Muskeln. Hilft, körperliche Verspannungen durch Stress und Angst zu lösen.
+Tiefe Entspannung des gesamten Körpers durch bewusstes Anspannen und Entspannen der Muskeln.
+Hilft, körperliche Verspannungen durch Stress und Angst zu lösen.
 
 *Wie es funktioniert:*
 1. Spannen Sie eine Muskelgruppe für 7 Sekunden an

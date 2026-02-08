@@ -192,7 +192,7 @@ func (r *RedisStorage) GetPendingCleanup(ctx context.Context, now time.Time, lim
 	userIDs := make([]int64, 0, len(results))
 	for _, s := range results {
 		var userID int64
-		if _, err := fmt.Sscanf(s, "%d", &userID); err == nil {
+		if _, parseErr := fmt.Sscanf(s, "%d", &userID); parseErr == nil {
 			userIDs = append(userIDs, userID)
 		}
 	}
@@ -226,8 +226,8 @@ func (r *RedisStorage) GetCleanupRetry(ctx context.Context, userID int64) (*Clea
 	}
 
 	var retry CleanupRetry
-	if err := json.Unmarshal([]byte(result), &retry); err != nil {
-		return nil, err
+	if unmarshalErr := json.Unmarshal([]byte(result), &retry); unmarshalErr != nil {
+		return nil, unmarshalErr
 	}
 	return &retry, nil
 }

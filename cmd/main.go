@@ -72,8 +72,8 @@ func main() {
 	case <-time.After(shutdownTimeout):
 		log.Printf("WARNING: bot handler did not stop within %v, forcing exit", shutdownTimeout)
 	}
-	if err := sessionStorage.Close(); err != nil {
-		log.Printf("WARNING: failed to close Redis connection: %v", err)
+	if closeErr := sessionStorage.Close(); closeErr != nil {
+		log.Printf("WARNING: failed to close Redis connection: %v", closeErr)
 	}
 	log.Println("Bot stopped successfully")
 }

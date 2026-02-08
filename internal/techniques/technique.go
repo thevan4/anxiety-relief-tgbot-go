@@ -2,6 +2,15 @@ package techniques
 
 import "time"
 
+// Phase ID constants for breathing exercises.
+const (
+	PhaseInhale  = "inhale"
+	PhaseHoldIn  = "hold_in"
+	PhaseExhale  = "exhale"
+	PhaseHoldOut = "hold_out"
+	PhaseHold    = "hold"
+)
+
 // BreathingCycle represents one phase of breathing exercise (inhale/hold/exhale).
 type BreathingCycle struct {
 	Phase    string        // Phase ID: "inhale", "hold", "exhale"

@@ -95,31 +95,19 @@ func (m *Manager) GetOrStart(parentCtx context.Context, userID int64) context.Co
 	return ctx
 }
 
-// =============================================================================
-// SessionManager — alias for backward compatibility with handlers
-// =============================================================================
-
-// SessionManager is an alias for Manager (backward compatibility).
-type SessionManager = Manager
-
-// NewSessionManager creates a new session manager instance (backward compatibility).
-func NewSessionManager() *SessionManager {
-	return NewManager()
-}
-
-// StartSession creates a new context for user's session (backward compatibility).
+// StartSession creates a new context for user's session.
 // Alias for Start().
 func (m *Manager) StartSession(parentCtx context.Context, userID int64) context.Context {
 	return m.Start(parentCtx, userID)
 }
 
-// CancelSession cancels the user's current session (backward compatibility).
+// CancelSession cancels the user's current session.
 // Alias for Cancel().
 func (m *Manager) CancelSession(userID int64) {
 	m.Cancel(userID)
 }
 
-// GetSessionContext returns a context for the user (backward compatibility).
+// GetSessionContext returns a context for the user.
 // Alias for GetOrStart().
 func (m *Manager) GetSessionContext(parentCtx context.Context, userID int64) context.Context {
 	return m.GetOrStart(parentCtx, userID)

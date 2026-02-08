@@ -71,9 +71,10 @@ Your heart rate has slowed and your nervous system has calmed down. Take a few m
 	BreathingExhale: "Exhale",
 
 	// Grounding
-	GroundingIntro: `🌿 *5-4-3-2-1 Grounding Technique*
-
-During anxiety and panic, attention shifts to the mind and negative thoughts. This technique brings you back to the present moment through 5 senses.
+	GroundingIntro: "🌿 *5-4-3-2-1 Grounding Technique*\n\n" +
+		"During anxiety and panic, attention shifts to the mind and negative thoughts. " +
+		"This technique brings you back to the present moment through 5 senses." +
+		`
 
 *How it works:*
 5 steps with decreasing numbers:
@@ -124,7 +125,8 @@ Energy and mental clarity, relief from fatigue.
 🚀 *Quick Reset 3-3-3* (~1 min)
 Fast relief from acute tension and stress.
 `,
-	GuidedCompletion: "✅ *Great job!*\n\nYou've completed the \"%s\" exercise.\n\nYour breathing has become steadier. Stay with this feeling for a moment.",
+	GuidedCompletion: "✅ *Great job!*\n\nYou've completed the \"%s\" exercise.\n\n" +
+		"Your breathing has become steadier. Stay with this feeling for a moment.",
 
 	// Guided breathing — pattern intros
 	PatternBoxIntro: `📦 *Box Breathing 4-4-4-4*
@@ -177,9 +179,10 @@ Ready to begin?`,
 	GuidedHoldOut: "Pause",
 
 	// PMR
-	PMRIntro: `💪 *Progressive Muscle Relaxation*
-
-Deep relaxation of the entire body through conscious tensing and relaxing of muscles. Helps release physical tension from stress and anxiety.
+	PMRIntro: "💪 *Progressive Muscle Relaxation*\n\n" +
+		"Deep relaxation of the entire body through conscious tensing and relaxing of muscles. " +
+		"Helps release physical tension from stress and anxiety." +
+		`
 
 *How it works:*
 1. Tense a muscle group for 7 seconds

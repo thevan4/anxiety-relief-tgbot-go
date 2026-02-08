@@ -81,7 +81,7 @@ func GetBreathingPhases(pattern BreathingPattern) []BreathingPhase {
 
 	if pattern.Inhale > 0 {
 		phases = append(phases, BreathingPhase{
-			Phase:    "inhale",
+			Phase:    PhaseInhale,
 			Duration: pattern.Inhale,
 			Emoji:    "💨",
 		})
@@ -89,7 +89,7 @@ func GetBreathingPhases(pattern BreathingPattern) []BreathingPhase {
 
 	if pattern.HoldIn > 0 {
 		phases = append(phases, BreathingPhase{
-			Phase:    "hold_in",
+			Phase:    PhaseHoldIn,
 			Duration: pattern.HoldIn,
 			Emoji:    "⏸️",
 		})
@@ -97,7 +97,7 @@ func GetBreathingPhases(pattern BreathingPattern) []BreathingPhase {
 
 	if pattern.Exhale > 0 {
 		phases = append(phases, BreathingPhase{
-			Phase:    "exhale",
+			Phase:    PhaseExhale,
 			Duration: pattern.Exhale,
 			Emoji:    "🌬️",
 		})
@@ -105,7 +105,7 @@ func GetBreathingPhases(pattern BreathingPattern) []BreathingPhase {
 
 	if pattern.HoldOut > 0 {
 		phases = append(phases, BreathingPhase{
-			Phase:    "hold_out",
+			Phase:    PhaseHoldOut,
 			Duration: pattern.HoldOut,
 			Emoji:    "⏸️",
 		})

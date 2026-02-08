@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func TestCleanupProcessor_EvaluateCleanup(t *testing.T) {
+func TestCleanupProcessor_EvaluateCleanup_Initial(t *testing.T) {
 	t.Parallel()
 	config := DefaultConfig()
 	processor := NewCleanupProcessor(config)
@@ -15,71 +15,49 @@ func TestCleanupProcessor_EvaluateCleanup(t *testing.T) {
 		name         string
 		createdAt    time.Time
 		currentState string
-		retry        *CleanupRetry
 		wantDecision CleanupDecision
 	}{
-		{
-			name:         "resource too old",
-			createdAt:    now.Add(-49 * time.Hour),
-			currentState: "some_state",
-			retry:        nil,
-			wantDecision: DecisionDelete,
-		},
-		{
-			name:         "no creation timestamp",
-			createdAt:    time.Time{},
-			currentState: "some_state",
-			retry:        nil,
-			wantDecision: DecisionDelete,
-		},
-		{
-			name:         "first check - user inactive",
-			createdAt:    now.Add(-47 * time.Hour),
-			currentState: "",
-			retry:        nil,
-			wantDecision: DecisionDelete,
-		},
-		{
-			name:         "first check - user active",
-			createdAt:    now.Add(-47 * time.Hour),
-			currentState: "breathing_running",
-			retry:        nil,
-			wantDecision: DecisionRetry,
-		},
-		{
-			name:         "retry - user finished (became inactive)",
-			createdAt:    now.Add(-47 * time.Hour),
-			currentState: "",
-			retry:        &CleanupRetry{State: "breathing_running", Attempt: 1},
-			wantDecision: DecisionKeep,
-		},
-		{
-			name:         "retry - user stuck in same state",
-			createdAt:    now.Add(-47 * time.Hour),
-			currentState: "breathing_running",
-			retry:        &CleanupRetry{State: "breathing_running", Attempt: 1},
-			wantDecision: DecisionDelete,
-		},
-		{
-			name:         "retry - user switched states",
-			createdAt:    now.Add(-47 * time.Hour),
-			currentState: "grounding_step_1",
-			retry:        &CleanupRetry{State: "breathing_running", Attempt: 1},
-			wantDecision: DecisionRetry,
-		},
-		{
-			name:         "retry - max retries exceeded",
-			createdAt:    now.Add(-47 * time.Hour),
-			currentState: "grounding_step_1",
-			retry:        &CleanupRetry{State: "breathing_running", Attempt: 6},
-			wantDecision: DecisionDelete,
-		},
+		{"resource too old", now.Add(-49 * time.Hour), "some_state", DecisionDelete},
+		{"no creation timestamp", time.Time{}, "some_state", DecisionDelete},
+		{"first check - user inactive", now.Add(-47 * time.Hour), "", DecisionDelete},
+		{"first check - user active", now.Add(-47 * time.Hour), "breathing_running", DecisionRetry},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			result := processor.EvaluateCleanup(tt.createdAt, tt.currentState, tt.retry, now)
+			result := processor.EvaluateCleanup(tt.createdAt, tt.currentState, nil, now)
+			if result.Decision != tt.wantDecision {
+				t.Errorf("EvaluateCleanup() decision = %v, want %v (reason: %s)",
+					result.Decision, tt.wantDecision, result.Reason)
+			}
+		})
+	}
+}
+
+func TestCleanupProcessor_EvaluateCleanup_Retry(t *testing.T) {
+	t.Parallel()
+	config := DefaultConfig()
+	processor := NewCleanupProcessor(config)
+	now := time.Now()
+	created := now.Add(-47 * time.Hour)
+
+	tests := []struct {
+		name         string
+		currentState string
+		retry        *CleanupRetry
+		wantDecision CleanupDecision
+	}{
+		{"user finished", "", &CleanupRetry{State: "breathing_running", Attempt: 1}, DecisionKeep},
+		{"user stuck", "breathing_running", &CleanupRetry{State: "breathing_running", Attempt: 1}, DecisionDelete},
+		{"user switched", "grounding_step_1", &CleanupRetry{State: "breathing_running", Attempt: 1}, DecisionRetry},
+		{"max retries", "grounding_step_1", &CleanupRetry{State: "breathing_running", Attempt: 6}, DecisionDelete},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			result := processor.EvaluateCleanup(created, tt.currentState, tt.retry, now)
 			if result.Decision != tt.wantDecision {
 				t.Errorf("EvaluateCleanup() decision = %v, want %v (reason: %s)",
 					result.Decision, tt.wantDecision, result.Reason)

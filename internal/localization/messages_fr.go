@@ -73,7 +73,8 @@ Votre pouls a ralenti et votre système nerveux s'est apaisé. Prenez encore que
 	// Grounding
 	GroundingIntro: `🌿 *Technique d'ancrage 5-4-3-2-1*
 
-Lors de l'anxiété et de la panique, l'attention se déplace vers la tête et les pensées négatives. Cette technique vous ramène au moment présent à travers 5 sens.
+Lors de l'anxiété et de la panique, l'attention se déplace vers la tête et les pensées négatives.
+Cette technique vous ramène au moment présent à travers 5 sens.
 
 *Comment ça marche :*
 5 étapes avec nombres décroissants :
@@ -127,7 +128,8 @@ Longue expiration pour relaxation profonde et préparation au sommeil.
 🚀 *Reset rapide 3-3-3* (~1 min)
 Soulagement rapide de la tension et du stress aigus.
 `,
-	GuidedCompletion: "✅ *Excellent !*\n\nVous avez terminé l'exercice \"%s\".\n\nVotre respiration est devenue plus régulière. Restez dans cet état encore un instant.",
+	GuidedCompletion: "✅ *Excellent !*\n\nVous avez terminé l'exercice \"%s\".\n\n" +
+		"Votre respiration est devenue plus régulière. Restez dans cet état encore un instant.",
 
 	// Guided breathing — pattern intros
 	PatternBoxIntro: `📦 *Respiration carrée 4-4-4-4*
@@ -165,7 +167,7 @@ Prêt à commencer ?`,
 
 	// Breathing patterns
 	PatternBoxName:        "Respiration carrée 4-4-4-4",
-	PatternBoxDesc:        "Focus et concentration",
+	PatternBoxDesc:        "Concentration et focalisation",
 	PatternRelaxingName:   "Relaxant 4-7-8",
 	PatternRelaxingDesc:   "Relaxation profonde et sommeil",
 	PatternEnergizingName: "Énergisant 4-4-6",
@@ -182,7 +184,8 @@ Prêt à commencer ?`,
 	// PMR
 	PMRIntro: `💪 *Relaxation musculaire progressive*
 
-Relaxation profonde de tout le corps par tension et relâchement conscients des muscles. Aide à relâcher les tensions physiques du stress et de l'anxiété.
+Relaxation profonde de tout le corps par tension et relâchement conscients des muscles.
+Aide à relâcher les tensions physiques du stress et de l'anxiété.
 
 *Comment ça marche :*
 1. Contractez un groupe musculaire pendant 7 secondes

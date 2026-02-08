@@ -125,7 +125,6 @@ func (m *mockStorage) ClearCleanupRetry(_ context.Context, userID int64) error {
 func TestWorkerProcessesInactiveUser(t *testing.T) {
 	t.Parallel()
 	storage := newMockStorage()
-	ctx := context.Background()
 
 	// Setup: user with old menu, no state (inactive)
 	userID := int64(123)
@@ -133,17 +132,10 @@ func TestWorkerProcessesInactiveUser(t *testing.T) {
 	storage.menuCreatedAt[userID] = time.Now().Add(-47 * time.Hour)
 	storage.cleanupQueue[userID] = time.Now().Add(-1 * time.Hour)
 
-	// Create worker with mock time
-	w := &Worker{
-		ctx:     ctx,
-		bot:     nil, // Will cause delete to fail, but that's ok for this test
-		storage: storage,
-		core:    session.NewCleanupProcessor(session.DefaultConfig()),
-		timeNow: time.Now,
-	}
+	processor := session.NewCleanupProcessor(session.DefaultConfig())
 
 	// Process - should decide to delete since user is inactive
-	result := w.core.EvaluateCleanup(
+	result := processor.EvaluateCleanup(
 		storage.menuCreatedAt[userID],
 		string(storage.states[userID]),
 		nil,

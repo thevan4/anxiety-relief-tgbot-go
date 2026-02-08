@@ -147,12 +147,12 @@ func (w *Worker) executeDecision(userID int64, result session.CleanupResult) {
 func (w *Worker) deleteMenuAndCleanup(userID int64) {
 	menuID, err := w.storage.GetMenuMessageID(w.ctx, userID)
 	if err == nil && menuID != 0 {
-		if err := w.bot.DeleteMessage(w.ctx, &telego.DeleteMessageParams{
+		if delErr := w.bot.DeleteMessage(w.ctx, &telego.DeleteMessageParams{
 			ChatID:    tu.ID(userID),
 			MessageID: menuID,
-		}); err != nil {
+		}); delErr != nil {
 			// Log but continue cleanup — message might already be deleted or too old
-			log.Printf("DEBUG: cleanup delete message %d for user %d: %v", menuID, userID, err)
+			log.Printf("DEBUG: cleanup delete message %d for user %d: %v", menuID, userID, delErr)
 		}
 	}
 

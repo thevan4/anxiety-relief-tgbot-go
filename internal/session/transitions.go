@@ -15,68 +15,16 @@ func NeedsRecreate(createdAt time.Time, ttl time.Duration) bool {
 // This encapsulates the business logic of when to edit vs recreate.
 //
 // Rules:
-//   - Holder → Menu: always Recreate (different message structure)
-//   - Menu → ExerciseIntro: Edit (same message)
-//   - Menu → Menu: Edit
-//   - ExerciseComplete → Menu: Edit
-//   - To LanguageSelect: Edit
-//   - From LanguageSelect: Edit
-//   - Unknown source: Send
+//   - Unknown source: Send (no existing message to modify)
+//   - From/to Holder: Recreate (holder is a separate message structure)
+//   - Everything else: Edit (same message, different content)
 func GetTransitionOp(from, to Screen) TransitionOp {
-	// Unknown source — need to send new message
 	if from == ScreenUnknown {
 		return OpSend
 	}
-
-	// Holder to anything else — recreate (holder is separate message)
-	if from == ScreenHolder {
+	if from == ScreenHolder || to == ScreenHolder {
 		return OpRecreate
 	}
-
-	// Same screen — edit
-	if from == to {
-		return OpEdit
-	}
-
-	// Menu transitions
-	if from == ScreenMenu {
-		switch to {
-		case ScreenExerciseIntro, ScreenExerciseRunning, ScreenLanguageSelect:
-			return OpEdit
-		case ScreenHolder:
-			return OpRecreate
-		}
-	}
-
-	// Exercise transitions
-	if from == ScreenExerciseIntro || from == ScreenExerciseRunning || from == ScreenExerciseComplete {
-		switch to {
-		case ScreenMenu, ScreenExerciseIntro, ScreenExerciseRunning, ScreenExerciseComplete, ScreenLanguageSelect:
-			return OpEdit
-		case ScreenHolder:
-			return OpRecreate
-		}
-	}
-
-	// Language select transitions
-	if from == ScreenLanguageSelect {
-		switch to {
-		case ScreenMenu, ScreenExerciseIntro, ScreenExerciseRunning, ScreenExerciseComplete:
-			return OpEdit
-		case ScreenHolder:
-			return OpRecreate
-		}
-	}
-
-	// Error screen — can always be edited to anything
-	if from == ScreenError {
-		if to == ScreenHolder {
-			return OpRecreate
-		}
-		return OpEdit
-	}
-
-	// Default: edit
 	return OpEdit
 }
 

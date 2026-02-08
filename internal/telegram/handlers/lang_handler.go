@@ -106,7 +106,10 @@ func (h *LangHandler) showLangSelectionRecreate(ctx context.Context, chatID, use
 	keyboard := &telego.InlineKeyboardMarkup{InlineKeyboard: buttons}
 
 	// Recreate message to extend its lifetime
-	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, m.LangSelectTitle, keyboard); err != nil {
+	_, err := RecreateMenuMessage(
+		ctx, h.bot, h.sessionStorage, chatID, userID, m.LangSelectTitle, keyboard,
+	)
+	if err != nil {
 		log.Printf("ERROR: recreate lang selection: %v", err)
 	}
 }

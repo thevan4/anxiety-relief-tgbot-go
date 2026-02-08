@@ -14,6 +14,8 @@ import (
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/statistic"
 )
 
+const cbGroundingComplete = "grounding_complete"
+
 // GroundingHandler handles the 5-4-3-2-1 grounding technique.
 type GroundingHandler struct {
 	ctx               context.Context
@@ -21,7 +23,7 @@ type GroundingHandler struct {
 	localizer         *localization.Localizer
 	statistics        statistic.Stats
 	sessionStorage    session.Storage
-	sessionManager    *session.SessionManager
+	sessionManager    *session.Manager
 	callbackProcessor *CallbackProcessor
 }
 
@@ -32,7 +34,7 @@ func NewGroundingHandler(
 	localizer *localization.Localizer,
 	statistics statistic.Stats,
 	sessionStorage session.Storage,
-	sessionManager *session.SessionManager,
+	sessionManager *session.Manager,
 	callbackProcessor *CallbackProcessor,
 ) *GroundingHandler {
 	return &GroundingHandler{
@@ -48,24 +50,7 @@ func NewGroundingHandler(
 
 // getLang returns user's language from session or default.
 func (h *GroundingHandler) getLang(ctx context.Context, userID int64) string {
-	lang, err := h.sessionStorage.GetLang(ctx, userID)
-	if err != nil || lang == "" {
-		return localization.DefaultLang
-	}
-	return lang
-}
-
-// getMainMenuInline returns localized main menu keyboard.
-func (h *GroundingHandler) getMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
-	return &telego.InlineKeyboardMarkup{
-		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: m.MenuBreathing, CallbackData: "menu_breathing"}},
-			{{Text: m.MenuGrounding, CallbackData: "menu_grounding"}},
-			{{Text: m.MenuGuided, CallbackData: "menu_guided"}},
-			{{Text: m.MenuPMR, CallbackData: "menu_pmr"}},
-			{{Text: m.MenuLang, CallbackData: "menu_lang"}},
-		},
-	}
+	return GetLang(ctx, h.sessionStorage, userID)
 }
 
 // HandleMenuSelect handles selection from main menu.
@@ -97,12 +82,10 @@ func (h *GroundingHandler) applyGroundingCallbackAction(
 	switch {
 	case strings.HasPrefix(data, "grounding_step_"):
 		stepNum := strings.TrimPrefix(data, "grounding_step_")
-		if stepNum == "1" || stepNum == "2" || stepNum == "3" || stepNum == "4" || stepNum == "5" {
-			h.showGroundingStep(ctx, chatID, userID, messageID, stepNum)
-		}
+		h.showGroundingStep(ctx, chatID, userID, messageID, stepNum)
 	case data == "grounding_back_intro":
 		h.showGroundingIntroEdit(ctx, chatID, userID, messageID)
-	case data == "grounding_complete":
+	case data == cbGroundingComplete:
 		h.showGroundingCompletion(ctx, chatID, userID, messageID)
 	case data == "grounding_repeat":
 		h.showGroundingIntroEdit(ctx, chatID, userID, messageID)
@@ -114,52 +97,22 @@ func (h *GroundingHandler) applyGroundingCallbackAction(
 }
 
 func (h *GroundingHandler) showGroundingIntro(ctx context.Context, chatID, userID int64) {
-	if err := h.sessionStorage.SetState(ctx, userID, session.StateGroundingStep1); err != nil {
-		log.Printf("ERROR: set state grounding step1: %v", err)
-	}
-
-	m := h.localizer.Get(h.getLang(ctx, userID))
-
-	keyboard := &telego.InlineKeyboardMarkup{
-		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{
-				{Text: m.Back, CallbackData: "grounding_cancel"},
-				{Text: m.Start, CallbackData: "grounding_step_1"},
-			},
-		},
-	}
-
-	// Recreate message to extend its lifetime
-	if _, err := RecreateMenuMessage(ctx, h.bot, h.sessionStorage, chatID, userID, m.GroundingIntro, keyboard); err != nil {
-		log.Printf("ERROR: recreate grounding intro: %v", err)
-	}
+	lang := h.getLang(ctx, userID)
+	m := h.localizer.Get(lang)
+	ShowIntroRecreate(
+		ctx, h.bot, h.sessionStorage, h.localizer, lang,
+		chatID, userID, session.StateGroundingStep1, m.GroundingIntro,
+		"grounding_cancel", "grounding_step_1", "grounding intro",
+	)
 }
 
 func (h *GroundingHandler) showGroundingIntroEdit(ctx context.Context, chatID, userID int64, messageID int) {
-	if err := h.sessionStorage.SetState(ctx, userID, session.StateGroundingStep1); err != nil {
-		log.Printf("ERROR: set state grounding step1: %v", err)
-	}
-
 	m := h.localizer.Get(h.getLang(ctx, userID))
-
-	keyboard := &telego.InlineKeyboardMarkup{
-		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{
-				{Text: m.Back, CallbackData: "grounding_cancel"},
-				{Text: m.Start, CallbackData: "grounding_step_1"},
-			},
-		},
-	}
-
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.GroundingIntro,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit grounding intro: %v", err)
-	}
+	SetStateAndEditIntro(
+		ctx, h.bot, h.sessionStorage, chatID, userID, messageID,
+		session.StateGroundingStep1, m.GroundingIntro,
+		"grounding_cancel", "grounding_step_1", m, "grounding intro edit",
+	)
 }
 
 func getGroundingStepConfig() []struct {
@@ -213,7 +166,7 @@ func (h *GroundingHandler) showGroundingStep(
 	var keyboard *telego.InlineKeyboardMarkup
 	var nextCB string
 	if nextStep == "complete" {
-		nextCB = "grounding_complete"
+		nextCB = cbGroundingComplete
 	} else {
 		nextCB = "grounding_step_" + nextStep
 	}
@@ -257,61 +210,22 @@ func (h *GroundingHandler) getLocalizedStep(idx int, m localization.Messages) (s
 
 func (h *GroundingHandler) showGroundingCompletion(ctx context.Context, chatID, userID int64, messageID int) {
 	m := h.localizer.Get(h.getLang(ctx, userID))
-
-	keyboard := &telego.InlineKeyboardMarkup{
-		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{
-				{Text: m.Repeat, CallbackData: "grounding_repeat"},
-				{Text: m.Done, CallbackData: "grounding_done"},
-			},
-		},
-	}
-
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.GroundingCompletion,
-		ParseMode:   "Markdown",
-		ReplyMarkup: keyboard,
-	}); err != nil {
-		log.Printf("ERROR: edit grounding completion: %v", err)
-	}
+	EditCompletionScreen(
+		ctx, h.bot, chatID, messageID, m.GroundingCompletion,
+		"grounding_repeat", "grounding_done", m, "edit grounding completion",
+	)
 }
 
 func (h *GroundingHandler) completeGrounding(ctx context.Context, chatID, userID int64, messageID int) {
-	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
-		log.Printf("ERROR: clear state: %v", err)
-	}
-
-	m := h.localizer.Get(h.getLang(ctx, userID))
-
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.MainMenuText,
-		ParseMode:   "Markdown",
-		ReplyMarkup: h.getMainMenuInline(m),
-	}); err != nil {
-		log.Printf("ERROR: edit grounding complete: %v", err)
-	}
+	ClearAndShowMainMenu(
+		ctx, h.bot, h.sessionStorage, h.localizer, h.getLang(ctx, userID),
+		chatID, userID, messageID, "edit grounding complete",
+	)
 }
 
 func (h *GroundingHandler) cancelGrounding(ctx context.Context, chatID, userID int64, messageID int) {
-	if err := h.sessionStorage.ClearState(ctx, userID); err != nil {
-		log.Printf("ERROR: clear state: %v", err)
-	}
-
-	m := h.localizer.Get(h.getLang(ctx, userID))
-
-	if _, err := h.bot.EditMessageText(ctx, &telego.EditMessageTextParams{
-		ChatID:      tu.ID(chatID),
-		MessageID:   messageID,
-		Text:        m.MainMenuText,
-		ParseMode:   "Markdown",
-		ReplyMarkup: h.getMainMenuInline(m),
-	}); err != nil {
-		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
-			log.Printf("ERROR: edit grounding cancel: %v", err)
-		}
-	}
+	CancelAndShowMainMenu(
+		ctx, h.bot, h.sessionStorage, h.localizer, h.getLang(ctx, userID),
+		chatID, userID, messageID, "edit grounding cancel",
+	)
 }
