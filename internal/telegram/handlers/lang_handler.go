@@ -45,24 +45,7 @@ func NewLangHandler(
 
 // getLang returns user's language from session or default.
 func (h *LangHandler) getLang(ctx context.Context, userID int64) string {
-	lang, err := h.sessionStorage.GetLang(ctx, userID)
-	if err != nil || lang == "" {
-		return localization.DefaultLang
-	}
-	return lang
-}
-
-// getMainMenuInline returns localized main menu keyboard.
-func (h *LangHandler) getMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
-	return &telego.InlineKeyboardMarkup{
-		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: m.MenuBreathing, CallbackData: "menu_breathing"}},
-			{{Text: m.MenuGrounding, CallbackData: "menu_grounding"}},
-			{{Text: m.MenuGuided, CallbackData: "menu_guided"}},
-			{{Text: m.MenuPMR, CallbackData: "menu_pmr"}},
-			{{Text: m.MenuLang, CallbackData: "menu_lang"}},
-		},
-	}
+	return GetLang(ctx, h.sessionStorage, userID)
 }
 
 // HandleMenuSelect handles selection from main menu.
@@ -159,7 +142,7 @@ func (h *LangHandler) setLanguage(ctx context.Context, chatID, userID int64, mes
 		MessageID:   messageID,
 		Text:        m.MainMenuText,
 		ParseMode:   "Markdown",
-		ReplyMarkup: h.getMainMenuInline(m),
+		ReplyMarkup: GetMainMenuInline(m),
 	}); err != nil {
 		log.Printf("ERROR: edit after lang set: %v", err)
 	}
@@ -173,7 +156,7 @@ func (h *LangHandler) cancelSelection(ctx context.Context, chatID, userID int64,
 		MessageID:   messageID,
 		Text:        m.MainMenuText,
 		ParseMode:   "Markdown",
-		ReplyMarkup: h.getMainMenuInline(m),
+		ReplyMarkup: GetMainMenuInline(m),
 	}); err != nil {
 		if !HandleEditError(ctx, h.bot, err, chatID, messageID) {
 			log.Printf("ERROR: edit lang cancel: %v", err)

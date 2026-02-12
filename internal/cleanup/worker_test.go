@@ -41,15 +41,6 @@ func (m *mockStorage) ClearState(_ context.Context, userID int64) error {
 	return nil
 }
 
-func (m *mockStorage) SetMessageID(_ context.Context, userID int64, messageID int) error {
-	m.menuIDs[userID] = messageID
-	return nil
-}
-
-func (m *mockStorage) GetMessageID(_ context.Context, userID int64) (int, error) {
-	return m.menuIDs[userID], nil
-}
-
 func (m *mockStorage) SetHolderMessageID(_ context.Context, _ int64, _ int) error { return nil }
 func (m *mockStorage) GetHolderMessageID(_ context.Context, _ int64) (int, error) { return 0, nil }
 func (m *mockStorage) ClearHolderMessageID(_ context.Context, _ int64) error      { return nil }

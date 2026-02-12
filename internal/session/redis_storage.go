@@ -76,20 +76,6 @@ func (r *RedisStorage) ClearState(ctx context.Context, userID int64) error {
 	return r.client.Del(ctx, stateKey).Err()
 }
 
-// SetMessageID stores Telegram message ID for user session.
-//
-// Deprecated: Use SetMenuMessageID instead.
-func (r *RedisStorage) SetMessageID(ctx context.Context, userID int64, messageID int) error {
-	return r.SetMenuMessageID(ctx, userID, messageID)
-}
-
-// GetMessageID retrieves stored Telegram message ID for user. Returns 0 if not found.
-//
-// Deprecated: Use GetMenuMessageID instead.
-func (r *RedisStorage) GetMessageID(ctx context.Context, userID int64) (int, error) {
-	return r.GetMenuMessageID(ctx, userID)
-}
-
 // SetHolderMessageID stores holder (welcome) message ID.
 func (r *RedisStorage) SetHolderMessageID(ctx context.Context, userID int64, messageID int) error {
 	key := fmt.Sprintf("holder:%d", userID)

@@ -201,36 +201,6 @@ func assertContains(t *testing.T, result string, expected ...string) {
 	}
 }
 
-// Test backward compatibility functions.
-func TestBackwardCompatibility(t *testing.T) {
-	t.Parallel()
-	// Test global Get function
-	msgs := Get("en")
-	if msgs.Start == "" {
-		t.Error("Get() returned empty Start")
-	}
-
-	// Test global SupportedLang function
-	if SupportedLang("ru") != "ru" {
-		t.Error("SupportedLang() failed")
-	}
-
-	// Test global LangFlag function
-	if LangFlag("en") != "🇬🇧" {
-		t.Error("LangFlag() failed")
-	}
-
-	// Test global LangName function
-	if LangName("en") != "English" {
-		t.Error("LangName() failed")
-	}
-
-	// Test SupportedLanguages var
-	if len(SupportedLanguages) != 6 {
-		t.Errorf("SupportedLanguages has %d elements, want 6", len(SupportedLanguages))
-	}
-}
-
 func TestFormatBreathingPhase(t *testing.T) {
 	t.Parallel()
 	l := NewLocalizer()

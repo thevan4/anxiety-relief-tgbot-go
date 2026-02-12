@@ -93,19 +93,6 @@ func (bh *BotHandler) getLang(userID int64) string {
 	return lang
 }
 
-// getMainMenuInline returns localized main menu keyboard.
-func (bh *BotHandler) getMainMenuInline(m localization.Messages) *telego.InlineKeyboardMarkup {
-	return &telego.InlineKeyboardMarkup{
-		InlineKeyboard: [][]telego.InlineKeyboardButton{
-			{{Text: m.MenuBreathing, CallbackData: "menu_breathing"}},
-			{{Text: m.MenuGrounding, CallbackData: "menu_grounding"}},
-			{{Text: m.MenuGuided, CallbackData: "menu_guided"}},
-			{{Text: m.MenuPMR, CallbackData: "menu_pmr"}},
-			{{Text: m.MenuLang, CallbackData: "menu_lang"}},
-		},
-	}
-}
-
 // deleteOldMessagesResult contains results of deleting old messages.
 type deleteOldMessagesResult struct {
 	holderExisted bool
@@ -264,7 +251,7 @@ func (bh *BotHandler) sendMenuMessage(chatID, userID int64) error {
 	sentMsg, err := bh.bot.SendMessage(bh.ctx, tu.Message(
 		tu.ID(chatID),
 		m.MainMenuText,
-	).WithParseMode("Markdown").WithReplyMarkup(bh.getMainMenuInline(m)))
+	).WithParseMode("Markdown").WithReplyMarkup(handlers.GetMainMenuInline(m)))
 	if err != nil {
 		log.Printf("ERROR: send menu message: %v", err)
 		return err
@@ -316,7 +303,7 @@ func (bh *BotHandler) showMainMenu(chatID, userID int64, messageID int) {
 		MessageID:   messageID,
 		Text:        m.MainMenuText,
 		ParseMode:   "Markdown",
-		ReplyMarkup: bh.getMainMenuInline(m),
+		ReplyMarkup: handlers.GetMainMenuInline(m),
 	}); err != nil {
 		if !handlers.HandleEditError(bh.ctx, bh.bot, err, chatID, messageID) {
 			log.Printf("ERROR: edit to main menu: %v", err)

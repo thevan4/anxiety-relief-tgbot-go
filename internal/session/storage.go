@@ -12,12 +12,6 @@ type Storage interface {
 	GetState(ctx context.Context, userID int64) (State, error)
 	ClearState(ctx context.Context, userID int64) error
 
-	// Message IDs (legacy - kept for backward compatibility).
-	//
-	// Deprecated: Use SetHolderMessageID/SetMenuMessageID instead.
-	SetMessageID(ctx context.Context, userID int64, messageID int) error
-	GetMessageID(ctx context.Context, userID int64) (int, error)
-
 	// Holder message (приветствие после /start).
 	SetHolderMessageID(ctx context.Context, userID int64, messageID int) error
 	GetHolderMessageID(ctx context.Context, userID int64) (int, error)
