@@ -44,7 +44,7 @@ var messagesUK = Messages{
 💪 М'язова релаксація — зняття напруження`,
 	MenuBreathing: "🌬️ Просте дихання 2 хв",
 	MenuGrounding: "🌿 Заземлення 3-5 хв",
-	MenuGuided:    "🧘 Патерни дихання 1-2 хв",
+	MenuGuided:    "🧘 Кероване дихання 1-2 хв",
 	MenuPMR:       "💪 М'язи 4 хв",
 	MenuLang:      "🌐 Мова",
 

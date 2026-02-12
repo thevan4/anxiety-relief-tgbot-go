@@ -44,7 +44,7 @@ Datenschutz: Der Bot speichert keine persönlichen Daten.
 💪 Muskelentspannung — Spannung lösen`,
 	MenuBreathing: "🌬️ Einfache Atmung 2 Min",
 	MenuGrounding: "🌿 Erdung 3-5 Min",
-	MenuGuided:    "🧘 Atemmuster 1-2 Min",
+	MenuGuided:    "🧘 Geführte Atmung 1-2 Min",
 	MenuPMR:       "💪 Muskeln 4 Min",
 	MenuLang:      "🌐 Sprache",
 

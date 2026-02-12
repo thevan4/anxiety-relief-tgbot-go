@@ -44,7 +44,7 @@ var messagesRU = Messages{
 💪 Мышечная релаксация — снятие напряжения`,
 	MenuBreathing: "🌬️ Простое дыхание 2 мин",
 	MenuGrounding: "🌿 Якорение 3-5 мин",
-	MenuGuided:    "🧘 Паттерны дыхания 1-2 мин",
+	MenuGuided:    "🧘 Управляемое дыхание 1-2 мин",
 	MenuPMR:       "💪 Мышечная 4 мин",
 	MenuLang:      "🌐 Язык",
 

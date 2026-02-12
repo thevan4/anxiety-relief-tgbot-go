@@ -44,7 +44,7 @@ Privacy: the bot doesn't store personal data.
 💪 Muscle relaxation — release tension`,
 	MenuBreathing: "🌬️ Simple breathing 2 min",
 	MenuGrounding: "🌿 Grounding 3-5 min",
-	MenuGuided:    "🧘 Breathing patterns 1-2 min",
+	MenuGuided:    "🧘 Guided breathing 1-2 min",
 	MenuPMR:       "💪 Muscles 4 min",
 	MenuLang:      "🌐 Language",
 

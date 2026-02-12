@@ -44,7 +44,7 @@ Confidentialité : le bot ne stocke pas de données personnelles.
 💪 Relaxation musculaire — relâcher la tension`,
 	MenuBreathing: "🌬️ Respiration simple 2 min",
 	MenuGrounding: "🌿 Ancrage 3-5 min",
-	MenuGuided:    "🧘 Techniques respiratoires 1-2 min",
+	MenuGuided:    "🧘 Respiration guidée 1-2 min",
 	MenuPMR:       "💪 Muscles 4 min",
 	MenuLang:      "🌐 Langue",
 

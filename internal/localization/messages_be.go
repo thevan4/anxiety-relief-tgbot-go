@@ -44,7 +44,7 @@ var messagesBE = Messages{
 💪 Мышачная рэлаксацыя — зняцце напружання`,
 	MenuBreathing: "🌬️ Простае дыханне 2 хв",
 	MenuGrounding: "🌿 Зазямленне 3-5 хв",
-	MenuGuided:    "🧘 Патэрны дыхання 1-2 хв",
+	MenuGuided:    "🧘 Кіраванае дыханне 1-2 хв",
 	MenuPMR:       "💪 Мышцы 4 хв",
 	MenuLang:      "🌐 Мова",
 
