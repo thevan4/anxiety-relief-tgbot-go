@@ -30,7 +30,7 @@ var messagesRU = Messages{
 👇 Нажмите кнопку ниже, чтобы начать`,
 
 	// Session expired
-	SessionExpired: "Сессия истекла. Нажмите /start",
+	SessionExpired: "Сессия истекла. Отправьте /start или нажмите кнопку «Начать» в чате.",
 
 	// Main menu
 	MainMenuText: `Выберите технику для работы с тревожностью:

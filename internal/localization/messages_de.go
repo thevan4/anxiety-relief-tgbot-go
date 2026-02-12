@@ -30,7 +30,7 @@ Datenschutz: Der Bot speichert keine persönlichen Daten.
 👇 Drücken Sie die Taste unten, um zu beginnen`,
 
 	// Session expired
-	SessionExpired: "Sitzung abgelaufen. Drücken Sie /start",
+	SessionExpired: "Sitzung abgelaufen. Senden Sie /start oder tippen Sie auf die Schaltfläche „Start“ im Chat.",
 
 	// Main menu
 	MainMenuText: `Wählen Sie eine Technik zur Angstbewältigung:

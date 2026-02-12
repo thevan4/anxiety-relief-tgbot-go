@@ -30,7 +30,7 @@ var messagesBE = Messages{
 👇 Націсніце кнопку ніжэй, каб пачаць`,
 
 	// Session expired
-	SessionExpired: "Сесія скончылася. Націсніце /start",
+	SessionExpired: "Сесія скончылася. Дашліце /start або націсніце кнопку «Пачаць» у чаце.",
 
 	// Main menu
 	MainMenuText: `Абярыце тэхніку для працы з трывожнасцю:
