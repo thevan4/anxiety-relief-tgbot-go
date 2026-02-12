@@ -56,13 +56,13 @@ func (cp *CallbackProcessor) Extract(cb telego.CallbackQuery) *CallbackInfo {
 		Data:      cb.Data,
 	}
 
-	// Answer callback; if too old - delete message
-	if !AnswerCallbackOrDelete(cp.ctx, cp.bot, cb.ID, info.ChatID, info.MessageID) {
+	// Callback guard: check if menu exists for this user (before answering so we can show alert once)
+	if !cp.hasActiveMenu(info.UserID, info.ChatID, info.MessageID, cb.ID) {
 		return nil
 	}
 
-	// Callback guard: check if menu exists for this user
-	if !cp.hasActiveMenu(info.UserID, info.ChatID, info.MessageID, cb.ID) {
+	// Answer callback; if too old - stop processing
+	if !AnswerCallbackOrDelete(cp.ctx, cp.bot, cb.ID, info.ChatID, info.MessageID) {
 		return nil
 	}
 
@@ -91,9 +91,8 @@ func (cp *CallbackProcessor) hasActiveMenu(userID, chatID int64, messageID int, 
 	return true
 }
 
-// showSessionExpired shows alert and deletes stale message.
+// showSessionExpired shows alert (one answer per callback; no delete — old messages often can't be deleted).
 func (cp *CallbackProcessor) showSessionExpired(callbackID string, chatID int64, messageID int, userID int64) {
-	// Get localized message
 	lang, _ := cp.storage.GetLang(cp.ctx, userID)
 	m := cp.localizer.Get(lang)
 
@@ -102,5 +101,4 @@ func (cp *CallbackProcessor) showSessionExpired(callbackID string, chatID int64,
 		Text:            m.SessionExpired,
 		ShowAlert:       true,
 	})
-	DeleteMessage(cp.ctx, cp.bot, chatID, messageID)
 }

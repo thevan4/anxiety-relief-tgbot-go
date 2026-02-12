@@ -14,8 +14,8 @@ import (
 
 const pausePollInterval = 500 * time.Millisecond
 
-// AnswerCallbackOrDelete answers callback query. If "too old" error occurs, deletes the message.
-// Returns true if callback was answered successfully, false if message was deleted (stop processing).
+// AnswerCallbackOrDelete answers callback query. If "too old" error occurs, returns false (stop processing).
+// Does not delete message on "too old" — delete often fails with 400 for old messages.
 func AnswerCallbackOrDelete(ctx context.Context, bot *telego.Bot, callbackID string, chatID int64, messageID int) bool {
 	err := bot.AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
 		CallbackQueryID: callbackID,
@@ -24,7 +24,6 @@ func AnswerCallbackOrDelete(ctx context.Context, bot *telego.Bot, callbackID str
 		return true
 	}
 	if IsCallbackTooOldError(err) {
-		DeleteMessage(ctx, bot, chatID, messageID)
 		return false
 	}
 	return true
