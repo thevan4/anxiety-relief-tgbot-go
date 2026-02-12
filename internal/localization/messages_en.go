@@ -30,7 +30,7 @@ Privacy: the bot doesn't store personal data.
 👇 Press the button below to start`,
 
 	// Session expired
-	SessionExpired: "Session expired. Send /start or tap the \"Start\" button in the chat.",
+	SessionExpired: "Current session expired. Send /start or tap the \"Start\" button in the chat.",
 
 	// Main menu
 	MainMenuText: `Choose a technique to manage anxiety:

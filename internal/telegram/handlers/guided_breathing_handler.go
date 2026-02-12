@@ -326,8 +326,13 @@ func (h *GuidedBreathingHandler) runPhase(
 			Text:        text,
 			ParseMode:   "Markdown",
 			ReplyMarkup: keyboard,
-		}); err != nil && !IsMessageNotModifiedError(err) {
-			log.Printf("ERROR: edit guided breathing message: %v", err)
+		}); err != nil {
+			if IsMessageNotFoundError(err) {
+				return false
+			}
+			if !IsMessageNotModifiedError(err) {
+				log.Printf("ERROR: edit guided breathing message: %v", err)
+			}
 		}
 
 		timer := time.NewTimer(1 * time.Second)

@@ -204,8 +204,13 @@ func (h *PMRHandler) runPhaseWithProgress(
 			Text:        text,
 			ParseMode:   "Markdown",
 			ReplyMarkup: keyboard,
-		}); err != nil && !IsMessageNotModifiedError(err) {
-			log.Printf("ERROR: edit pmr phase message: %v", err)
+		}); err != nil {
+			if IsMessageNotFoundError(err) {
+				return false
+			}
+			if !IsMessageNotModifiedError(err) {
+				log.Printf("ERROR: edit pmr phase message: %v", err)
+			}
 		}
 
 		timer := time.NewTimer(1 * time.Second)

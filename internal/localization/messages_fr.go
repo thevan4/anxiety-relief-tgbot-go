@@ -30,7 +30,7 @@ Confidentialité : le bot ne stocke pas de données personnelles.
 👇 Appuyez sur le bouton ci-dessous pour commencer`,
 
 	// Session expired
-	SessionExpired: "Session expirée. Envoyez /start ou appuyez sur le bouton « Commencer » dans le chat.",
+	SessionExpired: "Session en cours expirée. Envoyez /start ou appuyez sur le bouton « Commencer » dans le chat.",
 
 	// Main menu
 	MainMenuText: `Choisissez une technique pour gérer l'anxiété :

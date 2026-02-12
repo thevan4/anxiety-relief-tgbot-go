@@ -47,6 +47,15 @@ func IsMessageNotModifiedError(err error) bool {
 	return strings.Contains(err.Error(), "message is not modified")
 }
 
+// IsMessageNotFoundError checks if the error is "message to edit not found" (e.g. user deleted the message).
+func IsMessageNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	s := err.Error()
+	return strings.Contains(s, "message to edit not found") || strings.Contains(s, "message not found")
+}
+
 // HandleEditError checks edit error and deletes message if it's "not modified" error.
 // Returns true if error was handled (message deleted), false otherwise.
 func HandleEditError(ctx context.Context, bot *telego.Bot, err error, chatID int64, messageID int) bool {
