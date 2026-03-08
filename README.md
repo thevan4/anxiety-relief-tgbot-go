@@ -6,6 +6,8 @@
 
 *Anxiety support — in a Telegram bot*
 
+https://t.me/anxietyhelp_bot
+
 </div>
 
 ## Techniques
