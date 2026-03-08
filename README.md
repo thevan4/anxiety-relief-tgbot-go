@@ -4,60 +4,59 @@
 
 # Anxiety Relief Bot
 
-*Помощь при тревоге — в Telegram-боте*
+*Anxiety support — in a Telegram bot*
 
 </div>
 
-## Техники
+## Techniques
 
-| | Техника | Время | Что делает |
+| | Technique | Duration | What it does |
 |:---:|:---|:---:|:---|
-| 🌬️ | **Простое дыхание** | 2 мин | Успокоение нервной системы |
-| 🌿 | **Якорение** | 3-5 мин | Возврат в настоящий момент |
-| 🧘 | **Паттерные дыхания** | 1-2 мин | 4 паттерна: коробочное 4-4-4-4, расслабляющее 4-7-8, энергичное 4-4-6, быстрый сброс 3-3-3 |
-| 💪 | **Мышечная релаксация** | 4 мин | Глубокое расслабление всего тела |
+| 🌬️ | **Simple Breathing** | 2 min | Calms the nervous system |
+| 🌿 | **Grounding** | 3-5 min | Returns attention to the present moment |
+| 🧘 | **Breathing Patterns** | 1-2 min | 4 patterns: box 4-4-4-4, relaxing 4-7-8, energizing 4-4-6, quick reset 3-3-3 |
+| 💪 | **Muscle Relaxation** | 4 min | Deep relaxation of the entire body |
 
-## Принципы
+## Principles
 
-**Бесплатно** — без подписок, без платных функций, без ограничений.
+**Free** — no subscriptions, no paid features, no limits.
 
-**Без рекламы** — никаких баннеров и интеграций.
+**No ads** — no banners or integrations.
 
-**Без слежки** — никаких персональных данных. Хранится только текущее состояние сессии (Redis, TTL 5 мин). После завершения — ничего не остаётся.
+**No tracking** — no personal data. Only the current session state is stored (Redis, TTL 5 min). Nothing remains after the session ends.
 
-**Без уведомлений** — бот не пишет первым и не присылает напоминания.
+**No notifications** — the bot never messages first and never sends reminders.
 
-**Открытый код** — всё можно проверить самому.
+**Open source** — everything can be verified.
 
-## Языки
+## Languages
 
-🇷🇺 RU · 🇬🇧 EN · 🇩🇪 DE · 🇫🇷 FR · 🇺🇦 UK · 🇧🇾 BE
+🇬🇧 EN · 🇩🇪 DE · 🇫🇷 FR · 🇷🇺 RU · 🇧🇾 BE · 🇺🇦 UK
 
+## Technical Info
 
-## Техническая информация
-
-### Структура проекта
+### Project structure
 
 ```
 internal/
-├── localization/   # Переводы (6 языков)
-├── session/        # State machine — состояние пользователя (Redis)
-├── techniques/     # Данные упражнений: фазы, тайминги, тексты
-├── statistic/      # Статистика
-├── cleanup/        # Очистка устаревших сессий
+├── localization/   # Translations (6 languages)
+├── session/        # State machine — user state (Redis)
+├── techniques/     # Exercise data: phases, timings, texts
+├── statistic/      # Statistics
+├── cleanup/        # Stale session cleanup
 └── telegram/
-    ├── handlers/   # Обработчики: breathing, grounding, guided_breathing, pmr
-    └── messages/   # Форматирование сообщений
+    ├── handlers/   # Handlers: breathing, grounding, guided_breathing, pmr
+    └── messages/   # Message formatting
 ```
 
-### Запуск локально
+### Run locally
 
 ```bash
-# BOT_TOKEN= вписать токен бота в .env
+# Set BOT_TOKEN in .env
 go run ./cmd/main.go
 ```
 
-### Линтер
+### Linter
 
 ```bash
 golangci-lint run --config .golangci.pipeline.yaml ./...
@@ -65,4 +64,4 @@ golangci-lint run --config .golangci.pipeline.yaml ./...
 
 ## Disclaimer
 
-Бот не заменяет работу с психологом. Если тревога мешает жить — обратитесь к специалисту.
+This bot is not a substitute for professional mental health support. If anxiety is affecting your life — please consult a specialist.
