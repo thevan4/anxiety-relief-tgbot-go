@@ -33,23 +33,23 @@ Privacy: the bot doesn't store personal data.
 	SessionExpired: "Current session expired. Send /start or tap the \"Start\" button in the chat.",
 
 	// Main menu
-	MainMenuText: `Choose a technique to manage anxiety:
+	MainMenuText: `Choose a technique:
 
 *Quick (2-5 min):*
 🌬️ Breathing — calm your nervous system
 🌿 Grounding — return to the present moment
 
 *Advanced (5-15 min):*
-🧘 Guided breathing — various patterns
-💪 Muscle relaxation — release tension`,
+🧘 Breathing patterns
+💪 Muscle relaxation`,
 	MenuBreathing: "🌬️ Simple breathing 2 min",
 	MenuGrounding: "🌿 Grounding 3-5 min",
-	MenuGuided:    "🧘 Guided breathing 1-2 min",
-	MenuPMR:       "💪 Muscles 4 min",
+	MenuGuided:    "🧘 Breathing patterns 1-2 min",
+	MenuPMR:       "💪 Muscle Relaxation 4 min",
 	MenuLang:      "🌐 Language",
 
 	// Breathing
-	BreathingIntro: `🌬️ *2-Minute Breathing*
+	BreathingIntro: `🌬️ *Simple Breathing*
 
 A simple exercise to calm your nervous system.
 
@@ -61,14 +61,10 @@ A simple exercise to calm your nervous system.
 5️⃣ Repeat 8 cycles (~2 minutes)
 
 I'll guide you through each step. Ready to begin?`,
-	BreathingCompletion: `✅ *Great job!*
-
-You've completed the breathing exercise.
-
-Your heart rate has slowed and your nervous system has calmed down. Take a few more gentle breaths.`,
-	BreathingInhale: "Inhale",
-	BreathingHold:   "Hold",
-	BreathingExhale: "Exhale",
+	BreathingCompletion: "✅ *Simple Breathing*\n\nDone. You can move on.",
+	BreathingInhale:     "Inhale",
+	BreathingHold:       "Hold",
+	BreathingExhale:     "Exhale",
 
 	// Grounding
 	GroundingIntro: "🌿 *5-4-3-2-1 Grounding Technique*\n\n" +
@@ -86,12 +82,8 @@ Your heart rate has slowed and your nervous system has calmed down. Take a few m
 
 *Time:* ~3-5 minutes
 
-Ready to begin?`,
-	GroundingCompletion: `✅ *Great job!*
-
-You've completed the 5-4-3-2-1 grounding technique.
-
-You're back in the here and now. Your attention has returned to the present moment.`,
+I'll guide you every step of the way. Ready to begin?`,
+	GroundingCompletion: "✅ *Grounding 5-4-3-2-1*\n\nYou handled something difficult.",
 
 	// Grounding steps
 	GroundingStep1Title: "Step 1: Sight",
@@ -107,7 +99,7 @@ You're back in the here and now. Your attention has returned to the present mome
 	GroundingStep5Desc:  "Name 1 taste you can sense in your mouth.\n\nIf nothing — recall your favorite taste.",
 
 	// Guided breathing
-	GuidedIntro: `🧘 *Guided Breathing*
+	GuidedIntro: `🧘 *Breathing Patterns*
 
 Different breathing patterns for different goals — from focus to relaxation.
 
@@ -125,8 +117,7 @@ Energy and mental clarity, relief from fatigue.
 🚀 *Quick Reset 3-3-3* (~1 min)
 Fast relief from acute tension and stress.
 `,
-	GuidedCompletion: "✅ *Great job!*\n\nYou've completed the \"%s\" exercise.\n\n" +
-		"Your breathing has become steadier. Stay with this feeling for a moment.",
+	GuidedCompletion: "✅ *Breathing Patterns*\n\nDone. You can move on.",
 
 	// Guided breathing — pattern intros
 	PatternBoxIntro: `📦 *Box Breathing 4-4-4-4*
@@ -136,7 +127,7 @@ Used by military and athletes for quick focus.
 
 *6 cycles, ~1.5 minutes*
 
-Ready to begin?`,
+I'll guide you through every cycle. Ready to begin?`,
 	PatternRelaxingIntro: `😴 *Relaxing 4-7-8*
 
 Inhale 4 sec, hold 7 sec, long exhale 8 sec.
@@ -144,7 +135,7 @@ The long exhale activates the parasympathetic system — deep relaxation and sle
 
 *4 cycles, ~1.5 minutes*
 
-Ready to begin?`,
+I'll guide you through every cycle. Ready to begin?`,
 	PatternEnergizingIntro: `⚡ *Energizing 4-4-6*
 
 Inhale 4 sec, hold 4 sec, exhale 6 sec.
@@ -152,7 +143,7 @@ Energy and mental clarity, quick relief from fatigue.
 
 *6 cycles, ~1.5 minutes*
 
-Ready to begin?`,
+I'll guide you through every cycle. Ready to begin?`,
 	PatternQuickIntro: `🚀 *Quick Reset 3-3-3*
 
 Inhale 3 sec, hold 3 sec, exhale 3 sec.
@@ -160,7 +151,7 @@ Minimal pattern for fast relief from acute tension.
 
 *5 cycles, ~1 minute*
 
-Ready to begin?`,
+I'll guide you through every cycle. Ready to begin?`,
 
 	// Breathing patterns
 	PatternBoxName:        "Box Breathing 4-4-4-4",
@@ -192,14 +183,10 @@ Ready to begin?`,
 *%d muscle groups* — from hands to feet.
 *Time:* ~4 minutes
 
-Ready to begin?`,
-	PMRTense: "🔴 *TENSE*\n\n%s",
-	PMRRelax: "🟢 *RELAX*\n\n%s",
-	PMRCompletion: `✅ *Great job!*
-
-You've completed progressive muscle relaxation.
-
-Your body is now fully relaxed. Sit for another minute, enjoying this state.`,
+I'll guide you through every muscle group. Ready to begin?`,
+	PMRTense:      "🔴 *TENSE*\n\n%s",
+	PMRRelax:      "🟢 *RELAX*\n\n%s",
+	PMRCompletion: "✅ *Muscle Relaxation*\n\nThe body worked. Now just rest.",
 
 	// PMR muscle groups
 	PMRHandsName:  "Hands",

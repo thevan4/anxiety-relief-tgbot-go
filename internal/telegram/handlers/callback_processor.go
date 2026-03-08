@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/mymmrac/telego"
+	tu "github.com/mymmrac/telego/telegoutil"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/localization"
 	"github.com/thevan4/anxiety-relief-tgbot-go/internal/session"
 )
@@ -91,14 +92,41 @@ func (cp *CallbackProcessor) hasActiveMenu(userID, chatID int64, messageID int, 
 	return true
 }
 
-// showSessionExpired shows alert (one answer per callback; no delete — old messages often can't be deleted).
+// showSessionExpired answers the callback and sends a fresh holder message.
 func (cp *CallbackProcessor) showSessionExpired(callbackID string, chatID int64, messageID int, userID int64) {
+	_ = cp.bot.AnswerCallbackQuery(cp.ctx, &telego.AnswerCallbackQueryParams{
+		CallbackQueryID: callbackID,
+	})
+
+	_ = cp.bot.DeleteMessage(cp.ctx, &telego.DeleteMessageParams{
+		ChatID:    tu.ID(chatID),
+		MessageID: messageID,
+	})
+
+	cp.sendHolder(chatID, userID)
+}
+
+// sendHolder sends a new holder (welcome) message with the Start button.
+func (cp *CallbackProcessor) sendHolder(chatID, userID int64) {
 	lang, _ := cp.storage.GetLang(cp.ctx, userID)
 	m := cp.localizer.Get(lang)
 
-	_ = cp.bot.AnswerCallbackQuery(cp.ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: callbackID,
-		Text:            m.SessionExpired,
-		ShowAlert:       true,
-	})
+	keyboard := &telego.InlineKeyboardMarkup{
+		InlineKeyboard: [][]telego.InlineKeyboardButton{
+			{{Text: m.Start, CallbackData: "holder_start"}},
+		},
+	}
+
+	sentMsg, err := cp.bot.SendMessage(cp.ctx, tu.Message(
+		tu.ID(chatID),
+		m.HolderText,
+	).WithParseMode("Markdown").WithReplyMarkup(keyboard))
+	if err != nil {
+		log.Printf("ERROR: send holder on session expired: %v", err)
+		return
+	}
+
+	if setErr := cp.storage.SetHolderMessageID(cp.ctx, userID, sentMsg.MessageID); setErr != nil {
+		log.Printf("ERROR: save holder message id on session expired: %v", setErr)
+	}
 }

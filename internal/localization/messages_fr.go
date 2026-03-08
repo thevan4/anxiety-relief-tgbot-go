@@ -33,23 +33,23 @@ Confidentialité : le bot ne stocke pas de données personnelles.
 	SessionExpired: "Session en cours expirée. Envoyez /start ou appuyez sur le bouton « Commencer » dans le chat.",
 
 	// Main menu
-	MainMenuText: `Choisissez une technique pour gérer l'anxiété :
+	MainMenuText: `Choisissez une technique :
 
 *Rapides (2-5 min) :*
 🌬️ Respiration — calmer le système nerveux
 🌿 Ancrage — revenir au moment présent
 
 *Avancées (5-15 min) :*
-🧘 Respiration guidée — différents schémas
-💪 Relaxation musculaire — relâcher la tension`,
+🧘 Schémas de respiration
+💪 Relaxation musculaire`,
 	MenuBreathing: "🌬️ Respiration simple 2 min",
 	MenuGrounding: "🌿 Ancrage 3-5 min",
-	MenuGuided:    "🧘 Respiration guidée 1-2 min",
-	MenuPMR:       "💪 Muscles 4 min",
+	MenuGuided:    "🧘 Schémas de respiration 1-2 min",
+	MenuPMR:       "💪 Relaxation musculaire 4 min",
 	MenuLang:      "🌐 Langue",
 
 	// Breathing
-	BreathingIntro: `🌬️ *Respiration de 2 minutes*
+	BreathingIntro: `🌬️ *Respiration simple*
 
 Un exercice simple pour calmer le système nerveux.
 
@@ -61,14 +61,10 @@ Un exercice simple pour calmer le système nerveux.
 5️⃣ Répétez 8 cycles (~2 minutes)
 
 Je vous guiderai à chaque étape. Prêt à commencer ?`,
-	BreathingCompletion: `✅ *Excellent !*
-
-Vous avez terminé l'exercice de respiration.
-
-Votre pouls a ralenti et votre système nerveux s'est apaisé. Prenez encore quelques respirations calmes.`,
-	BreathingInhale: "Inspirer",
-	BreathingHold:   "Retenir",
-	BreathingExhale: "Expirer",
+	BreathingCompletion: "✅ *Respiration simple*\n\nTerminé. Vous pouvez continuer.",
+	BreathingInhale:     "Inspirer",
+	BreathingHold:       "Retenir",
+	BreathingExhale:     "Expirer",
 
 	// Grounding
 	GroundingIntro: `🌿 *Technique d'ancrage 5-4-3-2-1*
@@ -86,12 +82,8 @@ Cette technique vous ramène au moment présent à travers 5 sens.
 
 *Temps :* ~3-5 minutes
 
-Prêt à commencer ?`,
-	GroundingCompletion: `✅ *Excellent !*
-
-Vous avez terminé la technique d'ancrage 5-4-3-2-1.
-
-Vous êtes de retour dans l'ici et maintenant. Votre attention est revenue au moment présent.`,
+Je vous accompagnerai à chaque étape. Prêt à commencer ?`,
+	GroundingCompletion: "✅ *Ancrage 5-4-3-2-1*\n\nVous avez surmonté quelque chose de difficile.",
 
 	// Grounding steps
 	GroundingStep1Title: "Étape 1 : Vue",
@@ -110,7 +102,7 @@ Vous êtes de retour dans l'ici et maintenant. Votre attention est revenue au mo
 		"Si rien — rappelez-vous votre goût préféré.",
 
 	// Guided breathing
-	GuidedIntro: `🧘 *Respiration guidée*
+	GuidedIntro: `🧘 *Schémas de respiration*
 
 Différents schémas de respiration pour différents objectifs — de la concentration à la relaxation.
 
@@ -128,8 +120,7 @@ Longue expiration pour relaxation profonde et préparation au sommeil.
 🚀 *Reset rapide 3-3-3* (~1 min)
 Soulagement rapide de la tension et du stress aigus.
 `,
-	GuidedCompletion: "✅ *Excellent !*\n\nVous avez terminé l'exercice \"%s\".\n\n" +
-		"Votre respiration est devenue plus régulière. Restez dans cet état encore un instant.",
+	GuidedCompletion: "✅ *Schémas de respiration*\n\nTerminé. Vous pouvez continuer.",
 
 	// Guided breathing — pattern intros
 	PatternBoxIntro: `📦 *Respiration carrée 4-4-4-4*
@@ -139,7 +130,7 @@ Utilisée par les militaires et les athlètes pour un focus rapide.
 
 *6 cycles, ~1.5 minutes*
 
-Prêt à commencer ?`,
+Je vous accompagnerai à chaque cycle. Prêt à commencer ?`,
 	PatternRelaxingIntro: `😴 *Relaxant 4-7-8*
 
 Inspiration 4 sec, rétention 7 sec, longue expiration 8 sec.
@@ -147,7 +138,7 @@ La longue expiration active le parasympathique — relaxation profonde et prépa
 
 *4 cycles, ~1.5 minutes*
 
-Prêt à commencer ?`,
+Je vous accompagnerai à chaque cycle. Prêt à commencer ?`,
 	PatternEnergizingIntro: `⚡ *Énergisant 4-4-6*
 
 Inspiration 4 sec, rétention 4 sec, expiration 6 sec.
@@ -155,7 +146,7 @@ Inspiration 4 sec, rétention 4 sec, expiration 6 sec.
 
 *6 cycles, ~1.5 minutes*
 
-Prêt à commencer ?`,
+Je vous accompagnerai à chaque cycle. Prêt à commencer ?`,
 	PatternQuickIntro: `🚀 *Reset rapide 3-3-3*
 
 Inspiration 3 sec, rétention 3 sec, expiration 3 sec.
@@ -163,7 +154,7 @@ Schéma minimal pour un soulagement rapide de la tension aiguë.
 
 *5 cycles, ~1 minute*
 
-Prêt à commencer ?`,
+Je vous accompagnerai à chaque cycle. Prêt à commencer ?`,
 
 	// Breathing patterns
 	PatternBoxName:        "Respiration carrée 4-4-4-4",
@@ -195,14 +186,10 @@ Aide à relâcher les tensions physiques du stress et de l'anxiété.
 *%d groupes musculaires* — des mains aux pieds.
 *Temps :* ~4 minutes
 
-Prêt à commencer ?`,
-	PMRTense: "🔴 *CONTRACTEZ*\n\n%s",
-	PMRRelax: "🟢 *RELÂCHEZ*\n\n%s",
-	PMRCompletion: `✅ *Excellent !*
-
-Vous avez terminé la relaxation musculaire progressive.
-
-Votre corps est maintenant complètement détendu. Restez assis encore une minute en profitant de cet état.`,
+Je vous accompagnerai à travers chaque groupe musculaire. Prêt à commencer ?`,
+	PMRTense:      "🔴 *CONTRACTEZ*\n\n%s",
+	PMRRelax:      "🟢 *RELÂCHEZ*\n\n%s",
+	PMRCompletion: "✅ *Relaxation musculaire*\n\nLe corps a travaillé. Reposez-vous maintenant.",
 
 	// PMR muscle groups
 	PMRHandsName:  "Mains",

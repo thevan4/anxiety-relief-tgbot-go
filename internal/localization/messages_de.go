@@ -33,23 +33,23 @@ Datenschutz: Der Bot speichert keine persönlichen Daten.
 	SessionExpired: "Aktuelle Sitzung abgelaufen. Senden Sie /start oder tippen Sie auf die Schaltfläche „Start“ im Chat.",
 
 	// Main menu
-	MainMenuText: `Wählen Sie eine Technik zur Angstbewältigung:
+	MainMenuText: `Wählen Sie eine Technik:
 
 *Schnell (2-5 Min):*
 🌬️ Atmung — Beruhigung des Nervensystems
 🌿 Erdung — Rückkehr in den Moment
 
 *Fortgeschritten (5-15 Min):*
-🧘 Geführte Atmung — verschiedene Muster
-💪 Muskelentspannung — Spannung lösen`,
+🧘 Atemmuster
+💪 Muskelentspannung`,
 	MenuBreathing: "🌬️ Einfache Atmung 2 Min",
 	MenuGrounding: "🌿 Erdung 3-5 Min",
-	MenuGuided:    "🧘 Geführte Atmung 1-2 Min",
-	MenuPMR:       "💪 Muskeln 4 Min",
+	MenuGuided:    "🧘 Atemmuster 1-2 Min",
+	MenuPMR:       "💪 Muskelentspannung 4 Min",
 	MenuLang:      "🌐 Sprache",
 
 	// Breathing
-	BreathingIntro: `🌬️ *2-Minuten-Atmung*
+	BreathingIntro: `🌬️ *Einfache Atmung*
 
 Eine einfache Übung zur Beruhigung des Nervensystems.
 
@@ -61,14 +61,10 @@ Eine einfache Übung zur Beruhigung des Nervensystems.
 5️⃣ 8 Zyklen wiederholen (~2 Minuten)
 
 Ich werde Sie durch jeden Schritt führen. Bereit zu beginnen?`,
-	BreathingCompletion: `✅ *Sehr gut!*
-
-Sie haben die Atemübung abgeschlossen.
-
-Ihr Puls hat sich verlangsamt und Ihr Nervensystem hat sich beruhigt. Machen Sie noch ein paar ruhige Atemzüge.`,
-	BreathingInhale: "Einatmen",
-	BreathingHold:   "Halten",
-	BreathingExhale: "Ausatmen",
+	BreathingCompletion: "✅ *Einfache Atmung*\n\nFertig. Sie können weitermachen.",
+	BreathingInhale:     "Einatmen",
+	BreathingHold:       "Halten",
+	BreathingExhale:     "Ausatmen",
 
 	// Grounding
 	GroundingIntro: `🌿 *5-4-3-2-1 Erdungstechnik*
@@ -86,12 +82,8 @@ Diese Technik bringt Sie durch 5 Sinne in den gegenwärtigen Moment zurück.
 
 *Zeit:* ~3-5 Minuten
 
-Bereit zu beginnen?`,
-	GroundingCompletion: `✅ *Sehr gut!*
-
-Sie haben die 5-4-3-2-1-Erdungstechnik abgeschlossen.
-
-Sie sind wieder im Hier und Jetzt. Ihre Aufmerksamkeit ist in den gegenwärtigen Moment zurückgekehrt.`,
+Ich begleite Sie durch jeden Schritt. Bereit zu beginnen?`,
+	GroundingCompletion: "✅ *Erdung 5-4-3-2-1*\n\nSie haben etwas Schwieriges geschafft.",
 
 	// Grounding steps
 	GroundingStep1Title: "Schritt 1: Sehen",
@@ -111,7 +103,7 @@ Sie sind wieder im Hier und Jetzt. Ihre Aufmerksamkeit ist in den gegenwärtigen
 		"Wenn nichts — erinnern Sie sich an Ihren Lieblingsgeschmack.",
 
 	// Guided breathing
-	GuidedIntro: `🧘 *Geführte Atmung*
+	GuidedIntro: `🧘 *Atemmuster*
 
 Verschiedene Atemmuster für verschiedene Ziele — von Fokus bis Entspannung.
 
@@ -129,8 +121,7 @@ Energie und geistige Klarheit, Linderung von Müdigkeit.
 🚀 *Schneller Reset 3-3-3* (~1 Min)
 Schnelle Linderung von akuter Spannung und Stress.
 `,
-	GuidedCompletion: "✅ *Sehr gut!*\n\nSie haben die Übung \"%s\" abgeschlossen.\n\n" +
-		"Ihre Atmung ist gleichmäßiger geworden. Verweilen Sie noch einen Moment in diesem Zustand.",
+	GuidedCompletion: "✅ *Atemmuster*\n\nFertig. Sie können weitermachen.",
 
 	// Guided breathing — pattern intros
 	PatternBoxIntro: `📦 *Box-Atmung 4-4-4-4*
@@ -140,7 +131,7 @@ Wird vom Militär und Sportlern für schnellen Fokus verwendet.
 
 *6 Zyklen, ~1.5 Minuten*
 
-Bereit zu beginnen?`,
+Ich begleite Sie durch jeden Zyklus. Bereit zu beginnen?`,
 	PatternRelaxingIntro: `😴 *Entspannend 4-7-8*
 
 Einatmen 4 Sek, Halten 7 Sek, langes Ausatmen 8 Sek.
@@ -148,7 +139,7 @@ Das lange Ausatmen aktiviert den Parasympathikus — tiefe Entspannung und Schla
 
 *4 Zyklen, ~1.5 Minuten*
 
-Bereit zu beginnen?`,
+Ich begleite Sie durch jeden Zyklus. Bereit zu beginnen?`,
 	PatternEnergizingIntro: `⚡ *Energetisierend 4-4-6*
 
 Einatmen 4 Sek, Halten 4 Sek, Ausatmen 6 Sek.
@@ -156,7 +147,7 @@ Energie und geistige Klarheit, schnelle Linderung von Müdigkeit.
 
 *6 Zyklen, ~1.5 Minuten*
 
-Bereit zu beginnen?`,
+Ich begleite Sie durch jeden Zyklus. Bereit zu beginnen?`,
 	PatternQuickIntro: `🚀 *Schneller Reset 3-3-3*
 
 Einatmen 3 Sek, Halten 3 Sek, Ausatmen 3 Sek.
@@ -164,7 +155,7 @@ Minimales Muster zur schnellen Linderung akuter Spannung.
 
 *5 Zyklen, ~1 Minute*
 
-Bereit zu beginnen?`,
+Ich begleite Sie durch jeden Zyklus. Bereit zu beginnen?`,
 
 	// Breathing patterns
 	PatternBoxName:        "Box-Atmung 4-4-4-4",
@@ -196,14 +187,10 @@ Hilft, körperliche Verspannungen durch Stress und Angst zu lösen.
 *%d Muskelgruppen* — von den Händen bis zu den Füßen.
 *Zeit:* ~4 Minuten
 
-Bereit zu beginnen?`,
-	PMRTense: "🔴 *ANSPANNEN*\n\n%s",
-	PMRRelax: "🟢 *ENTSPANNEN*\n\n%s",
-	PMRCompletion: `✅ *Sehr gut!*
-
-Sie haben die progressive Muskelentspannung abgeschlossen.
-
-Ihr Körper ist jetzt vollständig entspannt. Sitzen Sie noch eine Minute und genießen Sie diesen Zustand.`,
+Ich begleite Sie durch jede Muskelgruppe. Bereit zu beginnen?`,
+	PMRTense:      "🔴 *ANSPANNEN*\n\n%s",
+	PMRRelax:      "🟢 *ENTSPANNEN*\n\n%s",
+	PMRCompletion: "✅ *Muskelentspannung*\n\nDer Körper hat gearbeitet. Einfach ruhen jetzt.",
 
 	// PMR muscle groups
 	PMRHandsName:  "Hände",

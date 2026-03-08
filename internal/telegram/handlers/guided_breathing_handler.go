@@ -380,9 +380,7 @@ func (h *GuidedBreathingHandler) sendCompletion(
 	}
 
 	m := h.localizer.Get(h.getLang(ctx, userID))
-	patternName := h.getLocalizedPattern(patternIdx, m)
-
-	text := fmt.Sprintf(m.GuidedCompletion, patternName)
+	text := m.GuidedCompletion
 
 	keyboard := &telego.InlineKeyboardMarkup{
 		InlineKeyboard: [][]telego.InlineKeyboardButton{
