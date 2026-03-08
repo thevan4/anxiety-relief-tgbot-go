@@ -65,3 +65,7 @@ golangci-lint run --config .golangci.pipeline.yaml ./...
 ## Disclaimer
 
 This bot is not a substitute for professional mental health support. If anxiety is affecting your life — please consult a specialist.
+
+# About
+
+Based on https://github.com/msgnoki/anxiety-aid-tools — a fork of https://anxietyaidtools.com. The original author made the repository private, abandoning the open-source principles the project was built on. 
