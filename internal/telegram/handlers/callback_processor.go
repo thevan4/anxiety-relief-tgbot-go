@@ -58,7 +58,7 @@ func (cp *CallbackProcessor) Extract(cb telego.CallbackQuery) *CallbackInfo {
 	}
 
 	// Callback guard: check if menu exists for this user (before answering so we can show alert once)
-	if !cp.hasActiveMenu(info.UserID, info.ChatID, info.MessageID, cb.ID) {
+	if !cp.hasActiveMenu(info.UserID, info.ChatID, info.MessageID, cb.ID, cb.From.LanguageCode) {
 		return nil
 	}
 
@@ -72,20 +72,22 @@ func (cp *CallbackProcessor) Extract(cb telego.CallbackQuery) *CallbackInfo {
 
 // hasActiveMenu checks if user has an active menu message (callback guard).
 // Returns false and shows alert if no menu or message mismatch.
-func (cp *CallbackProcessor) hasActiveMenu(userID, chatID int64, messageID int, callbackID string) bool {
+func (cp *CallbackProcessor) hasActiveMenu(userID, chatID int64, messageID int, callbackID, langCode string) bool {
 	storedMsgID, err := cp.storage.GetMenuMessageID(cp.ctx, userID)
 
 	// No menu in Redis — session expired or never existed
 	if err != nil || storedMsgID == 0 {
 		log.Printf("DEBUG: no menu for user %d, showing session expired", userID)
-		cp.showSessionExpired(callbackID, chatID, messageID, userID)
+		cp.showSessionExpired(callbackID, chatID, messageID, userID, langCode)
 		return false
 	}
 
-	// Message ID mismatch — callback from old/stale message
+	// Message ID mismatch — callback from old/stale message, silently ignore
 	if storedMsgID != messageID {
 		log.Printf("DEBUG: stale message %d (expected %d) for user %d", messageID, storedMsgID, userID)
-		cp.showSessionExpired(callbackID, chatID, messageID, userID)
+		_ = cp.bot.AnswerCallbackQuery(cp.ctx, &telego.AnswerCallbackQueryParams{
+			CallbackQueryID: callbackID,
+		})
 		return false
 	}
 
@@ -93,7 +95,7 @@ func (cp *CallbackProcessor) hasActiveMenu(userID, chatID int64, messageID int, 
 }
 
 // showSessionExpired answers the callback and sends a fresh holder message.
-func (cp *CallbackProcessor) showSessionExpired(callbackID string, chatID int64, messageID int, userID int64) {
+func (cp *CallbackProcessor) showSessionExpired(callbackID string, chatID int64, messageID int, userID int64, langCode string) {
 	_ = cp.bot.AnswerCallbackQuery(cp.ctx, &telego.AnswerCallbackQueryParams{
 		CallbackQueryID: callbackID,
 	})
@@ -103,12 +105,21 @@ func (cp *CallbackProcessor) showSessionExpired(callbackID string, chatID int64,
 		MessageID: messageID,
 	})
 
-	cp.sendHolder(chatID, userID)
+	// Don't create new holder if one already exists
+	if existingHolderID, err := cp.storage.GetHolderMessageID(cp.ctx, userID); err == nil && existingHolderID != 0 {
+		return
+	}
+
+	cp.sendHolder(chatID, userID, langCode)
 }
 
 // sendHolder sends a new holder (welcome) message with the Start button.
-func (cp *CallbackProcessor) sendHolder(chatID, userID int64) {
+func (cp *CallbackProcessor) sendHolder(chatID, userID int64, langCode string) {
 	lang, _ := cp.storage.GetLang(cp.ctx, userID)
+	if lang == "" {
+		lang = cp.localizer.SupportedLang(langCode)
+		_ = cp.storage.SetLang(cp.ctx, userID, lang)
+	}
 	m := cp.localizer.Get(lang)
 
 	keyboard := &telego.InlineKeyboardMarkup{

@@ -178,6 +178,10 @@ func (bh *BotHandler) registerStartHandler() {
 			log.Printf("DEBUG: old menu not deleted, creating holder for user %d", userID)
 		}
 
+		if existingLang, getErr := bh.sessionStorage.GetLang(bh.ctx, userID); getErr == nil && existingLang == "" {
+			_ = bh.sessionStorage.SetLang(bh.ctx, userID, bh.localizer.SupportedLang(message.From.LanguageCode))
+		}
+
 		return bh.sendHolderMessage(ctx, chatID, userID)
 	}, th.CommandEqual("start"))
 }
@@ -231,6 +235,10 @@ func (bh *BotHandler) handleHolderStart(cb telego.CallbackQuery) error {
 
 	if !handlers.AnswerCallbackOrDelete(bh.ctx, bh.bot, cb.ID, chatID, holderMessageID) {
 		return nil
+	}
+
+	if existingLang, getErr := bh.sessionStorage.GetLang(bh.ctx, userID); getErr == nil && existingLang == "" {
+		_ = bh.sessionStorage.SetLang(bh.ctx, userID, bh.localizer.SupportedLang(cb.From.LanguageCode))
 	}
 
 	// If menu already exists, try to delete it and remove from queue
